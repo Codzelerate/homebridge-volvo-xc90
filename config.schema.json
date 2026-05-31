@@ -2,7 +2,7 @@
   "pluginAlias": "VolvoXC90",
   "pluginType": "platform",
   "singular": true,
-  "headerDisplay": "Control your Volvo XC90 2016 from Apple Home via the Volvo Connected Vehicle API v2. Get your VCC API Key at [developer.volvocars.com](https://developer.volvocars.com).",
+  "headerDisplay": "Control your Volvo XC90 2016 from Apple Home via the Volvo Connected Vehicle API v2. Get your VCC API Key at [developer.volvocars.com](https://developer.volvocars.com).\n\n**First-time setup:** Save your credentials and restart Homebridge. An OTP will be emailed to you by Volvo. Paste it into the OTP field below, save, and restart again. After that, the OTP field can be left empty — a refresh token is stored automatically.",
   "schema": {
     "type": "object",
     "properties": {
@@ -38,6 +38,11 @@
         "required": true,
         "description": "17-character Vehicle Identification Number. Found on the dashboard or in the Volvo Cars app under vehicle details."
       },
+      "otp": {
+        "title": "One-Time Password (OTP)",
+        "type": "string",
+        "description": "Enter the 6-digit code Volvo emailed you. Leave empty after first successful login — a refresh token is stored automatically and this field is no longer needed."
+      },
       "engineStartDuration": {
         "title": "Engine start duration (minutes)",
         "type": "integer",
@@ -71,6 +76,12 @@
       "type": "fieldset",
       "title": "API & Vehicle",
       "items": ["vccApiKey", "vin"]
+    },
+    {
+      "type": "fieldset",
+      "title": "Authentication",
+      "description": "First-time only: save credentials, restart, then paste the OTP Volvo emails you.",
+      "items": ["otp"]
     },
     {
       "type": "fieldset",

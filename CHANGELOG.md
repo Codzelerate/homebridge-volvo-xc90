@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-05-31
+
+### Changed
+- **Authentication completely rewritten** — replaces deprecated OAuth password grant with Volvo's current multi-step PingFederate OTP flow
+- Correct OAuth client credentials, scopes (`conve:*`), and `X-XSRF-Header` now used
+- Refresh token persisted to `homebridge-volvo-xc90.json` in Homebridge storage — re-auth only needed when token expires
+- Auth flow state (flow ID + cookies) also persisted so OTP can be submitted after a Homebridge restart
+- Accessories only start polling after successful authentication (no more "Not authenticated" flood)
+
+### Added
+- `otp` config field in Homebridge UI (Authentication section) for first-time setup
+- Clear step-by-step instructions in log and UI header for the OTP flow
+
 ## [0.5.0] - 2026-05-31
 
 ### Fixed
