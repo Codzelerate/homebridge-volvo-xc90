@@ -30,7 +30,6 @@ const AUTH_SCOPES = [
   'conve:vehicle_relation',
   'conve:warnings',
   'conve:windows_status',
-  'conve:recharge_status',
 ].join(' ');
 
 export interface VehicleStatus {

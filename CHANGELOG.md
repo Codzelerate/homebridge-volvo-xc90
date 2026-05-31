@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.2] - 2026-05-31
+
+### Fixed
+- Removed invalid `conve:recharge_status` OAuth scope — Volvo's auth server rejects it with a validation error, breaking OTP initiation entirely. The `/recharge-status` endpoint will be tested without a dedicated scope
+
 ## [1.0.1] - 2026-05-31
 
 ### Added
