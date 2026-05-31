@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.6] - 2026-05-31
+
+### Fixed
+- Door sensors now show their correct names in the Home app ("Front Left Door", "Rear Right Door", etc.) by setting the `ConfiguredName` characteristic — previously displayed as "Contact Sensor 1–7"
+
 ## [1.0.5] - 2026-05-31
 
 ### Added
