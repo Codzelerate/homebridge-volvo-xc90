@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-05-31
+
+### Fixed
+- Doors cache stampede: both LockAccessory and DoorsAccessory fired simultaneously on startup before the first request resolved, causing two `/doors` calls instead of one. Fixed with an in-flight promise guard — concurrent callers now join the same request
+- Fuel level no longer shows `undefined%` — the `/fuel` endpoint returns litres only (`fuelAmount`), not a percentage. Fuel % is now calculated from litres ÷ tank capacity
+
+### Added
+- `tankCapacityLiters` config option (default `70` — the standard XC90 2016 tank). Set to your actual tank size if your variant differs
+- Codzelerate attribution in README and `package.json` author field
+
 ## [0.8.0] - 2026-05-31
 
 ### Added

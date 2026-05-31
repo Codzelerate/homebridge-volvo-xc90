@@ -34,6 +34,7 @@ export interface VolvoConfig extends PlatformConfig {
   showEngine?: boolean;
   showDoors?: boolean;
   showFuel?: boolean;
+  tankCapacityLiters?: number;
 }
 
 interface PersistedState {
@@ -53,15 +54,28 @@ export class VolvoPlatform implements DynamicPlatformPlugin {
 
   // Shared cache so LockAccessory and DoorsAccessory share one API call per cycle
   private doorsCache: { data: VehicleStatus; ts: number } | null = null;
+  private doorsCacheInFlight: Promise<VehicleStatus> | null = null;
 
   async getCachedDoorsAndLocks(): Promise<VehicleStatus> {
     if (this.doorsCache && Date.now() - this.doorsCache.ts < 5_000) {
       this.dbg('getCachedDoorsAndLocks: returning cached result');
       return this.doorsCache.data;
     }
-    const data = await this.api.getDoorsAndLocks();
-    this.doorsCache = { data, ts: Date.now() };
-    return data;
+    if (this.doorsCacheInFlight) {
+      this.dbg('getCachedDoorsAndLocks: joining in-flight request');
+      return this.doorsCacheInFlight;
+    }
+    this.doorsCacheInFlight = this.api.getDoorsAndLocks()
+      .then(data => {
+        this.doorsCache = { data, ts: Date.now() };
+        this.doorsCacheInFlight = null;
+        return data;
+      })
+      .catch(err => {
+        this.doorsCacheInFlight = null;
+        throw err;
+      });
+    return this.doorsCacheInFlight;
   }
 
   constructor(

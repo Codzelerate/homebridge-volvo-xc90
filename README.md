@@ -214,6 +214,14 @@ See [CHANGELOG.md](CHANGELOG.md) for the full version history.
 
 ---
 
+## Built by Codzelerate
+
+This plugin is developed and maintained by [**Codzelerate**](https://www.codzelerate.com?utm_source=github&utm_medium=plugin&utm_campaign=homebridge-volvo-xc90) — a software development studio focused on smart home automation, IoT integrations, and Apple platform development.
+
+For questions, bug reports, or feature requests, please [open an issue](https://github.com/Codzelerate/homebridge-volvo-xc90/issues) on GitHub.
+
+---
+
 ## License
 
-MIT © [Codzelerate](https://github.com/Codzelerate)
+MIT © [Codzelerate](https://www.codzelerate.com?utm_source=github&utm_medium=plugin&utm_campaign=homebridge-volvo-xc90)

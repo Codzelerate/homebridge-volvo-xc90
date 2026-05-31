@@ -6,12 +6,15 @@ export class FuelAccessory {
   private service;
   private fuelLevel = 100;
 
+  private readonly tankCapacity: number;
+
   constructor(
     private readonly platform: VolvoPlatform,
     private readonly accessory: PlatformAccessory,
     private readonly opts: { pollInterval: number; engineDuration: number },
   ) {
     const { Service, Characteristic } = platform;
+    this.tankCapacity = platform.config.tankCapacityLiters ?? 70;
 
     setAccessoryInfo(platform, accessory, 'XC90 — Fuel');
 
@@ -44,8 +47,12 @@ export class FuelAccessory {
     try {
       const data = await this.platform.api.getFuel();
       const { Characteristic } = this.platform;
-      if (data.fuelAmountLevel !== undefined) {
-        this.fuelLevel = Math.round(data.fuelAmountLevel);
+      const litres = data.fuelAmountLevel !== undefined
+        ? (data.fuelAmountLevel / 100) * this.tankCapacity  // use API percentage if present
+        : data.fuelAmount;                                    // fall back to litres
+
+      if (litres !== undefined) {
+        this.fuelLevel = Math.min(100, Math.round((litres / this.tankCapacity) * 100));
         this.service.updateCharacteristic(Characteristic.BatteryLevel, this.fuelLevel);
         this.service.updateCharacteristic(
           Characteristic.StatusLowBattery,
@@ -53,7 +60,7 @@ export class FuelAccessory {
             ? Characteristic.StatusLowBattery.BATTERY_LEVEL_LOW
             : Characteristic.StatusLowBattery.BATTERY_LEVEL_NORMAL,
         );
-        this.platform.dbg(`Fuel poll: ${this.fuelLevel}% (${data.fuelAmount}L)`);
+        this.platform.dbg(`Fuel poll: ${this.fuelLevel}% (${data.fuelAmount}L / ${this.tankCapacity}L tank)`);
       }
     } catch (err) {
       this.platform.log.warn('Fuel poll failed:', (err as Error).message);

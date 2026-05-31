@@ -41,6 +41,14 @@
         "type": "string",
         "description": "6-digit code from the Volvo email. Only needed during initial setup. Remove after successful login."
       },
+      "tankCapacityLiters": {
+        "title": "Fuel tank capacity (litres)",
+        "type": "integer",
+        "default": 70,
+        "minimum": 10,
+        "maximum": 150,
+        "description": "Used to calculate fuel percentage. The XC90 2016 tank is 70 L — only change this if your variant differs."
+      },
       "engineStartDuration": {
         "title": "Engine start duration (minutes)",
         "type": "integer",
@@ -119,7 +127,7 @@
     {
       "type": "fieldset",
       "title": "Behaviour",
-      "items": ["engineStartDuration", "pollInterval"]
+      "items": ["tankCapacityLiters", "engineStartDuration", "pollInterval"]
     },
     {
       "type": "fieldset",
