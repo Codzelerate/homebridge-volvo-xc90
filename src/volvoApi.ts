@@ -5,8 +5,8 @@ const BASE_URL = 'https://api.volvocars.com';
 const AUTH_URL = 'https://volvoid.eu.volvocars.com/as/authorization.oauth2';
 const TOKEN_URL = 'https://volvoid.eu.volvocars.com/as/token.oauth2';
 
-// Official Volvo app OAuth client credentials (PingFederate)
-const AUTH_BASIC = 'Basic aDRZZjBiOlU4WWtTYlZsNnh3c2c1WVFxWmZyZ1ZtSWFEcGhPc3kxUENhVXNpY1F0bzNUUjVrd2FKc2U0QVpkZ2ZJZmNMeXc=';
+// Volvo mobile app OAuth client credentials — public, extracted from the official app, not user-owned
+const AUTH_BASIC = 'Basic aDRZZjBiOlU4WWtTYlZsNnh3c2c1WVFxWmZyZ1ZtSWFEcGhPc3kxUENhVXNpY1F0bzNUUjVrd2FKc2U0QVpkZ2ZJZmNMeXc='; // pragma: allowlist secret
 
 const AUTH_SCOPES = [
   'openid',
