@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.12] - 2026-05-31
+
+### Changed
+- Fuel Level now uses a `HumiditySensor` service (showing fuel % as a humidity %) instead of a second `Battery` service — HomeKit renders Battery and HumiditySensor as separate rows in the same accessory detail view, making both EV Battery and Fuel Level visible in the single Energy tile
+
 ## [1.0.11] - 2026-05-31
 
 ### Fixed

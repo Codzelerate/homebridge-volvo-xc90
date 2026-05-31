@@ -3,6 +3,8 @@ import { VolvoPlatform } from '../platform';
 import { setAccessoryInfo } from './accessoryInfo';
 
 export class EnergyAccessory {
+  // Fuel level shown as a HumiditySensor (0–100%) — different service type from Battery
+  // so HomeKit renders both in the same accessory detail view
   private fuelService: ReturnType<PlatformAccessory['addService']> | null = null;
   private evService: ReturnType<PlatformAccessory['addService']> | null = null;
   private fuelLevel = 100;
@@ -21,19 +23,19 @@ export class EnergyAccessory {
 
     setAccessoryInfo(platform, accessory, 'XC90 — Energy');
 
+    // Remove any legacy Battery service left by the old FuelAccessory (no subtype)
+    const legacyFuelBattery = accessory.services.find(
+      s => s.UUID === Service.Battery.UUID && !s.subtype,
+    );
+    if (legacyFuelBattery) accessory.removeService(legacyFuelBattery);
+
     if (platform.config.showFuel !== false) {
       this.fuelService = accessory.getService('Fuel Level')
-        || accessory.addService(Service.Battery, 'Fuel Level', 'fuel');
+        || accessory.addService(Service.HumiditySensor, 'Fuel Level', 'fuel');
       this.fuelService.addOptionalCharacteristic(Characteristic.ConfiguredName);
       this.fuelService.setCharacteristic(Characteristic.ConfiguredName, 'Fuel Level');
-      this.fuelService.getCharacteristic(Characteristic.BatteryLevel)
+      this.fuelService.getCharacteristic(Characteristic.CurrentRelativeHumidity)
         .onGet(() => this.fuelLevel);
-      this.fuelService.getCharacteristic(Characteristic.ChargingState)
-        .onGet(() => Characteristic.ChargingState.NOT_CHARGEABLE);
-      this.fuelService.getCharacteristic(Characteristic.StatusLowBattery)
-        .onGet(() => this.fuelLevel < 15
-          ? Characteristic.StatusLowBattery.BATTERY_LEVEL_LOW
-          : Characteristic.StatusLowBattery.BATTERY_LEVEL_NORMAL);
     }
 
     if (platform.config.showCharging !== false) {
@@ -66,13 +68,7 @@ export class EnergyAccessory {
           : data.fuelAmount;
         if (litres !== undefined) {
           this.fuelLevel = Math.min(100, Math.round((litres / this.tankCapacity) * 100));
-          this.fuelService.updateCharacteristic(Characteristic.BatteryLevel, this.fuelLevel);
-          this.fuelService.updateCharacteristic(
-            Characteristic.StatusLowBattery,
-            this.fuelLevel < 15
-              ? Characteristic.StatusLowBattery.BATTERY_LEVEL_LOW
-              : Characteristic.StatusLowBattery.BATTERY_LEVEL_NORMAL,
-          );
+          this.fuelService.updateCharacteristic(Characteristic.CurrentRelativeHumidity, this.fuelLevel);
           this.platform.dbg(`Fuel poll: ${this.fuelLevel}% (${data.fuelAmount}L / ${this.tankCapacity}L tank)`);
         }
       } catch (err) {
