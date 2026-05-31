@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-05-31
+
+### Added
+- **EV Battery accessory** (T8 PHEV) — shows charge level %, charging state (Charging / Plugged In / Unplugged), and a low-charge alert below 20%. Powered by the `/recharge-status` endpoint
+- `showCharging` config toggle to hide the EV Battery tile on petrol-only variants
+- `conve:recharge_status` added to OAuth scopes — **requires re-authentication** after upgrading (add credentials + OTP in plugin settings, save, restart)
+
 ## [0.9.0] - 2026-05-31
 
 ### Fixed

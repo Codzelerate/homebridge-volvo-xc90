@@ -30,6 +30,7 @@ const AUTH_SCOPES = [
   'conve:vehicle_relation',
   'conve:warnings',
   'conve:windows_status',
+  'conve:recharge_status',
 ].join(' ');
 
 export interface VehicleStatus {
@@ -44,6 +45,14 @@ export interface VehicleStatus {
     tailgate: boolean;
   };
   locked?: boolean;
+}
+
+export interface RechargeStatus {
+  chargeLevel?: number;       // 0–100 %
+  electricRange?: number;     // km
+  estimatedChargingTime?: number; // minutes to full
+  connectionStatus?: string;  // CONNECTED_AC | CONNECTED_DC | DISCONNECTED | FAULT | UNSPECIFIED
+  systemStatus?: string;      // CHARGING | IDLE | DONE | SCHEDULED | FAULT | UNSPECIFIED
 }
 
 export interface TokenSet {
@@ -364,6 +373,25 @@ export class VolvoApiClient {
     this.debug('Sending honk-flash');
     const token = await this.ensureValidToken();
     await this.http.post(`/connected-vehicle/v2/vehicles/${this.vin}/commands/honk-flash`, {}, { headers: this.authHeaders(token) });
+  }
+
+  async getRechargeStatus(): Promise<RechargeStatus> {
+    this.debug('Polling recharge status');
+    const token = await this.ensureValidToken();
+    const resp = await this.http.get(
+      `/connected-vehicle/v2/vehicles/${this.vin}/recharge-status`,
+      { headers: this.authHeaders(token) },
+    );
+    const d = resp.data.data;
+    const result: RechargeStatus = {
+      chargeLevel: d.batteryChargeLevel?.value as number | undefined,
+      electricRange: d.electricRange?.value as number | undefined,
+      estimatedChargingTime: d.estimatedChargingTime?.value as number | undefined,
+      connectionStatus: d.chargingConnectionStatus?.value as string | undefined,
+      systemStatus: d.chargingSystemStatus?.value as string | undefined,
+    };
+    this.debug(`Recharge: ${result.chargeLevel}% | ${result.connectionStatus} | ${result.systemStatus} | ~${result.estimatedChargingTime}min | range ${result.electricRange}km`);
+    return result;
   }
 
   async getSupportedCommands(): Promise<string[]> {

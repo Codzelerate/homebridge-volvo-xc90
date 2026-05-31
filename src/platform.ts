@@ -16,6 +16,7 @@ import { ClimateAccessory } from './accessories/climateAccessory';
 import { EngineAccessory } from './accessories/engineAccessory';
 import { DoorsAccessory } from './accessories/doorsAccessory';
 import { FuelAccessory } from './accessories/fuelAccessory';
+import { ChargingAccessory } from './accessories/chargingAccessory';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const { version: PLUGIN_VERSION } = require('../package.json') as { version: string };
@@ -34,6 +35,7 @@ export interface VolvoConfig extends PlatformConfig {
   showEngine?: boolean;
   showDoors?: boolean;
   showFuel?: boolean;
+  showCharging?: boolean;
   tankCapacityLiters?: number;
 }
 
@@ -253,7 +255,8 @@ export class VolvoPlatform implements DynamicPlatformPlugin {
       { id: `${vin}-climate`, name: 'Volvo Climate',   Class: ClimateAccessory, show: this.config.showClimate !== false },
       { id: `${vin}-engine`,  name: 'Remote Start',    Class: EngineAccessory,  show: this.config.showEngine  !== false },
       { id: `${vin}-doors`,   name: 'Volvo Doors',     Class: DoorsAccessory,   show: this.config.showDoors   !== false },
-      { id: `${vin}-fuel`,    name: 'Fuel Level',      Class: FuelAccessory,    show: this.config.showFuel    !== false },
+      { id: `${vin}-fuel`,     name: 'Fuel Level',      Class: FuelAccessory,     show: this.config.showFuel     !== false },
+      { id: `${vin}-charging`, name: 'EV Battery',      Class: ChargingAccessory, show: this.config.showCharging !== false },
     ];
 
     for (const device of devices) {
