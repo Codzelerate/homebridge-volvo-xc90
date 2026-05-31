@@ -5,9 +5,9 @@
 [![GitHub release](https://img.shields.io/github/v/release/Codzelerate/homebridge-volvo-xc90)](https://github.com/Codzelerate/homebridge-volvo-xc90/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-A [Homebridge](https://homebridge.io) plugin that integrates your **Volvo XC90 2016** (Sensus) with Apple HomeKit via the official [Volvo Connected Vehicle API v2](https://developer.volvocars.com/apis/connected-vehicle/v2/overview/).
+A [Homebridge](https://homebridge.io) plugin that integrates your **Volvo XC90 2016** (Sensus) with Apple HomeKit via the official [Volvo Connected Vehicle API v2](https://developer.volvocars.com/apis/connected-vehicle/v2/overview/) and [Energy API v2](https://developer.volvocars.com/apis/energy/v2/overview/).
 
-Control and monitor your car directly from the Apple Home app and Siri — lock/unlock, climate pre-conditioning, remote engine start, door sensors, and fuel level.
+Control and monitor your car directly from the Apple Home app and Siri — lock/unlock, climate pre-conditioning, remote engine start, door sensors, fuel level, and EV battery (T8 PHEV).
 
 ---
 
@@ -16,40 +16,44 @@ Control and monitor your car directly from the Apple Home app and Siri — lock/
 - [Features](#features)
 - [Requirements](#requirements)
 - [Installation](#installation)
-- [Configuration](#configuration)
-- [HomeKit Accessories](#homekit-accessories)
-- [Getting Your VCC API Key](#getting-your-vcc-api-key)
-- [Finding Your VIN](#finding-your-vin)
-- [Debug Mode](#debug-mode)
+- [Authentication](#authentication)
+  - [First-time setup](#first-time-setup)
+  - [Re-authenticating](#re-authenticating)
+- [Configuration reference](#configuration-reference)
+- [HomeKit accessories](#homekit-accessories)
+- [Getting your VCC API Key](#getting-your-vcc-api-key)
+- [Finding your VIN](#finding-your-vin)
+- [Debug mode](#debug-mode)
 - [Troubleshooting](#troubleshooting)
 - [Changelog](#changelog)
-- [License](#license)
+- [Built by Codzelerate](#built-by-codzelerate)
 
 ---
 
 ## Features
 
-| Accessory | HomeKit Type | What it does |
+| Accessory | HomeKit type | What it does |
 |---|---|---|
 | **Volvo Lock** | Lock Mechanism | Lock and unlock your car |
 | **Volvo Climate** | Switch | Start / stop cabin pre-conditioning |
-| **Volvo Engine** | Switch | Remote engine start (1–15 min) and stop |
-| **Volvo Doors** | Contact Sensors (×6) | Open/closed state for all doors, hood, and tailgate |
-| **Volvo Fuel** | Battery Level | Fuel level % with low-fuel alert below 15% |
+| **Remote Start** | Switch | Remote engine start (1–15 min) and stop |
+| **Volvo Doors** | Contact Sensors | Open/closed summary tile + individual sensors for all 6 openings |
+| **Fuel Level** | Battery Level | Petrol tank % with low-fuel alert (configurable threshold) |
+| **EV Battery** | Battery Level | EV charge %, charging state, and low-charge alert — T8 PHEV only |
 
-All accessories update on a configurable poll interval and reflect the latest state from the Volvo backend.
+All accessories update on a configurable poll interval (default: 30 minutes) and reflect the latest state from the Volvo backend.
 
 ---
 
 ## Requirements
 
-- Homebridge ≥ 1.6.0
+- Homebridge ≥ 1.6.0 or ≥ 2.0.0
 - Node.js ≥ 18
 - A **2016 Volvo XC90** (Sensus infotainment) with an active Volvo On Call subscription
 - The **Volvo Cars app** working on your phone (confirms your car has a live cellular connection)
-- A free developer account at [developer.volvocars.com](https://developer.volvocars.com)
+- A free developer account at [developer.volvocars.com](https://developer.volvocars.com) for a VCC API Key
 
-> **Note:** The 2016 XC90 uses a built-in cellular modem. If your Volvo Cars app can no longer control your car remotely, your modem may need a 4G upgrade from a Volvo dealer before this plugin will work.
+> **Note:** The 2016 XC90 uses a built-in cellular modem. If the Volvo Cars app can no longer control your car remotely, the modem may need a 4G upgrade from a Volvo dealer before this plugin will work.
 
 ---
 
@@ -57,13 +61,13 @@ All accessories update on a configurable poll interval and reflect the latest st
 
 ### Via Homebridge UI (recommended)
 
-1. Open the Homebridge UI on your Homebridge host
+1. Open the Homebridge UI
 2. Go to the **Plugins** tab
 3. Search for `homebridge-volvo-xc90`
 4. Click **Install**
 5. Restart Homebridge when prompted
 
-### Via SSH / Terminal
+### Via terminal
 
 ```bash
 sudo npm install -g homebridge-volvo-xc90
@@ -72,29 +76,102 @@ sudo systemctl restart homebridge
 
 ---
 
-## Configuration
+## Authentication
 
-After installation, configure the plugin through the Homebridge UI:
+This plugin uses Volvo's multi-step OTP authentication. On first setup, Volvo emails you a 6-digit code to verify your identity. Once authenticated, a refresh token is stored on disk — you only need to log in again if the token expires (typically after several months).
+
+### First-time setup
 
 1. Go to **Plugins → homebridge-volvo-xc90 → Settings**
-2. Fill in the four required fields (see table below)
-3. Save and restart Homebridge
+2. Under **Always Required**, enter your **VCC API Key** and **VIN**
+3. Under **First-time Setup**, enter your **Volvo ID email** and **password**
+4. Save and restart Homebridge
+5. Check the log — you will see:
+   ```
+   [Volvo XC90] No stored session. Sending OTP to your email...
+   ```
+6. Check your Volvo ID email for a 6-digit code
+7. Go back to plugin settings, paste the code into the **One-Time Password (OTP)** field
+8. Save and restart Homebridge
+9. Check the log for:
+   ```
+   [Volvo XC90] Authentication successful (OTP)
+   [Volvo XC90] You can now clear the OTP field in the plugin settings.
+   ```
+10. Return to plugin settings and **remove your email, password, and OTP** — only VCC API Key and VIN are needed going forward
 
-### Configuration fields
+Your session is now saved. Homebridge will automatically refresh it without any further action.
 
-| Field | Required | Description |
+---
+
+### Re-authenticating
+
+You need to re-authenticate when:
+- The refresh token has expired (Volvo invalidated your session)
+- You installed a plugin update that added new API scopes
+
+**Do not delete any files manually.** Use the built-in **Force re-authentication** toggle instead:
+
+1. Go to **Plugins → homebridge-volvo-xc90 → Settings → First-time Setup**
+2. Enter your **Volvo ID email** and **password**
+3. Enable **Force re-authentication**
+4. Save and restart Homebridge
+5. Check the log — you will see:
+   ```
+   [Volvo XC90] Force re-auth enabled — clearing stored tokens.
+   [Volvo XC90] No stored session. Sending OTP to your email...
+   ```
+6. Check your Volvo ID email for a 6-digit code
+7. Paste the code into the **One-Time Password (OTP)** field
+8. Save and restart Homebridge
+9. Check the log for:
+   ```
+   [Volvo XC90] Authentication successful (OTP)
+   ```
+10. Return to settings and **disable Force re-authentication**, then **remove email, password, and OTP**
+11. Save and restart one final time
+
+---
+
+## Configuration reference
+
+### Always Required
+
+| Field | Description |
+|---|---|
+| **VCC API Key** | Primary API key from [developer.volvocars.com](https://developer.volvocars.com) |
+| **VIN** | Your 17-character Vehicle Identification Number |
+
+### First-time Setup
+
+| Field | Description |
+|---|---|
+| **Volvo ID (email)** | Your Volvo Cars account email. Remove after successful login. |
+| **Volvo ID password** | Your Volvo Cars account password. Remove after successful login. |
+| **One-Time Password (OTP)** | 6-digit code from the Volvo email. Remove after successful login. |
+| **Force re-authentication** | Clears the stored session on next restart. Enable to trigger a fresh OTP login. Disable again once authenticated. |
+
+### Accessories
+
+| Field | Default | Description |
 |---|---|---|
-| **Volvo ID (email)** | ✅ | The email you use to log into the Volvo Cars app |
-| **Volvo ID password** | ✅ | Your Volvo Cars account password |
-| **VCC API Key** | ✅ | Primary API key from [developer.volvocars.com](https://developer.volvocars.com) |
-| **VIN** | ✅ | Your 17-character Vehicle Identification Number |
-| **Engine start duration** | — | How long the engine runs remotely (1–15 min, default: 15) |
-| **Poll interval** | — | How often vehicle state is fetched in seconds (default: 30) |
-| **Debug logging** | — | Log every API call and state change to the Homebridge log |
+| **Show Lock** | On | Lock / unlock tile |
+| **Show Climate Pre-condition** | On | Climate pre-conditioning switch |
+| **Show Remote Start** | On | Remote engine start switch |
+| **Show Doors** | On | Door sensors with summary tile |
+| **Show Fuel Level** | On | Petrol tank percentage |
+| **Show EV Battery** | On | EV charge level and charging state (T8 PHEV only — disable on petrol variants) |
+
+### Behaviour
+
+| Field | Default | Description |
+|---|---|---|
+| **Fuel tank capacity (litres)** | 70 | Used to calculate fuel %. Standard XC90 2016 tank is 70 L. |
+| **EV low charge alert threshold (%)** | 20 | HomeKit sends a low-battery notification when EV charge drops below this level. |
+| **Engine start duration (minutes)** | 15 | How long the engine runs when started remotely (max 15 min, enforced by Volvo). |
+| **Poll interval (seconds)** | 1800 | How often the plugin fetches vehicle state. Default is 30 minutes to stay within the 10,000 requests/day API limit. |
 
 ### Manual config.json
-
-If you prefer to edit `config.json` directly:
 
 ```json
 {
@@ -102,12 +179,18 @@ If you prefer to edit `config.json` directly:
     {
       "platform": "VolvoXC90",
       "name": "Volvo XC90",
-      "username": "your-email@example.com",
-      "password": "your-password",
       "vccApiKey": "your-vcc-api-key",
       "vin": "YV1XXXXXXXXX00000",
+      "showLock": true,
+      "showClimate": true,
+      "showEngine": true,
+      "showDoors": true,
+      "showFuel": true,
+      "showCharging": true,
+      "tankCapacityLiters": 70,
+      "evLowChargeThreshold": 20,
       "engineStartDuration": 15,
-      "pollInterval": 30,
+      "pollInterval": 1800,
       "debug": false
     }
   ]
@@ -116,21 +199,19 @@ If you prefer to edit `config.json` directly:
 
 ---
 
-## HomeKit Accessories
-
-Once configured, five accessories appear in the Home app:
+## HomeKit accessories
 
 ### Volvo Lock
-A standard **Lock Mechanism** accessory. Tap to lock or unlock. State is polled from the API and reflects the real lock state of the car.
+A **Lock Mechanism** tile. Tap to lock or unlock. State is polled from the API and reflects the real lock state of the car.
 
 ### Volvo Climate
-A **Switch** accessory. Turn on to start cabin pre-conditioning (heating or cooling depending on outside temperature). Turn off to stop it. Useful in automations — e.g. start climate 20 minutes before your calendar event.
+A **Switch** tile. Turn on to start cabin pre-conditioning (heating or cooling based on outside temperature). Useful in automations — e.g. start climate 20 minutes before a calendar event.
 
-### Volvo Engine
-A **Switch** accessory. Turn on to start the engine remotely for the configured duration (max 15 minutes, enforced by the Volvo API). The engine stops automatically when the timer expires, or you can turn the switch off early.
+### Remote Start
+A **Switch** tile. Turn on to start the engine remotely for the configured duration (max 15 minutes). The engine stops automatically when the timer expires, or turn the switch off early to stop it immediately.
 
 ### Volvo Doors
-Six **Contact Sensor** accessories — one for each opening:
+A **Contact Sensor** tile with an at-a-glance summary: shows **Open** if any door, hood, or tailgate is ajar — **Closed** only when everything is shut. Tap the tile to see the state of all 6 individual sensors:
 - Front Left Door
 - Front Right Door
 - Rear Left Door
@@ -138,14 +219,23 @@ Six **Contact Sensor** accessories — one for each opening:
 - Hood
 - Tailgate
 
-Each sensor shows **Open** or **Closed** and can trigger automations (e.g. notify if the tailgate is left open).
+### Fuel Level
+A **Battery Level** tile showing current petrol level as a percentage (calculated from litres ÷ tank capacity). A low-battery notification fires in HomeKit when fuel drops below the configured threshold (default 15%).
 
-### Volvo Fuel
-A **Battery Level** accessory showing your current fuel level as a percentage. A **low battery** alert fires in the Home app when fuel drops below 15%.
+### EV Battery *(T8 PHEV only)*
+A **Battery Level** tile showing EV charge level % and charging state:
+
+| Charging state | Meaning |
+|---|---|
+| **Charging** | Cable connected and actively charging |
+| **Not Charging** | Cable connected but charging is paused or complete |
+| **Not Chargeable** | No cable connected |
+
+A low-battery notification fires when charge drops below the configured threshold (default 20%). Disable this tile via plugin settings if your variant is not a PHEV.
 
 ---
 
-## Getting Your VCC API Key
+## Getting your VCC API Key
 
 1. Go to [developer.volvocars.com](https://developer.volvocars.com) and sign in with your Volvo ID
 2. Click **Your API Applications → Create application**
@@ -157,7 +247,7 @@ A **Battery Level** accessory showing your current fuel level as a percentage. A
 
 ---
 
-## Finding Your VIN
+## Finding your VIN
 
 Your VIN is a 17-character code. You can find it:
 
@@ -167,19 +257,19 @@ Your VIN is a 17-character code. You can find it:
 
 ---
 
-## Debug Mode
+## Debug mode
 
-Enable **Debug logging** in the plugin settings (under the **Advanced** section) to log every API request, response, and state change to the Homebridge log. This is useful for initial setup and troubleshooting.
+Enable **Debug logging** in the plugin settings (Advanced section) to log every API request, response, and state change. Useful for initial setup and troubleshooting.
 
-Example debug output:
+Example output:
 ```
-[DEBUG] Plugin v0.3.0 loaded — VIN: YV1XXXXXXXXXXXXX, poll: 30s
-[DEBUG] Authenticating as your@email.com
-[DEBUG] Token acquired, expires in 1800s
 [DEBUG] → GET https://api.volvocars.com/connected-vehicle/v2/vehicles/YV1XX.../doors
 [DEBUG] ← 200 /connected-vehicle/v2/vehicles/YV1XX.../doors
-[DEBUG] Doors result: locked=true, doors={"frontLeft":false,"frontRight":false,...}
+[DEBUG] Doors: locked=true, doors={"frontLeft":false,...}
 [DEBUG] Lock poll complete: LOCKED
+[DEBUG] → GET https://api.volvocars.com/energy/v2/vehicles/YV1XX.../state
+[DEBUG] ← 200 /energy/v2/vehicles/YV1XX.../state
+[DEBUG] Recharge: 72% | CONNECTED | CHARGING | ~85min | range 28km
 ```
 
 Disable debug once everything is working to keep your logs clean.
@@ -189,22 +279,26 @@ Disable debug once everything is working to keep your logs clean.
 ## Troubleshooting
 
 **Plugin doesn't appear in the Home app after install**
-Restart Homebridge and wait 30 seconds. Check the Homebridge log for errors.
+Open the Homebridge UI → **Child Bridges** tab → find Volvo XC90 → **Reset HomeKit Pairing**. A QR code will appear — scan it in the Home app.
 
-**"Authentication failed" in the log**
-- Confirm your Volvo ID email and password are correct (same credentials as the Volvo Cars app)
-- The Volvo API may require an OTP step — check the log for the specific error response with debug enabled
+**OTP email never arrives**
+- Check your Volvo ID spam folder
+- Confirm the email and password entered match your Volvo Cars app credentials
+- Enable debug and check the log for any error during OTP initiation
 
-**Accessories show "No Response" in Home**
-- Enable debug and check the log for API errors
+**"Not authenticated" or accessories show "No Response"**
+- Your refresh token has likely expired — follow the [Re-authenticating](#re-authenticating) steps above
 - Confirm the Volvo Cars app can control your car — if the app is broken, the plugin cannot work either
-- Check that your VCC API Key and VIN are entered correctly
+
+**EV Battery shows "No Response" or always 0%**
+- This accessory requires the T8 PHEV variant. If your car is petrol-only, disable **Show EV Battery** in plugin settings
+- If you are on a T8, re-authenticate to ensure your token includes the Energy API scopes
 
 **Lock/Unlock not working**
 Confirm your Volvo On Call subscription is active. Lock and unlock commands require an active subscription.
 
-**Fuel level always shows 100%**
-Your VIN may not support the engine/fuel endpoint. Check the Homebridge log on startup for the **Supported commands** line — it lists what your car actually exposes.
+**Fuel level shows wrong percentage**
+The API returns litres only. If your tank capacity differs from the default (70 L), set **Fuel tank capacity** in plugin settings to match your variant.
 
 ---
 
