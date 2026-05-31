@@ -392,7 +392,7 @@ export class VolvoApiClient {
     const result: RechargeStatus = {
       chargeLevel: d.batteryChargeLevel?.value as number | undefined,
       electricRange: d.electricRange?.value as number | undefined,
-      estimatedChargingTime: d.estimatedChargingTimeTimeToTargetBatteryChargeLevel?.value as number | undefined,
+      estimatedChargingTime: d.estimatedChargingTimeToTargetBatteryChargeLevel?.value as number | undefined,
       connectionStatus: d.chargerConnectionStatus?.value as string | undefined,
       systemStatus: d.chargingStatus?.value as string | undefined,
     };
