@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.11] - 2026-05-31
+
+### Fixed
+- Controls tile switches now show correct names ("Climate", "Remote Start") instead of generic "Switch" / "Switch 2" — HomeKit requires `ConfiguredName` characteristic for per-service labelling in multi-service accessories
+
 ## [1.0.10] - 2026-05-31
 
 ### Fixed

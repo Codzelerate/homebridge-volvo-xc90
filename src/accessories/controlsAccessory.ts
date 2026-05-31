@@ -24,7 +24,8 @@ export class ControlsAccessory {
     if (platform.config.showClimate !== false) {
       this.climateService = accessory.getService('Climate')
         || accessory.addService(Service.Switch, 'Climate', 'climate');
-      this.climateService.setCharacteristic(Characteristic.Name, 'Climate');
+      this.climateService.addOptionalCharacteristic(Characteristic.ConfiguredName);
+      this.climateService.setCharacteristic(Characteristic.ConfiguredName, 'Climate');
       this.climateService.getCharacteristic(Characteristic.On)
         .onGet(() => {
           platform.dbg(`Climate onGet: ${this.climateActive}`);
@@ -51,7 +52,8 @@ export class ControlsAccessory {
     if (platform.config.showEngine !== false) {
       this.engineService = accessory.getService('Remote Start')
         || accessory.addService(Service.Switch, 'Remote Start', 'engine');
-      this.engineService.setCharacteristic(Characteristic.Name, 'Remote Start');
+      this.engineService.addOptionalCharacteristic(Characteristic.ConfiguredName);
+      this.engineService.setCharacteristic(Characteristic.ConfiguredName, 'Remote Start');
       this.engineService.getCharacteristic(Characteristic.On)
         .onGet(() => {
           platform.dbg(`Engine onGet: running=${this.engineRunning}`);
