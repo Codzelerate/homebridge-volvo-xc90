@@ -1,6 +1,6 @@
 {
   "name": "homebridge-volvo-xc90",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Homebridge plugin for Volvo XC90 2016 (Sensus) via Volvo Connected Vehicle API v2",
   "author": "Codzelerate <contact@codzelerate.com>",
   "license": "MIT",

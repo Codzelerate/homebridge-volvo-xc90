@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.3] - 2026-05-31
+
+### Fixed
+- EV battery: correct OAuth scopes (`energy:battery_charge_level`, `energy:charging_connection_status`, `energy:charging_system_status`, `energy:electric_range`, `energy:estimated_charging_time`, `energy:recharge_status`) sourced from official ioBroker.volvo implementation
+- EV battery: endpoint corrected to Energy API v2 (`/energy/v2/vehicles/{vin}/state`)
+- EV battery: field names corrected to match actual API response (`chargerConnectionStatus`, `chargingStatus`, `estimatedChargingTimeTimeToTargetBatteryChargeLevel`)
+
 ## [1.0.2] - 2026-05-31
 
 ### Fixed

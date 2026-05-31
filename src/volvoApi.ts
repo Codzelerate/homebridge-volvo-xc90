@@ -30,6 +30,12 @@ const AUTH_SCOPES = [
   'conve:vehicle_relation',
   'conve:warnings',
   'conve:windows_status',
+  'energy:battery_charge_level',
+  'energy:charging_connection_status',
+  'energy:charging_system_status',
+  'energy:electric_range',
+  'energy:estimated_charging_time',
+  'energy:recharge_status',
 ].join(' ');
 
 export interface VehicleStatus {
@@ -377,17 +383,18 @@ export class VolvoApiClient {
   async getRechargeStatus(): Promise<RechargeStatus> {
     this.debug('Polling recharge status');
     const token = await this.ensureValidToken();
+    // Energy API v2 — separate base path from Connected Vehicle API
     const resp = await this.http.get(
-      `/connected-vehicle/v2/vehicles/${this.vin}/recharge-status`,
+      `/energy/v2/vehicles/${this.vin}/state`,
       { headers: this.authHeaders(token) },
     );
-    const d = resp.data.data;
+    const d = resp.data;
     const result: RechargeStatus = {
       chargeLevel: d.batteryChargeLevel?.value as number | undefined,
       electricRange: d.electricRange?.value as number | undefined,
-      estimatedChargingTime: d.estimatedChargingTime?.value as number | undefined,
-      connectionStatus: d.chargingConnectionStatus?.value as string | undefined,
-      systemStatus: d.chargingSystemStatus?.value as string | undefined,
+      estimatedChargingTime: d.estimatedChargingTimeTimeToTargetBatteryChargeLevel?.value as number | undefined,
+      connectionStatus: d.chargerConnectionStatus?.value as string | undefined,
+      systemStatus: d.chargingStatus?.value as string | undefined,
     };
     this.debug(`Recharge: ${result.chargeLevel}% | ${result.connectionStatus} | ${result.systemStatus} | ~${result.estimatedChargingTime}min | range ${result.electricRange}km`);
     return result;
