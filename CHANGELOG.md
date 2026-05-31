@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.2] - 2026-05-31
+
+### Fixed
+- Door field names corrected to match actual API response (`frontLeftDoor`, `frontRightDoor`, `rearLeftDoor`, `rearRightDoor`, `tailgate`) — doors were always showing closed
+- Fuel level now fetched from `/fuel` endpoint instead of `/engine` (engine endpoint only returns warning flags, not fuel level)
+
 ## [0.6.1] - 2026-05-31
 
 ### Changed

@@ -286,18 +286,19 @@ export class VolvoApiClient {
       { headers: this.authHeaders(token) },
     );
     const d = resp.data.data;
+    // API returns camelCase with full word: frontLeftDoor, rearRightDoor, etc.
     const status: VehicleStatus = {
       locked: d.centralLock?.value === 'LOCKED',
       doors: {
-        frontLeft: d.frontLeft?.value === 'OPEN',
-        frontRight: d.frontRight?.value === 'OPEN',
-        rearLeft: d.rearLeft?.value === 'OPEN',
-        rearRight: d.rearRight?.value === 'OPEN',
+        frontLeft: d.frontLeftDoor?.value === 'OPEN',
+        frontRight: d.frontRightDoor?.value === 'OPEN',
+        rearLeft: d.rearLeftDoor?.value === 'OPEN',
+        rearRight: d.rearRightDoor?.value === 'OPEN',
         hood: d.hood?.value === 'OPEN',
-        tailgate: d.tailGate?.value === 'OPEN',
+        tailgate: d.tailgate?.value === 'OPEN',
       },
     };
-    this.debug(`Doors: locked=${status.locked}`);
+    this.debug(`Doors: locked=${status.locked}, doors=${JSON.stringify(status.doors)}`);
     return status;
   }
 
@@ -305,7 +306,7 @@ export class VolvoApiClient {
     this.debug('Polling fuel level');
     const token = await this.ensureValidToken();
     const resp = await this.http.get(
-      `/connected-vehicle/v2/vehicles/${this.vin}/engine`,
+      `/connected-vehicle/v2/vehicles/${this.vin}/fuel`,
       { headers: this.authHeaders(token) },
     );
     const d = resp.data.data;
