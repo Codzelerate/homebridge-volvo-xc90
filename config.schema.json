@@ -1,0 +1,52 @@
+{
+  "pluginAlias": "VolvoXC90",
+  "pluginType": "platform",
+  "singular": true,
+  "schema": {
+    "type": "object",
+    "properties": {
+      "name": {
+        "title": "Name",
+        "type": "string",
+        "default": "Volvo XC90"
+      },
+      "username": {
+        "title": "Volvo ID (email)",
+        "type": "string",
+        "required": true
+      },
+      "password": {
+        "title": "Volvo ID password",
+        "type": "string",
+        "required": true
+      },
+      "vccApiKey": {
+        "title": "VCC API Key",
+        "description": "From developer.volvocars.com — your application's primary API key",
+        "type": "string",
+        "required": true
+      },
+      "vin": {
+        "title": "VIN",
+        "description": "17-character Vehicle Identification Number",
+        "type": "string",
+        "minLength": 17,
+        "maxLength": 17,
+        "required": true
+      },
+      "engineStartDuration": {
+        "title": "Engine start duration (minutes)",
+        "type": "integer",
+        "default": 15,
+        "minimum": 1,
+        "maximum": 15
+      },
+      "pollInterval": {
+        "title": "Poll interval (seconds)",
+        "type": "integer",
+        "default": 30,
+        "minimum": 10
+      }
+    }
+  }
+}

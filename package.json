@@ -1,0 +1,36 @@
+{
+  "name": "@codzelerate/homebridge-volvo-xc90",
+  "version": "0.1.0",
+  "description": "Homebridge plugin for Volvo XC90 2016 (Sensus) via Volvo Connected Vehicle API v2",
+  "license": "MIT",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc --watch",
+    "lint": "eslint src/",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "homebridge-plugin",
+    "homebridge",
+    "volvo",
+    "xc90",
+    "homekit"
+  ],
+  "engines": {
+    "node": ">=18.0.0",
+    "homebridge": ">=1.6.0"
+  },
+  "dependencies": {
+    "axios": "^1.7.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "homebridge": "^1.8.0",
+    "typescript": "^5.4.0"
+  },
+  "peerDependencies": {
+    "homebridge": "^1.6.0"
+  }
+}
