@@ -12,11 +12,9 @@ import * as path from 'path';
 import { PLATFORM_NAME, PLUGIN_NAME } from './settings';
 import { VolvoApiClient, TokenSet, AuthFlowState, VehicleStatus } from './volvoApi';
 import { LockAccessory } from './accessories/lockAccessory';
-import { ClimateAccessory } from './accessories/climateAccessory';
-import { EngineAccessory } from './accessories/engineAccessory';
+import { ControlsAccessory } from './accessories/controlsAccessory';
 import { DoorsAccessory } from './accessories/doorsAccessory';
-import { FuelAccessory } from './accessories/fuelAccessory';
-import { ChargingAccessory } from './accessories/chargingAccessory';
+import { EnergyAccessory } from './accessories/energyAccessory';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const { version: PLUGIN_VERSION } = require('../package.json') as { version: string };
@@ -257,13 +255,41 @@ export class VolvoPlatform implements DynamicPlatformPlugin {
     const engineDuration = this.config.engineStartDuration ?? 15;
     const vin = this.config.vin;
 
+    // Migrate: unregister legacy single-purpose accessories that were merged into combined tiles
+    for (const legacyId of [`${vin}-engine`, `${vin}-charging`]) {
+      const legacyUuid = this.hbApi.hap.uuid.generate(legacyId);
+      const legacy = this.accessories.find(a => a.UUID === legacyUuid);
+      if (legacy) {
+        this.log.info(`Removing legacy accessory: ${legacy.displayName}`);
+        this.hbApi.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [legacy]);
+      }
+    }
+
     const devices = [
-      { id: `${vin}-lock`,    name: 'Volvo Lock',      Class: LockAccessory,    show: this.config.showLock    !== false },
-      { id: `${vin}-climate`, name: 'Volvo Climate',   Class: ClimateAccessory, show: this.config.showClimate !== false },
-      { id: `${vin}-engine`,  name: 'Remote Start',    Class: EngineAccessory,  show: this.config.showEngine  !== false },
-      { id: `${vin}-doors`,   name: 'Volvo Doors',     Class: DoorsAccessory,   show: this.config.showDoors   !== false },
-      { id: `${vin}-fuel`,     name: 'Fuel Level',      Class: FuelAccessory,     show: this.config.showFuel     !== false },
-      { id: `${vin}-charging`, name: 'EV Battery',      Class: ChargingAccessory, show: this.config.showCharging !== false },
+      {
+        id: `${vin}-lock`,
+        name: 'Volvo Lock',
+        Class: LockAccessory,
+        show: this.config.showLock !== false,
+      },
+      {
+        id: `${vin}-climate`,
+        name: 'Volvo Controls',
+        Class: ControlsAccessory,
+        show: this.config.showClimate !== false || this.config.showEngine !== false,
+      },
+      {
+        id: `${vin}-doors`,
+        name: 'Volvo Doors',
+        Class: DoorsAccessory,
+        show: this.config.showDoors !== false,
+      },
+      {
+        id: `${vin}-fuel`,
+        name: 'Volvo Energy',
+        Class: EnergyAccessory,
+        show: this.config.showFuel !== false || this.config.showCharging !== false,
+      },
     ];
 
     for (const device of devices) {

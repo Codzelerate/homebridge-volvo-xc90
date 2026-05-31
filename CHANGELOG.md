@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.9] - 2026-05-31
+
+### Changed
+- Fuel Level and EV Battery are now combined into a single **Energy** tile (one accessory, two battery services visible in the detail view) — reduces clutter in the Home app
+- Climate and Remote Start are now combined into a single **Controls** tile (one accessory, two switch services) — same concept
+- Legacy `${vin}-engine` and `${vin}-charging` accessories are automatically removed on first run after upgrading
+
+## [1.0.8] - 2026-05-31
+
 ## [1.0.7] - 2026-05-31
 
 ### Fixed
