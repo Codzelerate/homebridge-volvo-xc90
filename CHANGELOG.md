@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.7] - 2026-05-31
+
+### Fixed
+- Fuel Level and EV Battery services now have `ConfiguredName` set — fixes "Volvo Battery" / "Volvo Charged" auto-naming in the Home app
+- Fuel Level `ChargingState` corrected to `NOT_CHARGEABLE` (was `NOT_CHARGING`) — petrol cannot be electrically charged
+
 ## [1.0.6] - 2026-05-31
 
 ### Fixed

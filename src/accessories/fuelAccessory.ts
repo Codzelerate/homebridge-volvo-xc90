@@ -19,7 +19,9 @@ export class FuelAccessory {
     setAccessoryInfo(platform, accessory, 'XC90 — Fuel');
 
     this.service = accessory.getService(Service.Battery)
-      || accessory.addService(Service.Battery, 'Volvo Fuel');
+      || accessory.addService(Service.Battery, 'Fuel Level');
+
+    this.service.setCharacteristic(Characteristic.ConfiguredName, 'Fuel Level');
 
     this.service.getCharacteristic(Characteristic.BatteryLevel)
       .onGet(() => {
@@ -27,8 +29,9 @@ export class FuelAccessory {
         return this.fuelLevel;
       });
 
+    // Petrol tank cannot be electrically charged
     this.service.getCharacteristic(Characteristic.ChargingState)
-      .onGet(() => Characteristic.ChargingState.NOT_CHARGING);
+      .onGet(() => Characteristic.ChargingState.NOT_CHARGEABLE);
 
     this.service.getCharacteristic(Characteristic.StatusLowBattery)
       .onGet(() => {
