@@ -7,7 +7,7 @@
 
 A [Homebridge](https://homebridge.io) plugin that integrates your **Volvo XC90 2016** (Sensus) with Apple HomeKit via the official [Volvo Connected Vehicle API v2](https://developer.volvocars.com/apis/connected-vehicle/v2/overview/) and [Energy API v2](https://developer.volvocars.com/apis/energy/v2/overview/).
 
-Control and monitor your car directly from the Apple Home app and Siri — lock/unlock, climate pre-conditioning, remote engine start, door sensors, fuel level, and EV battery (T8 PHEV).
+Control and monitor your car directly from the Apple Home app and Siri — lock/unlock, climate pre-conditioning, remote engine start, honk & flash, door sensors, fuel level, and EV battery (T8 PHEV).
 
 ---
 
@@ -32,14 +32,12 @@ Control and monitor your car directly from the Apple Home app and Siri — lock/
 
 ## Features
 
-| Accessory | HomeKit type | What it does |
+| Tile | HomeKit type | What it does |
 |---|---|---|
 | **Volvo Lock** | Lock Mechanism | Lock and unlock your car |
-| **Volvo Climate** | Switch | Start / stop cabin pre-conditioning |
-| **Remote Start** | Switch | Remote engine start (1–15 min) and stop |
-| **Volvo Doors** | Contact Sensors | Open/closed summary tile + individual sensors for all 6 openings |
-| **Fuel Level** | Battery Level | Petrol tank % with low-fuel alert (configurable threshold) |
-| **EV Battery** | Battery Level | EV charge %, charging state, and low-charge alert — T8 PHEV only |
+| **Volvo Controls** | Switch (×3) | Climate pre-conditioning, Honk & Flash, and Remote Start — three switches in one tile |
+| **Volvo Doors** | Contact Sensors | Open/closed summary + individual sensors for all 6 openings |
+| **Volvo Energy** | Battery + Humidity | EV charge % with charging state (Battery), and petrol tank % (Humidity) — both in one tile |
 
 All accessories update on a configurable poll interval (default: 30 minutes) and reflect the latest state from the Volvo backend.
 
@@ -156,11 +154,12 @@ You need to re-authenticate when:
 | Field | Default | Description |
 |---|---|---|
 | **Show Lock** | On | Lock / unlock tile |
-| **Show Climate Pre-condition** | On | Climate pre-conditioning switch |
-| **Show Remote Start** | On | Remote engine start switch |
+| **Show Climate Pre-condition** | On | Climate switch inside the Controls tile |
+| **Show Remote Start** | On | Remote engine start switch inside the Controls tile |
+| **Show Honk & Flash** | On | Momentary honk + lights switch inside the Controls tile |
 | **Show Doors** | On | Door sensors with summary tile |
-| **Show Fuel Level** | On | Petrol tank percentage |
-| **Show EV Battery** | On | EV charge level and charging state (T8 PHEV only — disable on petrol variants) |
+| **Show Fuel Level** | On | Petrol tank % inside the Energy tile |
+| **Show EV Battery** | On | EV charge level and charging state inside the Energy tile (T8 PHEV only — disable on petrol variants) |
 
 ### Behaviour
 
@@ -184,6 +183,7 @@ You need to re-authenticate when:
       "showLock": true,
       "showClimate": true,
       "showEngine": true,
+      "showHonkFlash": true,
       "showDoors": true,
       "showFuel": true,
       "showCharging": true,
@@ -204,11 +204,12 @@ You need to re-authenticate when:
 ### Volvo Lock
 A **Lock Mechanism** tile. Tap to lock or unlock. State is polled from the API and reflects the real lock state of the car.
 
-### Volvo Climate
-A **Switch** tile. Turn on to start cabin pre-conditioning (heating or cooling based on outside temperature). Useful in automations — e.g. start climate 20 minutes before a calendar event.
+### Volvo Controls
+A single tile containing three switches, all visible in the detail view:
 
-### Remote Start
-A **Switch** tile. Turn on to start the engine remotely for the configured duration (max 15 minutes). The engine stops automatically when the timer expires, or turn the switch off early to stop it immediately.
+- **Climate** — Start or stop cabin pre-conditioning (heating or cooling based on outside temperature). Useful in automations, e.g. start climate 20 minutes before a calendar event.
+- **Honk & Flash** — Momentary switch that honks the horn and flashes the lights. Resets to off automatically after 1.5 seconds. Useful for locating the car in a car park.
+- **Remote Start** — Start the engine remotely for the configured duration (max 15 minutes). The engine stops automatically when the timer expires, or turn the switch off early to stop immediately.
 
 ### Volvo Doors
 A **Contact Sensor** tile with an at-a-glance summary: shows **Open** if any door, hood, or tailgate is ajar — **Closed** only when everything is shut. Tap the tile to see the state of all 6 individual sensors:
@@ -219,19 +220,20 @@ A **Contact Sensor** tile with an at-a-glance summary: shows **Open** if any doo
 - Hood
 - Tailgate
 
-### Fuel Level
-A **Battery Level** tile showing current petrol level as a percentage (calculated from litres ÷ tank capacity). A low-battery notification fires in HomeKit when fuel drops below the configured threshold (default 15%).
+### Volvo Energy
+A single tile showing both energy sources:
 
-### EV Battery *(T8 PHEV only)*
-A **Battery Level** tile showing EV charge level % and charging state:
+- **EV Battery** *(T8 PHEV only)* — EV charge level % and charging state:
 
-| Charging state | Meaning |
-|---|---|
-| **Charging** | Cable connected and actively charging |
-| **Not Charging** | Cable connected but charging is paused or complete |
-| **Not Chargeable** | No cable connected |
+  | State | Meaning |
+  |---|---|
+  | **Charging** | Cable connected and actively charging |
+  | **Not Charging** | Cable connected but charging is paused or complete |
+  | **Not Chargeable** | No cable connected |
 
-A low-battery notification fires when charge drops below the configured threshold (default 20%). Disable this tile via plugin settings if your variant is not a PHEV.
+  A low-battery notification fires when charge drops below the configured threshold (default 20%).
+
+- **Fuel Level** — Petrol tank % (shown as a humidity reading, 0–100%). Calculated from litres ÷ tank capacity. A low reading means it's time to fill up. Disable **Show EV Battery** in settings if your variant is not a PHEV.
 
 ---
 
@@ -293,6 +295,10 @@ Open the Homebridge UI → **Child Bridges** tab → find Volvo XC90 → **Reset
 **EV Battery shows "No Response" or always 0%**
 - This accessory requires the T8 PHEV variant. If your car is petrol-only, disable **Show EV Battery** in plugin settings
 - If you are on a T8, re-authenticate to ensure your token includes the Energy API scopes
+
+**Honk & Flash does nothing**
+- Confirm `honk-flash` appears in the Homebridge log line `Supported commands: ...` on startup — if not, your VIN may not support this command
+- Ensure your Volvo On Call subscription is active
 
 **Lock/Unlock not working**
 Confirm your Volvo On Call subscription is active. Lock and unlock commands require an active subscription.
