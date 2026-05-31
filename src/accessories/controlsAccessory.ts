@@ -17,6 +17,10 @@ export class ControlsAccessory {
 
     setAccessoryInfo(platform, accessory, 'XC90 — Controls');
 
+    // Remove legacy unsubtyped Switch service left by the old ClimateAccessory
+    const legacySwitch = accessory.services.find(s => s.UUID === Service.Switch.UUID && !s.subtype);
+    if (legacySwitch) accessory.removeService(legacySwitch);
+
     if (platform.config.showClimate !== false) {
       this.climateService = accessory.getService('Climate')
         || accessory.addService(Service.Switch, 'Climate', 'climate');

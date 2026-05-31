@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.10] - 2026-05-31
+
+### Fixed
+- Controls tile no longer shows three duplicate "Volvo Climate" entries — the legacy unsubtyped Switch service left by the old ClimateAccessory is now removed on first run after upgrading
+
 ## [1.0.9] - 2026-05-31
 
 ### Changed
