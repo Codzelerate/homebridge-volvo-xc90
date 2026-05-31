@@ -114,6 +114,12 @@
         "default": true,
         "description": "EV battery charge level, charging state, and low-charge alert. Only meaningful on the T8 PHEV — disable on petrol-only variants."
       },
+      "showHonkFlash": {
+        "title": "Show Honk & Flash",
+        "type": "boolean",
+        "default": true,
+        "description": "Momentary switch that honks the horn and flashes the lights — useful for locating the car. Resets to off automatically after triggering."
+      },
       "debug": {
         "title": "Debug logging",
         "type": "boolean",
@@ -142,7 +148,7 @@
       "description": "Choose which tiles appear in the Home app. All shown by default.",
       "expandable": true,
       "expanded": true,
-      "items": ["showLock", "showClimate", "showEngine", "showDoors", "showFuel", "showCharging"]
+      "items": ["showLock", "showClimate", "showEngine", "showHonkFlash", "showDoors", "showFuel", "showCharging"]
     },
     {
       "type": "fieldset",

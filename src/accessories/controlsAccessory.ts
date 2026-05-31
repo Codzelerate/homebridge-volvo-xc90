@@ -5,6 +5,7 @@ import { setAccessoryInfo } from './accessoryInfo';
 export class ControlsAccessory {
   private climateService: ReturnType<PlatformAccessory['addService']> | null = null;
   private engineService: ReturnType<PlatformAccessory['addService']> | null = null;
+  private honkService: ReturnType<PlatformAccessory['addService']> | null = null;
   private climateActive = false;
   private engineRunning = false;
 
@@ -45,6 +46,30 @@ export class ControlsAccessory {
             this.climateActive = on;
           } catch (err) {
             platform.log.error('Climate command failed:', (err as Error).message);
+          }
+        });
+    }
+
+    if (platform.config.showHonkFlash !== false) {
+      this.honkService = accessory.getService('Honk & Flash')
+        || accessory.addService(Service.Switch, 'Honk & Flash', 'honk');
+      this.honkService.addOptionalCharacteristic(Characteristic.ConfiguredName);
+      this.honkService.setCharacteristic(Characteristic.ConfiguredName, 'Honk & Flash');
+      this.honkService.getCharacteristic(Characteristic.On)
+        .onGet(() => false)
+        .onSet(async (value: CharacteristicValue) => {
+          if (!value) return;
+          platform.dbg('Honk & Flash triggered');
+          try {
+            await platform.api.honkAndFlash();
+            platform.log.info('Honk & Flash sent');
+          } catch (err) {
+            platform.log.error('Honk & Flash failed:', (err as Error).message);
+          } finally {
+            // Momentary action — reset to off after 1.5 s regardless of outcome
+            setTimeout(() => {
+              this.honkService!.updateCharacteristic(Characteristic.On, false);
+            }, 1500);
           }
         });
     }

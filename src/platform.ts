@@ -34,6 +34,7 @@ export interface VolvoConfig extends PlatformConfig {
   showDoors?: boolean;
   showFuel?: boolean;
   showCharging?: boolean;
+  showHonkFlash?: boolean;
   tankCapacityLiters?: number;
   evLowChargeThreshold?: number;
   forceReauth?: boolean;
@@ -276,7 +277,7 @@ export class VolvoPlatform implements DynamicPlatformPlugin {
         id: `${vin}-climate`,
         name: 'Volvo Controls',
         Class: ControlsAccessory,
-        show: this.config.showClimate !== false || this.config.showEngine !== false,
+        show: this.config.showClimate !== false || this.config.showEngine !== false || this.config.showHonkFlash !== false,
       },
       {
         id: `${vin}-doors`,

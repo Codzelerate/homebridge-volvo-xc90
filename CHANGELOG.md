@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.14] - 2026-05-31
+
+### Added
+- **Honk & Flash** switch in the Controls tile — momentary action that honks the horn and flashes the lights; resets to off automatically after 1.5 s. Toggle with `showHonkFlash` (default on). No re-authentication required — the `conve:honk_flash` scope was already included.
+
 ## [1.0.13] - 2026-05-31
 
 ### Fixed
