@@ -1,5 +1,6 @@
 import { PlatformAccessory, CharacteristicValue } from 'homebridge';
 import { VolvoPlatform } from '../platform';
+import { setAccessoryInfo } from './accessoryInfo';
 
 export class LockAccessory {
   private service;
@@ -13,10 +14,7 @@ export class LockAccessory {
   ) {
     const { Service, Characteristic } = platform;
 
-    accessory.getService(Service.AccessoryInformation)!
-      .setCharacteristic(Characteristic.Manufacturer, 'Volvo')
-      .setCharacteristic(Characteristic.Model, 'XC90 2016')
-      .setCharacteristic(Characteristic.SerialNumber, platform.config.vin ?? 'unknown');
+    setAccessoryInfo(platform, accessory, 'XC90 — Lock');
 
     this.service = accessory.getService(Service.LockMechanism)
       || accessory.addService(Service.LockMechanism);

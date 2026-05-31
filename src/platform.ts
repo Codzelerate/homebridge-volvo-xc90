@@ -15,6 +15,9 @@ import { EngineAccessory } from './accessories/engineAccessory';
 import { DoorsAccessory } from './accessories/doorsAccessory';
 import { FuelAccessory } from './accessories/fuelAccessory';
 
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const { version: PLUGIN_VERSION } = require('../package.json') as { version: string };
+
 export interface VolvoConfig extends PlatformConfig {
   username: string;
   password: string;
@@ -29,6 +32,7 @@ export class VolvoPlatform implements DynamicPlatformPlugin {
   public readonly Service: typeof Service;
   public readonly Characteristic: typeof Characteristic;
   public readonly accessories: PlatformAccessory[] = [];
+  public readonly pluginVersion = PLUGIN_VERSION;
 
   public readonly api: VolvoApiClient;
   public readonly config: VolvoConfig;
@@ -48,7 +52,7 @@ export class VolvoPlatform implements DynamicPlatformPlugin {
 
     this.api = new VolvoApiClient(this.config.vccApiKey, this.config.vin, debugFn);
 
-    this.dbg(`Plugin loaded — VIN: ${this.config.vin}, pollInterval: ${this.config.pollInterval ?? 30}s`);
+    this.dbg(`Plugin v${PLUGIN_VERSION} loaded — VIN: ${this.config.vin}, poll: ${this.config.pollInterval ?? 30}s`);
 
     hbApi.on('didFinishLaunching', () => {
       this.authenticate().then(() => this.discoverDevices());

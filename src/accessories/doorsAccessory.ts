@@ -1,5 +1,6 @@
 import { PlatformAccessory } from 'homebridge';
 import { VolvoPlatform } from '../platform';
+import { setAccessoryInfo } from './accessoryInfo';
 
 const DOOR_SENSORS = [
   { key: 'frontLeft',  label: 'Front Left Door' },
@@ -22,10 +23,7 @@ export class DoorsAccessory {
   ) {
     const { Service, Characteristic } = platform;
 
-    accessory.getService(Service.AccessoryInformation)!
-      .setCharacteristic(Characteristic.Manufacturer, 'Volvo')
-      .setCharacteristic(Characteristic.Model, 'XC90 2016')
-      .setCharacteristic(Characteristic.SerialNumber, platform.config.vin ?? 'unknown');
+    setAccessoryInfo(platform, accessory, 'XC90 — Doors');
 
     for (const door of DOOR_SENSORS) {
       const svc = accessory.getService(door.label)
