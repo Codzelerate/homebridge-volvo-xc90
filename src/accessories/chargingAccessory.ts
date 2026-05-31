@@ -5,6 +5,7 @@ import { setAccessoryInfo } from './accessoryInfo';
 export class ChargingAccessory {
   private service;
   private chargeLevel = 100;
+  private readonly lowThreshold: number;
 
   constructor(
     private readonly platform: VolvoPlatform,
@@ -12,6 +13,7 @@ export class ChargingAccessory {
     private readonly opts: { pollInterval: number; engineDuration: number },
   ) {
     const { Service, Characteristic } = platform;
+    this.lowThreshold = platform.config.evLowChargeThreshold ?? 20;
 
     setAccessoryInfo(platform, accessory, 'XC90 — EV Battery');
 
@@ -29,7 +31,7 @@ export class ChargingAccessory {
 
     this.service.getCharacteristic(Characteristic.StatusLowBattery)
       .onGet(() => {
-        const low = this.chargeLevel < 20;
+        const low = this.chargeLevel < this.lowThreshold;
         platform.dbg(`EV battery low: ${low}`);
         return low
           ? Characteristic.StatusLowBattery.BATTERY_LEVEL_LOW
@@ -50,7 +52,7 @@ export class ChargingAccessory {
         this.service.updateCharacteristic(Characteristic.BatteryLevel, this.chargeLevel);
         this.service.updateCharacteristic(
           Characteristic.StatusLowBattery,
-          this.chargeLevel < 20
+          this.chargeLevel < this.lowThreshold
             ? Characteristic.StatusLowBattery.BATTERY_LEVEL_LOW
             : Characteristic.StatusLowBattery.BATTERY_LEVEL_NORMAL,
         );

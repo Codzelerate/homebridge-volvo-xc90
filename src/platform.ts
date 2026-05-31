@@ -37,6 +37,7 @@ export interface VolvoConfig extends PlatformConfig {
   showFuel?: boolean;
   showCharging?: boolean;
   tankCapacityLiters?: number;
+  evLowChargeThreshold?: number;
   forceReauth?: boolean;
 }
 

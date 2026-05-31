@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.5] - 2026-05-31
+
+### Added
+- `evLowChargeThreshold` config option — percentage at which HomeKit fires a low-battery notification for the EV Battery tile (default 20%)
+
 ## [1.0.3] - 2026-05-31
 
 ### Fixed
