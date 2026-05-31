@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.1] - 2026-05-31
+
+### Changed
+- `username` and `password` are now optional — only needed for first-time setup or when the refresh token expires
+- Config UI reorganised: "Always Required" section (VCC API Key + VIN) vs "First-time Setup" section (email, password, OTP)
+- Clear log message guides user to add credentials back temporarily if session expires
+
 ## [0.6.0] - 2026-05-31
 
 ### Changed

@@ -21,10 +21,10 @@ import { FuelAccessory } from './accessories/fuelAccessory';
 const { version: PLUGIN_VERSION } = require('../package.json') as { version: string };
 
 export interface VolvoConfig extends PlatformConfig {
-  username: string;
-  password: string;
   vccApiKey: string;
   vin: string;
+  username?: string;
+  password?: string;
   otp?: string;
   engineStartDuration?: number;
   pollInterval?: number;
@@ -145,6 +145,10 @@ export class VolvoPlatform implements DynamicPlatformPlugin {
 
     // 3. OTP in config but no stored flow → do full fresh flow with provided OTP
     if (this.config.otp && !state.authFlow) {
+      if (!this.config.username || !this.config.password) {
+        this.log.error('OTP provided but no credentials found. Add your Volvo ID email and password to complete login.');
+        return false;
+      }
       try {
         this.log.info('Starting fresh OTP auth flow...');
         const flowState = await this.api.initiateOtpFlow(this.config.username, this.config.password);
@@ -162,9 +166,18 @@ export class VolvoPlatform implements DynamicPlatformPlugin {
       }
     }
 
-    // 4. No tokens, no OTP → initiate flow to trigger OTP email, then wait
+    // 4. No tokens, no OTP → need credentials to trigger OTP email
+    if (!this.config.username || !this.config.password) {
+      this.log.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      this.log.error('No stored session found and no credentials configured.');
+      this.log.error('Add your Volvo ID email and password to the plugin');
+      this.log.error('settings, save, and restart Homebridge to begin setup.');
+      this.log.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      return false;
+    }
+
     try {
-      this.log.info('No stored credentials. Sending OTP to your email...');
+      this.log.info('No stored session. Sending OTP to your email...');
       const flowState = await this.api.initiateOtpFlow(this.config.username, this.config.password);
       this.saveState({ authFlow: flowState });
       this.log.warn('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
@@ -173,6 +186,7 @@ export class VolvoPlatform implements DynamicPlatformPlugin {
       this.log.warn('2. Open Homebridge UI → Plugins → Volvo XC90 → Settings');
       this.log.warn('3. Paste the code into the "One-Time Password (OTP)" field');
       this.log.warn('4. Save and restart Homebridge');
+      this.log.warn('After login, you can remove email, password, and OTP from settings.');
       this.log.warn('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     } catch (err) {
       this.log.error('Failed to initiate OTP flow:', (err as Error).message);

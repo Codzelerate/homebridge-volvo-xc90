@@ -2,7 +2,7 @@
   "pluginAlias": "VolvoXC90",
   "pluginType": "platform",
   "singular": true,
-  "headerDisplay": "Control your Volvo XC90 2016 from Apple Home via the Volvo Connected Vehicle API v2. Get your VCC API Key at [developer.volvocars.com](https://developer.volvocars.com).\n\n**First-time setup:** Save your credentials and restart Homebridge. An OTP will be emailed to you by Volvo. Paste it into the OTP field below, save, and restart again. After that, the OTP field can be left empty — a refresh token is stored automatically.",
+  "headerDisplay": "Control your Volvo XC90 2016 from Apple Home via the Volvo Connected Vehicle API v2. Get your VCC API Key at [developer.volvocars.com](https://developer.volvocars.com).\n\n**First-time setup:** Fill in all fields, save, and restart. Volvo will email you a 6-digit OTP — paste it into the OTP field, save, and restart again. Once authenticated, you can remove your email, password, and OTP from the config. Only the VCC API Key and VIN are needed going forward.",
   "schema": {
     "type": "object",
     "properties": {
@@ -11,24 +11,11 @@
         "type": "string",
         "default": "Volvo XC90"
       },
-      "username": {
-        "title": "Volvo ID (email)",
-        "type": "string",
-        "format": "email",
-        "required": true,
-        "description": "The email address you use to log into the Volvo Cars app."
-      },
-      "password": {
-        "title": "Volvo ID password",
-        "type": "string",
-        "required": true,
-        "description": "Your Volvo Cars account password."
-      },
       "vccApiKey": {
         "title": "VCC API Key",
         "type": "string",
         "required": true,
-        "description": "Primary API key from your application on developer.volvocars.com."
+        "description": "Primary API key from your application on developer.volvocars.com. Always required."
       },
       "vin": {
         "title": "VIN",
@@ -36,12 +23,23 @@
         "minLength": 17,
         "maxLength": 17,
         "required": true,
-        "description": "17-character Vehicle Identification Number. Found on the dashboard or in the Volvo Cars app under vehicle details."
+        "description": "17-character Vehicle Identification Number. Always required."
+      },
+      "username": {
+        "title": "Volvo ID (email)",
+        "type": "string",
+        "format": "email",
+        "description": "Only needed for first-time setup or if the refresh token expires. Can be removed after successful login."
+      },
+      "password": {
+        "title": "Volvo ID password",
+        "type": "string",
+        "description": "Only needed for first-time setup or if the refresh token expires. Can be removed after successful login."
       },
       "otp": {
         "title": "One-Time Password (OTP)",
         "type": "string",
-        "description": "Enter the 6-digit code Volvo emailed you. Leave empty after first successful login — a refresh token is stored automatically and this field is no longer needed."
+        "description": "6-digit code from the Volvo email. Only needed during initial setup. Remove after successful login."
       },
       "engineStartDuration": {
         "title": "Engine start duration (minutes)",
@@ -69,19 +67,16 @@
   "layout": [
     {
       "type": "fieldset",
-      "title": "Volvo Account",
-      "items": ["username", "password"]
-    },
-    {
-      "type": "fieldset",
-      "title": "API & Vehicle",
+      "title": "Always Required",
       "items": ["vccApiKey", "vin"]
     },
     {
       "type": "fieldset",
-      "title": "Authentication",
-      "description": "First-time only: save credentials, restart, then paste the OTP Volvo emails you.",
-      "items": ["otp"]
+      "title": "First-time Setup",
+      "description": "Fill in for initial authentication only. Once logged in, these can all be removed.",
+      "expandable": true,
+      "expanded": true,
+      "items": ["username", "password", "otp"]
     },
     {
       "type": "fieldset",
