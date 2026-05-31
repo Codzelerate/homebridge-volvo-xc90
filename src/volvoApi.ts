@@ -323,7 +323,7 @@ export class VolvoApiClient {
       fuelAmount: d.fuelAmount?.value as number | undefined,
       fuelAmountLevel: d.fuelAmountLevel?.value as number | undefined,
     };
-    this.debug(`Fuel: ${result.fuelAmountLevel}% (${result.fuelAmount}L)`);
+    this.debug(`Fuel: ${result.fuelAmount}L (fuelAmountLevel=${result.fuelAmountLevel ?? 'n/a'})`);
     return result;
   }
 
