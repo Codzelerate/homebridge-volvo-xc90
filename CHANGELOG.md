@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-05-31
+
+### Added
+- `showLock`, `showClimate`, `showEngine`, `showDoors`, `showFuel` config options — toggle each tile on/off from the Homebridge UI; disabled accessories are cleanly unregistered from HomeKit
+- Doors accessory: "All Doors" summary contact sensor added as the primary tile — shows "Open" if any opening is ajar, "Closed" only when everything is shut; individual door sensors still visible in the detail view
+
+### Changed
+- "Volvo Engine" renamed to "Remote Start" — clearer label for a naive Home app user
+- "Volvo Fuel" renamed to "Fuel Level"
+
 ## [0.7.0] - 2026-05-31
 
 ### Changed

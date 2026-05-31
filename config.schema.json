@@ -56,6 +56,36 @@
         "minimum": 10,
         "description": "How often the plugin fetches the latest vehicle state from Volvo. Default is 1800 (30 minutes) to stay well within the 10,000 requests/day API limit."
       },
+      "showLock": {
+        "title": "Show Lock",
+        "type": "boolean",
+        "default": true,
+        "description": "Lock / unlock tile in the Home app."
+      },
+      "showClimate": {
+        "title": "Show Climate Pre-condition",
+        "type": "boolean",
+        "default": true,
+        "description": "Switch to start / stop climate pre-conditioning."
+      },
+      "showEngine": {
+        "title": "Show Remote Start",
+        "type": "boolean",
+        "default": true,
+        "description": "Switch to remotely start or stop the engine."
+      },
+      "showDoors": {
+        "title": "Show Doors",
+        "type": "boolean",
+        "default": true,
+        "description": "Contact sensors for all 6 openings (doors, hood, tailgate) with an at-a-glance summary tile."
+      },
+      "showFuel": {
+        "title": "Show Fuel Level",
+        "type": "boolean",
+        "default": true,
+        "description": "Fuel level as a percentage tile with a low-fuel alert below 15%."
+      },
       "debug": {
         "title": "Debug logging",
         "type": "boolean",
@@ -77,6 +107,14 @@
       "expandable": true,
       "expanded": true,
       "items": ["username", "password", "otp"]
+    },
+    {
+      "type": "fieldset",
+      "title": "Accessories",
+      "description": "Choose which tiles appear in the Home app. All shown by default.",
+      "expandable": true,
+      "expanded": true,
+      "items": ["showLock", "showClimate", "showEngine", "showDoors", "showFuel"]
     },
     {
       "type": "fieldset",

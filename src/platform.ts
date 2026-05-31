@@ -29,6 +29,11 @@ export interface VolvoConfig extends PlatformConfig {
   engineStartDuration?: number;
   pollInterval?: number;
   debug?: boolean;
+  showLock?: boolean;
+  showClimate?: boolean;
+  showEngine?: boolean;
+  showDoors?: boolean;
+  showFuel?: boolean;
 }
 
 interface PersistedState {
@@ -230,16 +235,25 @@ export class VolvoPlatform implements DynamicPlatformPlugin {
     const vin = this.config.vin;
 
     const devices = [
-      { id: `${vin}-lock`,    name: 'Volvo Lock',    Class: LockAccessory },
-      { id: `${vin}-climate`, name: 'Volvo Climate', Class: ClimateAccessory },
-      { id: `${vin}-engine`,  name: 'Volvo Engine',  Class: EngineAccessory },
-      { id: `${vin}-doors`,   name: 'Volvo Doors',   Class: DoorsAccessory },
-      { id: `${vin}-fuel`,    name: 'Volvo Fuel',    Class: FuelAccessory },
+      { id: `${vin}-lock`,    name: 'Volvo Lock',      Class: LockAccessory,    show: this.config.showLock    !== false },
+      { id: `${vin}-climate`, name: 'Volvo Climate',   Class: ClimateAccessory, show: this.config.showClimate !== false },
+      { id: `${vin}-engine`,  name: 'Remote Start',    Class: EngineAccessory,  show: this.config.showEngine  !== false },
+      { id: `${vin}-doors`,   name: 'Volvo Doors',     Class: DoorsAccessory,   show: this.config.showDoors   !== false },
+      { id: `${vin}-fuel`,    name: 'Fuel Level',      Class: FuelAccessory,    show: this.config.showFuel    !== false },
     ];
 
     for (const device of devices) {
       const uuid = this.hbApi.hap.uuid.generate(device.id);
       const existing = this.accessories.find(a => a.UUID === uuid);
+
+      if (!device.show) {
+        if (existing) {
+          this.log.info(`Removing disabled accessory: ${device.name}`);
+          this.hbApi.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [existing]);
+        }
+        continue;
+      }
+
       if (existing) {
         this.log.info(`Restoring accessory: ${device.name}`);
         new device.Class(this, existing, { pollInterval, engineDuration });

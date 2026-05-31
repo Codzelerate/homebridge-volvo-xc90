@@ -12,18 +12,24 @@ const DOOR_SENSORS = [
 ] as const;
 
 type DoorKey = typeof DOOR_SENSORS[number]['key'];
+type ServiceMap = Map<DoorKey | 'summary', ReturnType<PlatformAccessory['addService']>>;
 
 export class DoorsAccessory {
-  private services: Map<DoorKey, ReturnType<PlatformAccessory['addService']>> = new Map();
+  private services: ServiceMap = new Map();
 
   constructor(
     private readonly platform: VolvoPlatform,
     private readonly accessory: PlatformAccessory,
     private readonly opts: { pollInterval: number; engineDuration: number },
   ) {
-    const { Service, Characteristic } = platform;
+    const { Service } = platform;
 
     setAccessoryInfo(platform, accessory, 'XC90 — Doors');
+
+    // Summary sensor added first — HomeKit uses the first service as the tile state
+    const summary = accessory.getService('All Doors')
+      || accessory.addService(Service.ContactSensor, 'All Doors', 'summary');
+    this.services.set('summary', summary);
 
     for (const door of DOOR_SENSORS) {
       const svc = accessory.getService(door.label)
@@ -41,6 +47,18 @@ export class DoorsAccessory {
       const status = await this.platform.getCachedDoorsAndLocks();
       const { Characteristic } = this.platform;
       if (!status.doors) return;
+
+      const anyOpen = Object.values(status.doors).some(Boolean);
+      const summary = this.services.get('summary');
+      if (summary) {
+        summary.updateCharacteristic(
+          Characteristic.ContactSensorState,
+          anyOpen
+            ? Characteristic.ContactSensorState.CONTACT_NOT_DETECTED
+            : Characteristic.ContactSensorState.CONTACT_DETECTED,
+        );
+        this.platform.dbg(`Doors summary: ${anyOpen ? 'ANY OPEN' : 'ALL CLOSED'}`);
+      }
 
       for (const door of DOOR_SENSORS) {
         const svc = this.services.get(door.key);
