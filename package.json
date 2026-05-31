@@ -5,10 +5,17 @@
   "license": "MIT",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Codzelerate/homebridge-volvo-xc90.git"
+  },
+  "homepage": "https://github.com/Codzelerate/homebridge-volvo-xc90#readme",
+  "bugs": {
+    "url": "https://github.com/Codzelerate/homebridge-volvo-xc90/issues"
+  },
   "scripts": {
     "build": "tsc",
     "watch": "tsc --watch",
-    "lint": "eslint src/",
     "prepublishOnly": "npm run build"
   },
   "keywords": [
@@ -16,7 +23,8 @@
     "homebridge",
     "volvo",
     "xc90",
-    "homekit"
+    "homekit",
+    "volvo-on-call"
   ],
   "engines": {
     "node": ">=18.0.0",

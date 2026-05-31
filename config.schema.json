@@ -2,51 +2,87 @@
   "pluginAlias": "VolvoXC90",
   "pluginType": "platform",
   "singular": true,
+  "headerDisplay": "Control your Volvo XC90 2016 from Apple Home via the Volvo Connected Vehicle API v2. Get your VCC API Key at [developer.volvocars.com](https://developer.volvocars.com).",
   "schema": {
     "type": "object",
     "properties": {
       "name": {
-        "title": "Name",
+        "title": "Platform name",
         "type": "string",
         "default": "Volvo XC90"
       },
       "username": {
         "title": "Volvo ID (email)",
         "type": "string",
-        "required": true
+        "format": "email",
+        "required": true,
+        "description": "The email address you use to log into the Volvo Cars app."
       },
       "password": {
         "title": "Volvo ID password",
         "type": "string",
-        "required": true
+        "required": true,
+        "description": "Your Volvo Cars account password."
       },
       "vccApiKey": {
         "title": "VCC API Key",
-        "description": "From developer.volvocars.com — your application's primary API key",
         "type": "string",
-        "required": true
+        "required": true,
+        "description": "Primary API key from your application on developer.volvocars.com."
       },
       "vin": {
         "title": "VIN",
-        "description": "17-character Vehicle Identification Number",
         "type": "string",
         "minLength": 17,
         "maxLength": 17,
-        "required": true
+        "required": true,
+        "description": "17-character Vehicle Identification Number. Found on the dashboard or in the Volvo Cars app under vehicle details."
       },
       "engineStartDuration": {
         "title": "Engine start duration (minutes)",
         "type": "integer",
         "default": 15,
         "minimum": 1,
-        "maximum": 15
+        "maximum": 15,
+        "description": "How long the engine runs when started remotely. Max 15 minutes (API limit)."
       },
       "pollInterval": {
         "title": "Poll interval (seconds)",
         "type": "integer",
         "default": 30,
-        "minimum": 10
+        "minimum": 10,
+        "description": "How often the plugin fetches the latest vehicle state from Volvo."
+      },
+      "debug": {
+        "title": "Debug logging",
+        "type": "boolean",
+        "default": false,
+        "description": "Log every API request, response, and state change to the Homebridge log. Useful for troubleshooting."
       }
     }
-  }
+  },
+  "layout": [
+    {
+      "type": "fieldset",
+      "title": "Volvo Account",
+      "items": ["username", "password"]
+    },
+    {
+      "type": "fieldset",
+      "title": "API & Vehicle",
+      "items": ["vccApiKey", "vin"]
+    },
+    {
+      "type": "fieldset",
+      "title": "Behaviour",
+      "items": ["engineStartDuration", "pollInterval"]
+    },
+    {
+      "type": "fieldset",
+      "title": "Advanced",
+      "expandable": true,
+      "expanded": false,
+      "items": ["debug"]
+    }
+  ]
 }

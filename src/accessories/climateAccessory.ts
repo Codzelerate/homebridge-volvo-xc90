@@ -21,17 +21,22 @@ export class ClimateAccessory {
       || accessory.addService(Service.Switch, 'Volvo Climate');
 
     this.service.getCharacteristic(Characteristic.On)
-      .onGet(() => this.isActive)
+      .onGet(() => {
+        platform.dbg(`Climate onGet: ${this.isActive}`);
+        return this.isActive;
+      })
       .onSet(async (value: CharacteristicValue) => {
+        const on = value as boolean;
+        platform.dbg(`Climate onSet: ${on ? 'start' : 'stop'}`);
         try {
-          if (value as boolean) {
+          if (on) {
             await platform.api.startClimatisation();
             platform.log.info('Climatisation started');
           } else {
             await platform.api.stopClimatisation();
             platform.log.info('Climatisation stopped');
           }
-          this.isActive = value as boolean;
+          this.isActive = on;
         } catch (err) {
           platform.log.error('Climate command failed:', (err as Error).message);
         }

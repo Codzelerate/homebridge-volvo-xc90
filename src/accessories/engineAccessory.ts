@@ -21,17 +21,22 @@ export class EngineAccessory {
       || accessory.addService(Service.Switch, 'Volvo Engine');
 
     this.service.getCharacteristic(Characteristic.On)
-      .onGet(() => this.isRunning)
+      .onGet(() => {
+        platform.dbg(`Engine onGet: running=${this.isRunning}`);
+        return this.isRunning;
+      })
       .onSet(async (value: CharacteristicValue) => {
+        const on = value as boolean;
+        platform.dbg(`Engine onSet: ${on ? `start (${opts.engineDuration}min)` : 'stop'}`);
         try {
-          if (value as boolean) {
+          if (on) {
             await platform.api.startEngine(opts.engineDuration);
             platform.log.info(`Engine started for ${opts.engineDuration} min`);
           } else {
             await platform.api.stopEngine();
             platform.log.info('Engine stopped');
           }
-          this.isRunning = value as boolean;
+          this.isRunning = on;
         } catch (err) {
           platform.log.error('Engine command failed:', (err as Error).message);
         }

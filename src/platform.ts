@@ -8,7 +8,7 @@ import {
   Characteristic,
 } from 'homebridge';
 import { PLATFORM_NAME, PLUGIN_NAME } from './settings';
-import { VolvoApiClient, TokenSet } from './volvoApi';
+import { VolvoApiClient } from './volvoApi';
 import { LockAccessory } from './accessories/lockAccessory';
 import { ClimateAccessory } from './accessories/climateAccessory';
 import { EngineAccessory } from './accessories/engineAccessory';
@@ -22,6 +22,7 @@ export interface VolvoConfig extends PlatformConfig {
   vin: string;
   engineStartDuration?: number;
   pollInterval?: number;
+  debug?: boolean;
 }
 
 export class VolvoPlatform implements DynamicPlatformPlugin {
@@ -41,26 +42,40 @@ export class VolvoPlatform implements DynamicPlatformPlugin {
     this.Characteristic = hbApi.hap.Characteristic;
     this.config = config as VolvoConfig;
 
-    this.api = new VolvoApiClient(this.config.vccApiKey, this.config.vin);
+    const debugFn = this.config.debug
+      ? (msg: string) => this.log.info(`[DEBUG] ${msg}`)
+      : undefined;
+
+    this.api = new VolvoApiClient(this.config.vccApiKey, this.config.vin, debugFn);
+
+    this.dbg(`Plugin loaded — VIN: ${this.config.vin}, pollInterval: ${this.config.pollInterval ?? 30}s`);
 
     hbApi.on('didFinishLaunching', () => {
       this.authenticate().then(() => this.discoverDevices());
     });
   }
 
+  dbg(msg: string): void {
+    if (this.config.debug) {
+      this.log.info(`[DEBUG] ${msg}`);
+    }
+  }
+
   private async authenticate(): Promise<void> {
     try {
+      this.log.info('Authenticating with Volvo API...');
       await this.api.authenticate(this.config.username, this.config.password);
-      this.log.info('Authenticated with Volvo API');
+      this.log.info('Authentication successful');
 
       const supported = await this.api.getSupportedCommands();
-      this.log.info(`Supported commands for VIN ${this.config.vin}: ${supported.join(', ')}`);
+      this.log.info(`Supported commands: ${supported.join(', ')}`);
     } catch (err) {
-      this.log.error('Failed to authenticate with Volvo API:', (err as Error).message);
+      this.log.error('Authentication failed:', (err as Error).message);
     }
   }
 
   configureAccessory(accessory: PlatformAccessory): void {
+    this.dbg(`Restoring cached accessory: ${accessory.displayName}`);
     this.accessories.push(accessory);
   }
 
@@ -85,7 +100,7 @@ export class VolvoPlatform implements DynamicPlatformPlugin {
         this.log.info(`Restoring accessory: ${device.name}`);
         new device.Class(this, existing, { pollInterval, engineDuration });
       } else {
-        this.log.info(`Adding accessory: ${device.name}`);
+        this.log.info(`Registering accessory: ${device.name}`);
         const accessory = new this.hbApi.platformAccessory(device.name, uuid);
         new device.Class(this, accessory, { pollInterval, engineDuration });
         this.hbApi.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);

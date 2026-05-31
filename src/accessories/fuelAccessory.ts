@@ -17,21 +17,26 @@ export class FuelAccessory {
       .setCharacteristic(Characteristic.Model, 'XC90 2016')
       .setCharacteristic(Characteristic.SerialNumber, platform.config.vin ?? 'unknown');
 
-    // BatteryService is the only HomeKit service that natively represents a % level
     this.service = accessory.getService(Service.Battery)
       || accessory.addService(Service.Battery, 'Volvo Fuel');
 
     this.service.getCharacteristic(Characteristic.BatteryLevel)
-      .onGet(() => this.fuelLevel);
+      .onGet(() => {
+        platform.dbg(`Fuel level queried: ${this.fuelLevel}%`);
+        return this.fuelLevel;
+      });
 
     this.service.getCharacteristic(Characteristic.ChargingState)
       .onGet(() => Characteristic.ChargingState.NOT_CHARGING);
 
     this.service.getCharacteristic(Characteristic.StatusLowBattery)
-      .onGet(() => this.fuelLevel < 15
-        ? Characteristic.StatusLowBattery.BATTERY_LEVEL_LOW
-        : Characteristic.StatusLowBattery.BATTERY_LEVEL_NORMAL,
-      );
+      .onGet(() => {
+        const low = this.fuelLevel < 15;
+        platform.dbg(`Fuel low status: ${low}`);
+        return low
+          ? Characteristic.StatusLowBattery.BATTERY_LEVEL_LOW
+          : Characteristic.StatusLowBattery.BATTERY_LEVEL_NORMAL;
+      });
 
     this.poll();
     setInterval(() => this.poll(), opts.pollInterval);
@@ -50,6 +55,7 @@ export class FuelAccessory {
             ? Characteristic.StatusLowBattery.BATTERY_LEVEL_LOW
             : Characteristic.StatusLowBattery.BATTERY_LEVEL_NORMAL,
         );
+        this.platform.dbg(`Fuel poll: ${this.fuelLevel}% (${data.fuelAmount}L)`);
       }
     } catch (err) {
       this.platform.log.warn('Fuel poll failed:', (err as Error).message);

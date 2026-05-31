@@ -31,6 +31,7 @@ export class DoorsAccessory {
       const svc = accessory.getService(door.label)
         || accessory.addService(Service.ContactSensor, door.label, door.key);
       this.services.set(door.key, svc);
+      platform.dbg(`Registered door sensor: ${door.label}`);
     }
 
     this.poll();
@@ -47,6 +48,7 @@ export class DoorsAccessory {
         const svc = this.services.get(door.key);
         if (!svc) continue;
         const isOpen = status.doors[door.key];
+        this.platform.dbg(`Door [${door.label}]: ${isOpen ? 'OPEN' : 'CLOSED'}`);
         svc.updateCharacteristic(
           Characteristic.ContactSensorState,
           isOpen
