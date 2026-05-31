@@ -23,14 +23,12 @@ export class EnergyAccessory {
 
     setAccessoryInfo(platform, accessory, 'XC90 — Energy');
 
-    // Remove any legacy Battery service left by the old FuelAccessory (no subtype)
-    const legacyFuelBattery = accessory.services.find(
-      s => s.UUID === Service.Battery.UUID && !s.subtype,
-    );
-    if (legacyFuelBattery) accessory.removeService(legacyFuelBattery);
+    // Remove legacy unsubtyped Battery service left by the old FuelAccessory
+    const legacyBattery = accessory.getService(Service.Battery);
+    if (legacyBattery && !legacyBattery.subtype) accessory.removeService(legacyBattery);
 
     if (platform.config.showFuel !== false) {
-      this.fuelService = accessory.getService('Fuel Level')
+      this.fuelService = accessory.getService(Service.HumiditySensor)
         || accessory.addService(Service.HumiditySensor, 'Fuel Level', 'fuel');
       this.fuelService.addOptionalCharacteristic(Characteristic.ConfiguredName);
       this.fuelService.setCharacteristic(Characteristic.ConfiguredName, 'Fuel Level');

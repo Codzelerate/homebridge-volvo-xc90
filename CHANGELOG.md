@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.13] - 2026-05-31
+
+### Fixed
+- Eliminated "Characteristic not in required or optional characteristic section for service Battery" warning — legacy Battery service cleanup now uses `getService(Service.Battery)` (reliable) instead of UUID string comparison; HumiditySensor lookup uses `getService(Service.HumiditySensor)` so it can never accidentally resolve to the old Battery service
+
 ## [1.0.12] - 2026-05-31
 
 ### Changed
