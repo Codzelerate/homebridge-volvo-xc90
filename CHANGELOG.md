@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-05-31
+
+### Changed
+- Default `pollInterval` changed from 30 seconds to 1800 seconds (30 minutes) — keeps daily API usage around 96 requests/day vs. 8,640 with the old default (Volvo allows 10,000/day)
+- `LockAccessory` and `DoorsAccessory` now share a single `getDoorsAndLocks()` API call per poll cycle via a 5-second platform-level cache — halves door/lock request count
+
 ## [0.6.2] - 2026-05-31
 
 ### Fixed

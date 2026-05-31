@@ -10,7 +10,7 @@ import {
 import * as fs from 'fs';
 import * as path from 'path';
 import { PLATFORM_NAME, PLUGIN_NAME } from './settings';
-import { VolvoApiClient, TokenSet, AuthFlowState } from './volvoApi';
+import { VolvoApiClient, TokenSet, AuthFlowState, VehicleStatus } from './volvoApi';
 import { LockAccessory } from './accessories/lockAccessory';
 import { ClimateAccessory } from './accessories/climateAccessory';
 import { EngineAccessory } from './accessories/engineAccessory';
@@ -45,6 +45,19 @@ export class VolvoPlatform implements DynamicPlatformPlugin {
   public readonly api: VolvoApiClient;
   public readonly config: VolvoConfig;
   private readonly storageFile: string;
+
+  // Shared cache so LockAccessory and DoorsAccessory share one API call per cycle
+  private doorsCache: { data: VehicleStatus; ts: number } | null = null;
+
+  async getCachedDoorsAndLocks(): Promise<VehicleStatus> {
+    if (this.doorsCache && Date.now() - this.doorsCache.ts < 5_000) {
+      this.dbg('getCachedDoorsAndLocks: returning cached result');
+      return this.doorsCache.data;
+    }
+    const data = await this.api.getDoorsAndLocks();
+    this.doorsCache = { data, ts: Date.now() };
+    return data;
+  }
 
   constructor(
     public readonly log: Logger,
@@ -212,7 +225,7 @@ export class VolvoPlatform implements DynamicPlatformPlugin {
   }
 
   private discoverDevices(): void {
-    const pollInterval = (this.config.pollInterval ?? 30) * 1000;
+    const pollInterval = (this.config.pollInterval ?? 1800) * 1000;
     const engineDuration = this.config.engineStartDuration ?? 15;
     const vin = this.config.vin;
 

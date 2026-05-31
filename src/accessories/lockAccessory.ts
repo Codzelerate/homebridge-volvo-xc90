@@ -59,7 +59,7 @@ export class LockAccessory {
 
   private async poll(): Promise<void> {
     try {
-      const status = await this.platform.api.getDoorsAndLocks();
+      const status = await this.platform.getCachedDoorsAndLocks();
       const { Characteristic } = this.platform;
       this.currentState = status.locked
         ? Characteristic.LockCurrentState.SECURED

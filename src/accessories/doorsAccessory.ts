@@ -38,7 +38,7 @@ export class DoorsAccessory {
 
   private async poll(): Promise<void> {
     try {
-      const status = await this.platform.api.getDoorsAndLocks();
+      const status = await this.platform.getCachedDoorsAndLocks();
       const { Characteristic } = this.platform;
       if (!status.doors) return;
 
