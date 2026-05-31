@@ -21,6 +21,7 @@ export class FuelAccessory {
     this.service = accessory.getService(Service.Battery)
       || accessory.addService(Service.Battery, 'Fuel Level');
 
+    this.service.addOptionalCharacteristic(Characteristic.ConfiguredName);
     this.service.setCharacteristic(Characteristic.ConfiguredName, 'Fuel Level');
 
     this.service.getCharacteristic(Characteristic.BatteryLevel)

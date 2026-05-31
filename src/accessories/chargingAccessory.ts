@@ -20,6 +20,7 @@ export class ChargingAccessory {
     this.service = accessory.getService(Service.Battery)
       || accessory.addService(Service.Battery, 'EV Battery');
 
+    this.service.addOptionalCharacteristic(Characteristic.ConfiguredName);
     this.service.setCharacteristic(Characteristic.ConfiguredName, 'EV Battery');
 
     this.service.getCharacteristic(Characteristic.BatteryLevel)
