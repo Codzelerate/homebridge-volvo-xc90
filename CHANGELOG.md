@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-05-31
+
+### Added
+- `forceReauth` config toggle — clears the stored session on next restart, triggering a fresh OTP login without needing SSH access to delete the state file. Useful when re-authenticating to pick up new API scopes
+
 ## [1.0.0] - 2026-05-31
 
 ### Added

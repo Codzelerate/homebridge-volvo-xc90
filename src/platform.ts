@@ -37,6 +37,7 @@ export interface VolvoConfig extends PlatformConfig {
   showFuel?: boolean;
   showCharging?: boolean;
   tankCapacityLiters?: number;
+  forceReauth?: boolean;
 }
 
 interface PersistedState {
@@ -136,6 +137,11 @@ export class VolvoPlatform implements DynamicPlatformPlugin {
   // ── Authentication orchestration ──────────────────────────────────────────
 
   private async authenticate(): Promise<boolean> {
+    if (this.config.forceReauth) {
+      this.log.warn('Force re-auth enabled — clearing stored tokens. Add your OTP once the email arrives, then disable this option.');
+      this.saveState({});
+    }
+
     const state = this.loadState();
 
     // 1. Try stored refresh token first

@@ -41,6 +41,12 @@
         "type": "string",
         "description": "6-digit code from the Volvo email. Only needed during initial setup. Remove after successful login."
       },
+      "forceReauth": {
+        "title": "Force re-authentication",
+        "type": "boolean",
+        "default": false,
+        "description": "Clears the stored session on next restart, triggering a fresh OTP login. Enable this + add your credentials, save and restart — you will receive a new OTP email. Disable again once authenticated."
+      },
       "tankCapacityLiters": {
         "title": "Fuel tank capacity (litres)",
         "type": "integer",
@@ -120,7 +126,7 @@
       "description": "Fill in for initial authentication only. Once logged in, these can all be removed.",
       "expandable": true,
       "expanded": true,
-      "items": ["username", "password", "otp"]
+      "items": ["username", "password", "otp", "forceReauth"]
     },
     {
       "type": "fieldset",
