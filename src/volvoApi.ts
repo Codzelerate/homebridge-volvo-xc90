@@ -374,6 +374,18 @@ export class VolvoApiClient {
     await this.http.post(`/connected-vehicle/v2/vehicles/${this.vin}/commands/engine-stop`, {}, { headers: this.authHeaders(token) });
   }
 
+  async honk(): Promise<void> {
+    this.debug('Sending honk');
+    const token = await this.ensureValidToken();
+    await this.http.post(`/connected-vehicle/v2/vehicles/${this.vin}/commands/honk`, {}, { headers: this.authHeaders(token) });
+  }
+
+  async flash(): Promise<void> {
+    this.debug('Sending flash');
+    const token = await this.ensureValidToken();
+    await this.http.post(`/connected-vehicle/v2/vehicles/${this.vin}/commands/flash`, {}, { headers: this.authHeaders(token) });
+  }
+
   async honkAndFlash(): Promise<void> {
     this.debug('Sending honk-flash');
     const token = await this.ensureValidToken();

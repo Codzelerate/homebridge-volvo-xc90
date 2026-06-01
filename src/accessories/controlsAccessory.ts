@@ -6,6 +6,8 @@ export class ControlsAccessory {
   private climateService: ReturnType<PlatformAccessory['addService']> | null = null;
   private engineService: ReturnType<PlatformAccessory['addService']> | null = null;
   private honkService: ReturnType<PlatformAccessory['addService']> | null = null;
+  private flashService: ReturnType<PlatformAccessory['addService']> | null = null;
+  private honkFlashService: ReturnType<PlatformAccessory['addService']> | null = null;
   private climateActive = false;
   private engineRunning = false;
 
@@ -50,12 +52,61 @@ export class ControlsAccessory {
         });
     }
 
-    if (platform.config.showHonkFlash !== false) {
-      this.honkService = accessory.getService('Honk & Flash')
-        || accessory.addService(Service.Switch, 'Honk & Flash', 'honk');
+    if (platform.config.showHonk === true) {
+      this.honkService = accessory.getService('Honk')
+        || accessory.addService(Service.Switch, 'Honk', 'honk');
       this.honkService.addOptionalCharacteristic(Characteristic.ConfiguredName);
-      this.honkService.setCharacteristic(Characteristic.ConfiguredName, 'Honk & Flash');
+      this.honkService.setCharacteristic(Characteristic.ConfiguredName, 'Honk');
       this.honkService.getCharacteristic(Characteristic.On)
+        .onGet(() => false)
+        .onSet(async (value: CharacteristicValue) => {
+          if (!value) return;
+          platform.dbg('Honk triggered');
+          try {
+            await platform.api.honk();
+            platform.log.info('Honk sent');
+          } catch (err) {
+            platform.log.error('Honk failed:', (err as Error).message);
+          } finally {
+            setTimeout(() => this.honkService!.updateCharacteristic(Characteristic.On, false), 1500);
+          }
+        });
+    } else {
+      // Remove service if config toggled off
+      const s = accessory.getService('Honk');
+      if (s) accessory.removeService(s);
+    }
+
+    if (platform.config.showFlash === true) {
+      this.flashService = accessory.getService('Flash')
+        || accessory.addService(Service.Switch, 'Flash', 'flash');
+      this.flashService.addOptionalCharacteristic(Characteristic.ConfiguredName);
+      this.flashService.setCharacteristic(Characteristic.ConfiguredName, 'Flash');
+      this.flashService.getCharacteristic(Characteristic.On)
+        .onGet(() => false)
+        .onSet(async (value: CharacteristicValue) => {
+          if (!value) return;
+          platform.dbg('Flash triggered');
+          try {
+            await platform.api.flash();
+            platform.log.info('Flash sent');
+          } catch (err) {
+            platform.log.error('Flash failed:', (err as Error).message);
+          } finally {
+            setTimeout(() => this.flashService!.updateCharacteristic(Characteristic.On, false), 1500);
+          }
+        });
+    } else {
+      const s = accessory.getService('Flash');
+      if (s) accessory.removeService(s);
+    }
+
+    if (platform.config.showHonkFlash !== false) {
+      this.honkFlashService = accessory.getService('Honk & Flash')
+        || accessory.addService(Service.Switch, 'Honk & Flash', 'honk-flash');
+      this.honkFlashService.addOptionalCharacteristic(Characteristic.ConfiguredName);
+      this.honkFlashService.setCharacteristic(Characteristic.ConfiguredName, 'Honk & Flash');
+      this.honkFlashService.getCharacteristic(Characteristic.On)
         .onGet(() => false)
         .onSet(async (value: CharacteristicValue) => {
           if (!value) return;
@@ -66,12 +117,12 @@ export class ControlsAccessory {
           } catch (err) {
             platform.log.error('Honk & Flash failed:', (err as Error).message);
           } finally {
-            // Momentary action — reset to off after 1.5 s regardless of outcome
-            setTimeout(() => {
-              this.honkService!.updateCharacteristic(Characteristic.On, false);
-            }, 1500);
+            setTimeout(() => this.honkFlashService!.updateCharacteristic(Characteristic.On, false), 1500);
           }
         });
+    } else {
+      const s = accessory.getService('Honk & Flash');
+      if (s) accessory.removeService(s);
     }
 
     if (platform.config.showEngine !== false) {

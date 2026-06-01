@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.15] - 2026-06-01
+
+### Added
+- **Honk only** and **Flash only** switches — separate momentary controls alongside the existing combined Honk & Flash switch. Both are off by default; enable via `showHonk` / `showFlash` in plugin settings. Check the Homebridge log for `Supported commands:` on startup to confirm your VIN supports the separate `honk` and `flash` API commands before enabling.
+
+### Changed
+- `showHonkFlash` renamed to **Show Honk & Flash (combined)** in the plugin settings UI for clarity
+
 ## [1.0.14] - 2026-05-31
 
 ### Added

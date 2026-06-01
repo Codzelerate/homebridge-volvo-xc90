@@ -115,10 +115,22 @@
         "description": "EV battery charge level, charging state, and low-charge alert. Only meaningful on the T8 PHEV — disable on petrol-only variants."
       },
       "showHonkFlash": {
-        "title": "Show Honk & Flash",
+        "title": "Show Honk & Flash (combined)",
         "type": "boolean",
         "default": true,
-        "description": "Momentary switch that honks the horn and flashes the lights — useful for locating the car. Resets to off automatically after triggering."
+        "description": "Momentary switch that honks the horn AND flashes the lights together. On by default. Disable if you prefer the separate controls below."
+      },
+      "showHonk": {
+        "title": "Show Honk only",
+        "type": "boolean",
+        "default": false,
+        "description": "Momentary switch that honks the horn only (no flash). Off by default — enable only if your VIN supports the separate 'honk' command (check Homebridge log for 'Supported commands' on startup)."
+      },
+      "showFlash": {
+        "title": "Show Flash only",
+        "type": "boolean",
+        "default": false,
+        "description": "Momentary switch that flashes the lights only (no honk). Off by default — enable only if your VIN supports the separate 'flash' command (check Homebridge log for 'Supported commands' on startup)."
       },
       "debug": {
         "title": "Debug logging",
@@ -148,7 +160,7 @@
       "description": "Choose which tiles appear in the Home app. All shown by default.",
       "expandable": true,
       "expanded": true,
-      "items": ["showLock", "showClimate", "showEngine", "showHonkFlash", "showDoors", "showFuel", "showCharging"]
+      "items": ["showLock", "showClimate", "showEngine", "showHonkFlash", "showHonk", "showFlash", "showDoors", "showFuel", "showCharging"]
     },
     {
       "type": "fieldset",
