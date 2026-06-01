@@ -124,13 +124,13 @@
         "title": "Show Honk only",
         "type": "boolean",
         "default": false,
-        "description": "Momentary switch that honks the horn only (no flash). Off by default — enable only if your VIN supports the separate 'honk' command (check Homebridge log for 'Supported commands' on startup)."
+        "description": "Momentary switch that honks the horn only (no flash). Enable if your VIN supports the separate 'HONK' command — check the 'Supported commands:' line in the Homebridge log on startup."
       },
       "showFlash": {
         "title": "Show Flash only",
         "type": "boolean",
         "default": false,
-        "description": "Momentary switch that flashes the lights only (no honk). Off by default — enable only if your VIN supports the separate 'flash' command (check Homebridge log for 'Supported commands' on startup)."
+        "description": "Momentary switch that flashes the lights only (no honk). Enable if your VIN supports the separate 'FLASH' command — check the 'Supported commands:' line in the Homebridge log on startup."
       },
       "debug": {
         "title": "Debug logging",

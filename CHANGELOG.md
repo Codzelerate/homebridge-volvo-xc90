@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.16] - 2026-06-01
+
+### Fixed
+- Climate and Remote Start switches no longer flip back to off immediately after being tapped — state is now set optimistically before the API call so HomeKit's verify-GET sees the correct value; reverts automatically if the API call actually fails
+
 ## [1.0.15] - 2026-06-01
 
 ### Added

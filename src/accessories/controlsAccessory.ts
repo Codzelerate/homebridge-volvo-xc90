@@ -37,6 +37,7 @@ export class ControlsAccessory {
         .onSet(async (value: CharacteristicValue) => {
           const on = value as boolean;
           platform.dbg(`Climate onSet: ${on ? 'start' : 'stop'}`);
+          this.climateActive = on; // optimistic — prevents HomeKit verify-GET from flipping back
           try {
             if (on) {
               await platform.api.startClimatisation();
@@ -45,8 +46,9 @@ export class ControlsAccessory {
               await platform.api.stopClimatisation();
               platform.log.info('Climatisation stopped');
             }
-            this.climateActive = on;
           } catch (err) {
+            this.climateActive = !on; // revert on failure
+            this.climateService!.updateCharacteristic(Characteristic.On, !on);
             platform.log.error('Climate command failed:', (err as Error).message);
           }
         });
@@ -138,6 +140,7 @@ export class ControlsAccessory {
         .onSet(async (value: CharacteristicValue) => {
           const on = value as boolean;
           platform.dbg(`Engine onSet: ${on ? `start (${opts.engineDuration}min)` : 'stop'}`);
+          this.engineRunning = on; // optimistic — prevents HomeKit verify-GET from flipping back
           try {
             if (on) {
               await platform.api.startEngine(opts.engineDuration);
@@ -146,8 +149,9 @@ export class ControlsAccessory {
               await platform.api.stopEngine();
               platform.log.info('Engine stopped');
             }
-            this.engineRunning = on;
           } catch (err) {
+            this.engineRunning = !on; // revert on failure
+            this.engineService!.updateCharacteristic(Characteristic.On, !on);
             platform.log.error('Engine command failed:', (err as Error).message);
           }
         });
