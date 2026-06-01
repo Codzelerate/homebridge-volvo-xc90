@@ -17,6 +17,8 @@ export class EnergyAccessory {
 
   private fuelLevel = 100;
   private chargeLevel = 100;
+  private tankRange = 1;   // km, default 1 (LightSensor minimum)
+  private evRange = 1;     // km
   private readonly tankCapacity: number;
   private readonly evLowThreshold: number;
 
@@ -50,7 +52,7 @@ export class EnergyAccessory {
       this.tankRangeService.addOptionalCharacteristic(Characteristic.ConfiguredName);
       this.tankRangeService.setCharacteristic(Characteristic.ConfiguredName, 'Tank Range (km)');
       this.tankRangeService.getCharacteristic(Characteristic.CurrentAmbientLightLevel)
-        .onGet(() => 1); // placeholder until first poll
+        .onGet(() => this.tankRange);
     }
 
     if (platform.config.showCharging !== false) {
@@ -73,7 +75,7 @@ export class EnergyAccessory {
       this.evRangeService.addOptionalCharacteristic(Characteristic.ConfiguredName);
       this.evRangeService.setCharacteristic(Characteristic.ConfiguredName, 'EV Range (km)');
       this.evRangeService.getCharacteristic(Characteristic.CurrentAmbientLightLevel)
-        .onGet(() => 1);
+        .onGet(() => this.evRange);
 
       // Charge target — shows what % the car is set to charge to
       this.chargeTargetService = accessory.getService('Charge Target')
@@ -176,14 +178,13 @@ export class EnergyAccessory {
       try {
         const stats = await this.platform.api.getStatistics();
         if (this.tankRangeService && stats.distanceToEmptyTank !== undefined) {
-          // LightSensor minimum is 0.0001 lux; use max(1, value) to stay valid
-          const km = Math.max(1, stats.distanceToEmptyTank);
-          this.tankRangeService.updateCharacteristic(Characteristic.CurrentAmbientLightLevel, km);
+          this.tankRange = Math.max(1, stats.distanceToEmptyTank);
+          this.tankRangeService.updateCharacteristic(Characteristic.CurrentAmbientLightLevel, this.tankRange);
           this.platform.dbg(`Tank range: ${stats.distanceToEmptyTank} km`);
         }
         if (this.evRangeService && stats.distanceToEmptyBattery !== undefined) {
-          const km = Math.max(1, stats.distanceToEmptyBattery);
-          this.evRangeService.updateCharacteristic(Characteristic.CurrentAmbientLightLevel, km);
+          this.evRange = Math.max(1, stats.distanceToEmptyBattery);
+          this.evRangeService.updateCharacteristic(Characteristic.CurrentAmbientLightLevel, this.evRange);
           this.platform.dbg(`EV range: ${stats.distanceToEmptyBattery} km`);
         }
       } catch (err) {

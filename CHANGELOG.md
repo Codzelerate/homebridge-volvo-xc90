@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.22] - 2026-06-01
+
+### Fixed
+- EV Range and Tank Range tiles were showing "1 lux" — the `onGet` handlers returned a hardcoded placeholder instead of the last polled value. Range values are now cached in instance properties and returned correctly by `onGet`.
+
 ## [1.0.21] - 2026-06-01
 
 ### Fixed
