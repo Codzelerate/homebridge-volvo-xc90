@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.18] - 2026-06-01
+
+### Added
+- **Charge Target (%)** sensor on the Energy tile — shows the charge level your car is set to stop at (e.g. 80% for battery health, 100% for long trips)
+- `chargingType` (AC/DC) and `chargerPowerStatus` now included in debug log output
+
+### Changed
+- EV API response parsing now checks `status: "OK"` on each field before using its value, so unsupported properties (`chargingCurrentLimit`, `chargingPower`) are safely ignored rather than silently returning undefined
+
 ## [1.0.17] - 2026-06-01
 
 ### Added

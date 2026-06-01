@@ -7,6 +7,8 @@ export class EnergyAccessory {
   private fuelService: ReturnType<PlatformAccessory['addService']> | null = null;
   // EV battery — Battery service (charge level + charging state)
   private evService: ReturnType<PlatformAccessory['addService']> | null = null;
+  // Charge target — HumiditySensor (0–100 %)
+  private chargeTargetService: ReturnType<PlatformAccessory['addService']> | null = null;
   // Range — LightSensor (lux field used to display km, labelled clearly)
   private tankRangeService: ReturnType<PlatformAccessory['addService']> | null = null;
   private evRangeService: ReturnType<PlatformAccessory['addService']> | null = null;
@@ -70,6 +72,14 @@ export class EnergyAccessory {
       this.evRangeService.setCharacteristic(Characteristic.ConfiguredName, 'EV Range (km)');
       this.evRangeService.getCharacteristic(Characteristic.CurrentAmbientLightLevel)
         .onGet(() => 1);
+
+      // Charge target — shows what % the car is set to charge to
+      this.chargeTargetService = accessory.getService('Charge Target')
+        || accessory.addService(Service.HumiditySensor, 'Charge Target', 'charge-target');
+      this.chargeTargetService.addOptionalCharacteristic(Characteristic.ConfiguredName);
+      this.chargeTargetService.setCharacteristic(Characteristic.ConfiguredName, 'Charge Target (%)');
+      this.chargeTargetService.getCharacteristic(Characteristic.CurrentRelativeHumidity)
+        .onGet(() => 100);
     }
 
     this.poll();
@@ -108,7 +118,7 @@ export class EnergyAccessory {
               : Characteristic.StatusLowBattery.BATTERY_LEVEL_NORMAL,
           );
         }
-        const sys = data.systemStatus ?? '';
+        const sys  = data.systemStatus     ?? '';
         const conn = data.connectionStatus ?? '';
         let chargingState: number;
         if (sys === 'CHARGING') {
@@ -119,8 +129,19 @@ export class EnergyAccessory {
           chargingState = Characteristic.ChargingState.NOT_CHARGING;
         }
         this.evService.updateCharacteristic(Characteristic.ChargingState, chargingState);
+
+        // Charge target
+        if (this.chargeTargetService && data.targetChargeLevel !== undefined) {
+          this.chargeTargetService.updateCharacteristic(
+            Characteristic.CurrentRelativeHumidity,
+            Math.min(100, Math.round(data.targetChargeLevel)),
+          );
+        }
+
         this.platform.dbg(
-          `EV battery poll: ${this.chargeLevel}% | ${conn} | ${sys}` +
+          `EV poll: ${this.chargeLevel}% (target ${data.targetChargeLevel ?? '?'}%)` +
+          ` | ${conn} | ${sys}` +
+          ` | ${data.chargingType ?? 'n/a'} | power: ${data.powerStatus ?? 'n/a'}` +
           (data.estimatedChargingTime ? ` | ~${data.estimatedChargingTime}min to full` : '') +
           (data.electricRange ? ` | ${data.electricRange}km range` : ''),
         );

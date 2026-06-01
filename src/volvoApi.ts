@@ -53,11 +53,14 @@ export interface VehicleStatus {
 }
 
 export interface RechargeStatus {
-  chargeLevel?: number;       // 0–100 %
-  electricRange?: number;     // km
-  estimatedChargingTime?: number; // minutes to full
-  connectionStatus?: string;  // CONNECTED_AC | CONNECTED_DC | DISCONNECTED | FAULT | UNSPECIFIED
-  systemStatus?: string;      // CHARGING | IDLE | DONE | SCHEDULED | FAULT | UNSPECIFIED
+  chargeLevel?: number;         // 0–100 %
+  targetChargeLevel?: number;   // 0–100 % — user-configured charge target
+  electricRange?: number;       // km
+  estimatedChargingTime?: number; // minutes to target
+  connectionStatus?: string;    // CONNECTED | DISCONNECTED | FAULT | UNSPECIFIED
+  systemStatus?: string;        // CHARGING | DONE | IDLE | SCHEDULED | FAULT | UNSPECIFIED
+  chargingType?: string;        // AC | DC
+  powerStatus?: string;         // PROVIDING_POWER | FULLY_CHARGED | NOT_CONNECTED | etc.
 }
 
 export interface TokenSet {
@@ -476,13 +479,21 @@ export class VolvoApiClient {
     );
     const d = resp.data;
     const result: RechargeStatus = {
-      chargeLevel: d.batteryChargeLevel?.value as number | undefined,
-      electricRange: d.electricRange?.value as number | undefined,
-      estimatedChargingTime: d.estimatedChargingTimeToTargetBatteryChargeLevel?.value as number | undefined,
-      connectionStatus: d.chargerConnectionStatus?.value as string | undefined,
-      systemStatus: d.chargingStatus?.value as string | undefined,
+      chargeLevel:          d.batteryChargeLevel?.status === 'OK'                                   ? d.batteryChargeLevel.value                                   as number : undefined,
+      targetChargeLevel:    d.targetBatteryChargeLevel?.status === 'OK'                             ? d.targetBatteryChargeLevel.value                             as number : undefined,
+      electricRange:        d.electricRange?.status === 'OK'                                        ? d.electricRange.value                                        as number : undefined,
+      estimatedChargingTime: d.estimatedChargingTimeToTargetBatteryChargeLevel?.status === 'OK'    ? d.estimatedChargingTimeToTargetBatteryChargeLevel.value      as number : undefined,
+      connectionStatus:     d.chargerConnectionStatus?.status === 'OK'                              ? d.chargerConnectionStatus.value                              as string : undefined,
+      systemStatus:         d.chargingStatus?.status === 'OK'                                       ? d.chargingStatus.value                                       as string : undefined,
+      chargingType:         d.chargingType?.status === 'OK'                                         ? d.chargingType.value                                         as string : undefined,
+      powerStatus:          d.chargerPowerStatus?.status === 'OK'                                   ? d.chargerPowerStatus.value                                   as string : undefined,
     };
-    this.debug(`Recharge: ${result.chargeLevel}% | ${result.connectionStatus} | ${result.systemStatus} | ~${result.estimatedChargingTime}min | range ${result.electricRange}km`);
+    this.debug(
+      `Recharge: ${result.chargeLevel}% (target ${result.targetChargeLevel ?? '?'}%)` +
+      ` | ${result.connectionStatus} | ${result.systemStatus}` +
+      ` | type: ${result.chargingType ?? 'n/a'} | power: ${result.powerStatus ?? 'n/a'}` +
+      ` | ~${result.estimatedChargingTime}min | range ${result.electricRange}km`,
+    );
     return result;
   }
 
