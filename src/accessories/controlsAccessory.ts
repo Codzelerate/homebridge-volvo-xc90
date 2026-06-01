@@ -24,6 +24,17 @@ export class ControlsAccessory {
     const legacySwitch = accessory.services.find(s => s.UUID === Service.Switch.UUID && !s.subtype);
     if (legacySwitch) accessory.removeService(legacySwitch);
 
+    // Migration: v1.0.14 used subtype 'honk' for the combined Honk and Flash switch.
+    // v1.0.15+ uses subtype 'honk-flash' for combined and 'honk' for horn-only.
+    // Remove the old service so it gets re-added under the correct subtype.
+    const legacyHonkFlash = accessory.services.find(
+      s => s.UUID === Service.Switch.UUID && s.subtype === 'honk',
+    );
+    if (legacyHonkFlash) {
+      platform.log.info('Migrating legacy Honk and Flash service to updated subtype');
+      accessory.removeService(legacyHonkFlash);
+    }
+
     if (platform.config.showClimate !== false) {
       this.climateService = accessory.getService('Climate')
         || accessory.addService(Service.Switch, 'Climate', 'climate');
@@ -104,26 +115,26 @@ export class ControlsAccessory {
     }
 
     if (platform.config.showHonkFlash !== false) {
-      this.honkFlashService = accessory.getService('Honk & Flash')
-        || accessory.addService(Service.Switch, 'Honk & Flash', 'honk-flash');
+      this.honkFlashService = accessory.getService('Honk and Flash')
+        || accessory.addService(Service.Switch, 'Honk and Flash', 'honk-flash');
       this.honkFlashService.addOptionalCharacteristic(Characteristic.ConfiguredName);
-      this.honkFlashService.setCharacteristic(Characteristic.ConfiguredName, 'Honk & Flash');
+      this.honkFlashService.setCharacteristic(Characteristic.ConfiguredName, 'Honk and Flash');
       this.honkFlashService.getCharacteristic(Characteristic.On)
         .onGet(() => false)
         .onSet(async (value: CharacteristicValue) => {
           if (!value) return;
-          platform.dbg('Honk & Flash triggered');
+          platform.dbg('Honk and Flash triggered');
           try {
             await platform.api.honkAndFlash();
-            platform.log.info('Honk & Flash sent');
+            platform.log.info('Honk and Flash sent');
           } catch (err) {
-            platform.log.error('Honk & Flash failed:', (err as Error).message);
+            platform.log.error('Honk and Flash failed:', (err as Error).message);
           } finally {
             setTimeout(() => this.honkFlashService!.updateCharacteristic(Characteristic.On, false), 1500);
           }
         });
     } else {
-      const s = accessory.getService('Honk & Flash');
+      const s = accessory.getService('Honk and Flash');
       if (s) accessory.removeService(s);
     }
 

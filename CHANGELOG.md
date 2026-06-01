@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.20] - 2026-06-01
+
+### Fixed
+- **Crash on startup**: "Cannot add a Service with the same UUID and subtype 'honk'" — the v1.0.14 combined Honk and Flash switch was registered with subtype `honk`; v1.0.15 onwards uses `honk-flash` for combined and `honk` for horn-only, causing a UUID conflict on cached accessories. Migration code now removes the old service on first run.
+- **HAP name warnings**: `&` and `—` are not valid in HAP `Name` characteristics. Renamed "Honk & Flash" → "Honk and Flash" and "Tyre — Front/Rear Left/Right" → "Tyre - Front/Rear Left/Right" throughout.
+
 ## [1.0.19] - 2026-06-01
 
 ### Added

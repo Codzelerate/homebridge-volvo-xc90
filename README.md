@@ -35,7 +35,7 @@ Control and monitor your car directly from the Apple Home app and Siri — lock/
 | Tile | HomeKit type | What it does |
 |---|---|---|
 | **Volvo Lock** | Lock Mechanism | Lock and unlock your car |
-| **Volvo Controls** | Switch (up to 5) | Climate, Honk & Flash, Honk only, Flash only, Remote Start — all in one tile |
+| **Volvo Controls** | Switch (up to 5) | Climate, Honk and Flash, Honk only, Flash only, Remote Start — all in one tile |
 | **Volvo Doors** | Contact Sensors | Summary tile + individual sensors for all 6 openings |
 | **Volvo Windows** | Contact Sensors | Summary tile + individual sensors for all 4 windows and sunroof |
 | **Volvo Energy** | Battery + Sensors | EV battery, charger plug status, charge target, EV range, fuel level, and tank range — all in one tile |
@@ -158,7 +158,7 @@ You need to re-authenticate when:
 | **Show Lock** | On | Lock / unlock tile |
 | **Show Climate Pre-condition** | On | Climate switch inside the Controls tile |
 | **Show Remote Start** | On | Remote engine start switch inside the Controls tile |
-| **Show Honk & Flash (combined)** | On | Single momentary switch that honks and flashes simultaneously |
+| **Show Honk and Flash (combined)** | On | Single momentary switch that honks and flashes simultaneously |
 | **Show Honk only** | Off | Separate momentary switch for horn only — enable if your VIN supports the `HONK` command (check the `Supported commands:` log line on startup) |
 | **Show Flash only** | Off | Separate momentary switch for lights only — enable if your VIN supports the `FLASH` command |
 | **Show Doors** | On | Contact sensor summary tile + 6 individual door/hood/tailgate sensors |
@@ -220,7 +220,7 @@ A **Lock Mechanism** tile. Tap to lock or unlock. State is polled from the API a
 A single tile containing up to five momentary or toggle switches, all visible in the detail view:
 
 - **Climate** — Start or stop cabin pre-conditioning (heating or cooling based on outside temperature). Stays on until you turn it off. Useful in automations, e.g. start climate 20 minutes before a calendar event.
-- **Honk & Flash** — Momentary switch that honks the horn and flashes the lights together. Resets to off automatically after 1.5 seconds.
+- **Honk and Flash** — Momentary switch that honks the horn and flashes the lights together. Resets to off automatically after 1.5 seconds.
 - **Honk** *(off by default)* — Momentary switch for horn only. Enable via `showHonk` after confirming your VIN supports the `HONK` command.
 - **Flash** *(off by default)* — Momentary switch for lights only. Enable via `showFlash` after confirming your VIN supports the `FLASH` command.
 - **Remote Start** — Start the engine remotely for the configured duration (max 15 minutes). Turns off automatically when the timer expires, or switch it off early to stop immediately.
@@ -360,7 +360,7 @@ Open the Homebridge UI → **Child Bridges** tab → find Volvo XC90 → **Reset
 - These sensors require the T8 PHEV variant. If your car is petrol-only, disable **Show EV Battery** in plugin settings
 - If you are on a T8, re-authenticate to ensure your token includes the Energy API scopes
 
-**Honk & Flash / Honk / Flash does nothing**
+**Honk and Flash / Honk / Flash does nothing**
 - Check the `Supported commands:` line in the Homebridge log on startup — your VIN must list `HONK_AND_FLASH`, `HONK`, or `FLASH` respectively
 - Ensure your Volvo On Call subscription is active
 

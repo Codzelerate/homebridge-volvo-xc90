@@ -13,10 +13,10 @@ const SENSORS = [
   { key: 'brakeFluid',     label: 'Brake Fluid' },
   { key: 'washerFluid',    label: 'Washer Fluid' },
   { key: 'serviceWarning', label: 'Service Due' },
-  { key: 'tyreFrontLeft',  label: 'Tyre — Front Left' },
-  { key: 'tyreFrontRight', label: 'Tyre — Front Right' },
-  { key: 'tyreRearLeft',   label: 'Tyre — Rear Left' },
-  { key: 'tyreRearRight',  label: 'Tyre — Rear Right' },
+  { key: 'tyreFrontLeft',  label: 'Tyre - Front Left' },
+  { key: 'tyreFrontRight', label: 'Tyre - Front Right' },
+  { key: 'tyreRearLeft',   label: 'Tyre - Rear Left' },
+  { key: 'tyreRearRight',  label: 'Tyre - Rear Right' },
 ] as const;
 
 type SensorKey = typeof SENSORS[number]['key'];

@@ -127,7 +127,7 @@
         "description": "Contact sensor tile that alerts if any system warning is active: oil level, coolant level, brake fluid, washer fluid, service due, or tyre warnings. Tap the tile to see which specific system triggered."
       },
       "showHonkFlash": {
-        "title": "Show Honk & Flash (combined)",
+        "title": "Show Honk and Flash (combined)",
         "type": "boolean",
         "default": true,
         "description": "Momentary switch that honks the horn AND flashes the lights together. On by default. Disable if you prefer the separate controls below."
