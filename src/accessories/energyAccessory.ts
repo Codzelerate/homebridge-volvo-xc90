@@ -9,6 +9,8 @@ export class EnergyAccessory {
   private evService: ReturnType<PlatformAccessory['addService']> | null = null;
   // Charge target — HumiditySensor (0–100 %)
   private chargeTargetService: ReturnType<PlatformAccessory['addService']> | null = null;
+  // Charger connected — ContactSensor (closed = plugged in, open = unplugged)
+  private chargerConnectedService: ReturnType<PlatformAccessory['addService']> | null = null;
   // Range — LightSensor (lux field used to display km, labelled clearly)
   private tankRangeService: ReturnType<PlatformAccessory['addService']> | null = null;
   private evRangeService: ReturnType<PlatformAccessory['addService']> | null = null;
@@ -80,6 +82,13 @@ export class EnergyAccessory {
       this.chargeTargetService.setCharacteristic(Characteristic.ConfiguredName, 'Charge Target (%)');
       this.chargeTargetService.getCharacteristic(Characteristic.CurrentRelativeHumidity)
         .onGet(() => 100);
+
+      // Charger connected — ContactSensor: closed = plugged in, open = unplugged
+      this.chargerConnectedService = accessory.getService('Charger Connected')
+        || accessory.addService(Service.ContactSensor, 'Charger Connected', 'charger-connected');
+      this.chargerConnectedService.setCharacteristic(Characteristic.ConfiguredName, 'Charger Connected');
+      this.chargerConnectedService.getCharacteristic(Characteristic.ContactSensorState)
+        .onGet(() => Characteristic.ContactSensorState.CONTACT_DETECTED); // default: plugged in
     }
 
     this.poll();
@@ -136,6 +145,18 @@ export class EnergyAccessory {
             Characteristic.CurrentRelativeHumidity,
             Math.min(100, Math.round(data.targetChargeLevel)),
           );
+        }
+
+        // Charger connected
+        if (this.chargerConnectedService) {
+          const pluggedIn = conn !== 'DISCONNECTED' && conn !== 'UNSPECIFIED' && conn !== '';
+          this.chargerConnectedService.updateCharacteristic(
+            Characteristic.ContactSensorState,
+            pluggedIn
+              ? Characteristic.ContactSensorState.CONTACT_DETECTED    // closed = plugged in
+              : Characteristic.ContactSensorState.CONTACT_NOT_DETECTED, // open = unplugged
+          );
+          this.platform.dbg(`Charger: ${pluggedIn ? 'plugged in' : 'unplugged'} (${conn})`);
         }
 
         this.platform.dbg(

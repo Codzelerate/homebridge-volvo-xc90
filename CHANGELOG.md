@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.19] - 2026-06-01
+
+### Added
+- **Charger Connected** contact sensor on the Energy tile — Closed = cable plugged in, Open = no cable. Makes plug status visible at a glance independently of whether the car is actively charging.
+
 ## [1.0.18] - 2026-06-01
 
 ### Added
