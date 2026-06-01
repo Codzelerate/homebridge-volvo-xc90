@@ -48,10 +48,11 @@ export class EnergyAccessory {
 
       // Tank range shown as a LightSensor — lux field repurposed for km value
       // ConfiguredName label makes it clear this is km not lux
-      this.tankRangeService = accessory.getService('Tank Range')
-        || accessory.addService(Service.LightSensor, 'Tank Range', 'tank-range');
+      this.tankRangeService = accessory.getService('Tank Range km')
+        || accessory.getService('Tank Range')
+        || accessory.addService(Service.LightSensor, 'Tank Range km', 'tank-range');
       this.tankRangeService.addOptionalCharacteristic(Characteristic.ConfiguredName);
-      this.tankRangeService.setCharacteristic(Characteristic.ConfiguredName, 'Tank Range (km)');
+      this.tankRangeService.setCharacteristic(Characteristic.ConfiguredName, 'Tank Range km');
       this.tankRangeService.getCharacteristic(Characteristic.CurrentAmbientLightLevel)
         .onGet(() => this.tankRange);
     }
@@ -71,10 +72,11 @@ export class EnergyAccessory {
           : Characteristic.StatusLowBattery.BATTERY_LEVEL_NORMAL);
 
       // EV range
-      this.evRangeService = accessory.getService('EV Range')
-        || accessory.addService(Service.LightSensor, 'EV Range', 'ev-range');
+      this.evRangeService = accessory.getService('EV Range km')
+        || accessory.getService('EV Range')
+        || accessory.addService(Service.LightSensor, 'EV Range km', 'ev-range');
       this.evRangeService.addOptionalCharacteristic(Characteristic.ConfiguredName);
-      this.evRangeService.setCharacteristic(Characteristic.ConfiguredName, 'EV Range (km)');
+      this.evRangeService.setCharacteristic(Characteristic.ConfiguredName, 'EV Range km');
       this.evRangeService.getCharacteristic(Characteristic.CurrentAmbientLightLevel)
         .onGet(() => this.evRange);
 

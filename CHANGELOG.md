@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.24] - 2026-06-01
+
+### Changed
+- Range tile names shortened from `Tank Range (km)` → `Tank Range km` and `EV Range (km)` → `EV Range km` — removes truncation in the Home app tile label
+
 ## [1.0.23] - 2026-06-01
 
 ### Fixed
