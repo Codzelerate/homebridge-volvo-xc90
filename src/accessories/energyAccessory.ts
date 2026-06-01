@@ -3,23 +3,13 @@ import { VolvoPlatform } from '../platform';
 import { setAccessoryInfo } from './accessoryInfo';
 
 export class EnergyAccessory {
-  // Fuel level — HumiditySensor (0–100%) so HomeKit shows it alongside the Battery service
   private fuelService: ReturnType<PlatformAccessory['addService']> | null = null;
-  // EV battery — Battery service (charge level + charging state)
   private evService: ReturnType<PlatformAccessory['addService']> | null = null;
-  // Charge target — HumiditySensor (0–100 %)
-  private chargeTargetService: ReturnType<PlatformAccessory['addService']> | null = null;
-  // Charger connected — ContactSensor (closed = plugged in, open = unplugged)
+  private evChargeService: ReturnType<PlatformAccessory['addService']> | null = null;
   private chargerConnectedService: ReturnType<PlatformAccessory['addService']> | null = null;
-  // Range — LightSensor (lux field used to display km, labelled clearly)
-  private tankRangeService: ReturnType<PlatformAccessory['addService']> | null = null;
-  private evRangeService: ReturnType<PlatformAccessory['addService']> | null = null;
 
   private fuelLevel = 100;
   private chargeLevel = 100;
-  private chargeTarget = 100;
-  private tankRange = 1;   // km, default 1 (LightSensor minimum)
-  private evRange = 1;     // km
   private readonly tankCapacity: number;
   private readonly evLowThreshold: number;
 
@@ -38,27 +28,35 @@ export class EnergyAccessory {
     const legacyBattery = accessory.getService(Service.Battery);
     if (legacyBattery && !legacyBattery.subtype) accessory.removeService(legacyBattery);
 
+    // Remove legacy LightSensor range services (now separate accessories)
+    for (const subtype of ['tank-range', 'ev-range']) {
+      const legacy = accessory.services.find(
+        s => s.UUID === Service.LightSensor.UUID && s.subtype === subtype,
+      );
+      if (legacy) {
+        platform.log.info(`Migrating range sensor '${subtype}' to standalone accessory`);
+        accessory.removeService(legacy);
+      }
+    }
+
+    // Remove legacy Charge Limit / Charge Target HumiditySensor (replaced by EV Charge)
+    const legacyChargeTarget = accessory.services.find(
+      s => s.UUID === Service.HumiditySensor.UUID && s.subtype === 'charge-target',
+    );
+    if (legacyChargeTarget) accessory.removeService(legacyChargeTarget);
+
     if (platform.config.showFuel !== false) {
-      this.fuelService = accessory.getService(Service.HumiditySensor)
+      this.fuelService = accessory.services.find(s => s.subtype === 'fuel' && s.UUID === Service.HumiditySensor.UUID)
         || accessory.addService(Service.HumiditySensor, 'Fuel Level', 'fuel');
       this.fuelService.addOptionalCharacteristic(Characteristic.ConfiguredName);
       this.fuelService.setCharacteristic(Characteristic.ConfiguredName, 'Fuel Level');
       this.fuelService.getCharacteristic(Characteristic.CurrentRelativeHumidity)
         .onGet(() => this.fuelLevel);
-
-      // Tank range shown as a LightSensor — lux field repurposed for km value
-      // ConfiguredName label makes it clear this is km not lux
-      this.tankRangeService = accessory.getService('Tank Range km')
-        || accessory.getService('Tank Range')
-        || accessory.addService(Service.LightSensor, 'Tank Range km', 'tank-range');
-      this.tankRangeService.addOptionalCharacteristic(Characteristic.ConfiguredName);
-      this.tankRangeService.setCharacteristic(Characteristic.ConfiguredName, 'Tank Range km');
-      this.tankRangeService.getCharacteristic(Characteristic.CurrentAmbientLightLevel)
-        .onGet(() => this.tankRange);
     }
 
     if (platform.config.showCharging !== false) {
-      this.evService = accessory.getService('EV Battery')
+      // Battery service — shows charging state, low battery alert
+      this.evService = accessory.services.find(s => s.subtype === 'ev' && s.UUID === Service.Battery.UUID)
         || accessory.addService(Service.Battery, 'EV Battery', 'ev');
       this.evService.addOptionalCharacteristic(Characteristic.ConfiguredName);
       this.evService.setCharacteristic(Characteristic.ConfiguredName, 'EV Battery');
@@ -71,29 +69,20 @@ export class EnergyAccessory {
           ? Characteristic.StatusLowBattery.BATTERY_LEVEL_LOW
           : Characteristic.StatusLowBattery.BATTERY_LEVEL_NORMAL);
 
-      // EV range
-      this.evRangeService = accessory.getService('EV Range km')
-        || accessory.getService('EV Range')
-        || accessory.addService(Service.LightSensor, 'EV Range km', 'ev-range');
-      this.evRangeService.addOptionalCharacteristic(Characteristic.ConfiguredName);
-      this.evRangeService.setCharacteristic(Characteristic.ConfiguredName, 'EV Range km');
-      this.evRangeService.getCharacteristic(Characteristic.CurrentAmbientLightLevel)
-        .onGet(() => this.evRange);
+      // EV Charge — HumiditySensor showing charge % at a glance, like Fuel Level
+      this.evChargeService = accessory.services.find(s => s.subtype === 'ev-charge' && s.UUID === Service.HumiditySensor.UUID)
+        || accessory.addService(Service.HumiditySensor, 'EV Charge', 'ev-charge');
+      this.evChargeService.addOptionalCharacteristic(Characteristic.ConfiguredName);
+      this.evChargeService.setCharacteristic(Characteristic.ConfiguredName, 'EV Charge');
+      this.evChargeService.getCharacteristic(Characteristic.CurrentRelativeHumidity)
+        .onGet(() => this.chargeLevel);
 
-      // Charge target — shows what % the car is set to charge to
-      this.chargeTargetService = accessory.getService('Charge Limit')
-        || accessory.addService(Service.HumiditySensor, 'Charge Limit', 'charge-target');
-      this.chargeTargetService.addOptionalCharacteristic(Characteristic.ConfiguredName);
-      this.chargeTargetService.setCharacteristic(Characteristic.ConfiguredName, 'Charge Limit');
-      this.chargeTargetService.getCharacteristic(Characteristic.CurrentRelativeHumidity)
-        .onGet(() => this.chargeTarget);
-
-      // Charger connected — ContactSensor: closed = plugged in, open = unplugged
-      this.chargerConnectedService = accessory.getService('Charger Connected')
+      // Charger Connected — ContactSensor: closed = plugged in, open = unplugged
+      this.chargerConnectedService = accessory.services.find(s => s.subtype === 'charger-connected' && s.UUID === Service.ContactSensor.UUID)
         || accessory.addService(Service.ContactSensor, 'Charger Connected', 'charger-connected');
       this.chargerConnectedService.setCharacteristic(Characteristic.ConfiguredName, 'Charger Connected');
       this.chargerConnectedService.getCharacteristic(Characteristic.ContactSensorState)
-        .onGet(() => Characteristic.ContactSensorState.CONTACT_DETECTED); // default: plugged in
+        .onGet(() => Characteristic.ContactSensorState.CONTACT_DETECTED);
     }
 
     this.poll();
@@ -131,7 +120,11 @@ export class EnergyAccessory {
               ? Characteristic.StatusLowBattery.BATTERY_LEVEL_LOW
               : Characteristic.StatusLowBattery.BATTERY_LEVEL_NORMAL,
           );
+          if (this.evChargeService) {
+            this.evChargeService.updateCharacteristic(Characteristic.CurrentRelativeHumidity, this.chargeLevel);
+          }
         }
+
         const sys  = data.systemStatus     ?? '';
         const conn = data.connectionStatus ?? '';
         let chargingState: number;
@@ -144,52 +137,25 @@ export class EnergyAccessory {
         }
         this.evService.updateCharacteristic(Characteristic.ChargingState, chargingState);
 
-        // Charge target
-        if (this.chargeTargetService && data.targetChargeLevel !== undefined) {
-          this.chargeTarget = Math.min(100, Math.round(data.targetChargeLevel));
-          this.chargeTargetService.updateCharacteristic(Characteristic.CurrentRelativeHumidity, this.chargeTarget);
-        }
-
-        // Charger connected
         if (this.chargerConnectedService) {
           const pluggedIn = conn !== 'DISCONNECTED' && conn !== 'UNSPECIFIED' && conn !== '';
           this.chargerConnectedService.updateCharacteristic(
             Characteristic.ContactSensorState,
             pluggedIn
-              ? Characteristic.ContactSensorState.CONTACT_DETECTED    // closed = plugged in
-              : Characteristic.ContactSensorState.CONTACT_NOT_DETECTED, // open = unplugged
+              ? Characteristic.ContactSensorState.CONTACT_DETECTED
+              : Characteristic.ContactSensorState.CONTACT_NOT_DETECTED,
           );
           this.platform.dbg(`Charger: ${pluggedIn ? 'plugged in' : 'unplugged'} (${conn})`);
         }
 
         this.platform.dbg(
-          `EV poll: ${this.chargeLevel}% (target ${data.targetChargeLevel ?? '?'}%)` +
-          ` | ${conn} | ${sys}` +
+          `EV poll: ${this.chargeLevel}% | ${conn} | ${sys}` +
           ` | ${data.chargingType ?? 'n/a'} | power: ${data.powerStatus ?? 'n/a'}` +
           (data.estimatedChargingTime ? ` | ~${data.estimatedChargingTime}min to full` : '') +
           (data.electricRange ? ` | ${data.electricRange}km range` : ''),
         );
       } catch (err) {
         this.platform.log.warn('EV battery poll failed:', (err as Error).message);
-      }
-    }
-
-    // Range — fetched from statistics endpoint
-    if (this.tankRangeService || this.evRangeService) {
-      try {
-        const stats = await this.platform.api.getStatistics();
-        if (this.tankRangeService && stats.distanceToEmptyTank !== undefined) {
-          this.tankRange = Math.max(1, stats.distanceToEmptyTank);
-          this.tankRangeService.updateCharacteristic(Characteristic.CurrentAmbientLightLevel, this.tankRange);
-          this.platform.dbg(`Tank range: ${stats.distanceToEmptyTank} km`);
-        }
-        if (this.evRangeService && stats.distanceToEmptyBattery !== undefined) {
-          this.evRange = Math.max(1, stats.distanceToEmptyBattery);
-          this.evRangeService.updateCharacteristic(Characteristic.CurrentAmbientLightLevel, this.evRange);
-          this.platform.dbg(`EV range: ${stats.distanceToEmptyBattery} km`);
-        }
-      } catch (err) {
-        this.platform.log.warn('Range poll failed:', (err as Error).message);
       }
     }
   }

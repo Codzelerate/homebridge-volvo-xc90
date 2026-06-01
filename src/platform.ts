@@ -16,6 +16,7 @@ import { ControlsAccessory } from './accessories/controlsAccessory';
 import { DoorsAccessory } from './accessories/doorsAccessory';
 import { WindowsAccessory } from './accessories/windowsAccessory';
 import { EnergyAccessory } from './accessories/energyAccessory';
+import { EVRangeAccessory, TankRangeAccessory } from './accessories/rangeAccessory';
 import { DiagnosticsAccessory } from './accessories/diagnosticsAccessory';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -41,6 +42,7 @@ export interface VolvoConfig extends PlatformConfig {
   showHonkFlash?: boolean;
   showWindows?: boolean;
   showDiagnostics?: boolean;
+  showRange?: boolean;
   tankCapacityLiters?: number;
   evLowChargeThreshold?: number;
   forceReauth?: boolean;
@@ -303,6 +305,18 @@ export class VolvoPlatform implements DynamicPlatformPlugin {
         name: 'Volvo Diagnostics',
         Class: DiagnosticsAccessory,
         show: this.config.showDiagnostics !== false,
+      },
+      {
+        id: `${vin}-range-ev`,
+        name: 'EV Range km',
+        Class: EVRangeAccessory,
+        show: this.config.showRange !== false && this.config.showCharging !== false,
+      },
+      {
+        id: `${vin}-range-tank`,
+        name: 'Tank Range km',
+        Class: TankRangeAccessory,
+        show: this.config.showRange !== false && this.config.showFuel !== false,
       },
       {
         id: `${vin}-fuel`,

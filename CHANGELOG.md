@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.26] - 2026-06-01
+
+### Added
+- **EV Range km** and **Tank Range km** are now standalone accessories registered with their own UUIDs — each appears as its own tile in the room view, exactly like any other sensor
+- **EV Charge** HumiditySensor in the Energy tile — shows current EV charge % at a glance alongside Fuel Level, consistent visual style
+- `showRange` config toggle (default on) to hide both range tiles if not wanted
+
+### Changed
+- Charge Limit removed from Energy tile — rarely changes and caused confusion with current charge level
+- Range sensors removed from Energy tile detail view (they're now standalone tiles)
+
 ## [1.0.25] - 2026-06-01
 
 ### Changed
