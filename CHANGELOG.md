@@ -7,6 +7,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-06-01
+
+This release consolidates a full day of feature development. No breaking changes — all existing config options continue to work. New accessories register automatically on first restart; old accessories migrate cleanly.
+
+### Added
+- **Volvo Windows** tile — contact sensor summary + individual sensors for front left/right, rear left/right, and sunroof
+- **Volvo Diagnostics** tile — summary alert + individual sensors for oil level, coolant level, brake fluid, washer fluid, service due, and all 4 tyre TPMS warnings. Logs service interval on every poll.
+- **EV Range km** standalone tile — km-to-empty for EV battery shown as a Temperature Sensor (°C). Standalone by default; can be placed inside the Energy tile via `rangeStandalone: false`
+- **Tank Range km** standalone tile — km-to-empty for petrol tank shown as a Light Sensor (lux). Same standalone/combined toggle as EV Range
+- **EV Charge** humidity sensor in the Energy tile — shows current EV charge % at a glance alongside Fuel Level, consistent visual style
+- **Charger Connected** contact sensor in the Energy tile — Closed = cable plugged in, Open = no cable
+- **Honk only** and **Flash only** switches in Controls — separate momentary switches for horn and lights independently (`showHonk`, `showFlash`, both off by default)
+- `showRange` config toggle — show/hide both range tiles
+- `rangeStandalone` config toggle — standalone room tiles (default) or sub-sensors inside Energy tile detail view
+- `showWindows` config toggle
+- `showDiagnostics` config toggle
+- `showHonk` and `showFlash` config toggles
+
+### Changed
+- **Volvo Controls** tile: Climate and Remote Start merged into one tile. Honk and Flash (combined), Honk only, Flash only also available as switches in the same tile — up to 5 switches total
+- **Volvo Energy** tile: Fuel Level and EV Battery merged into one tile. Added EV Charge % and Charger Connected sensors
+- EV Range uses `TemperatureSensor` (not `LightSensor`) to prevent HomeKit from averaging it with Tank Range into a single grouped tile
+- Climate and Remote Start switches now set state optimistically before the API call — prevents HomeKit's verify-GET from flipping the switch back during the request
+- All contact sensor accessories now look up services by subtype rather than display name — resilient to label changes across versions
+
+### Fixed
+- Startup crash caused by UUID conflict when upgrading from v1.0.14 (legacy `honk` subtype for combined Honk and Flash)
+- Service names containing `&` and `—` rejected by HAP name validation — renamed to `and` and `-`
+- `onGet` handlers for range and charge level sensors returning hardcoded placeholder values instead of last polled data
+
 ## [1.0.28] - 2026-06-01
 
 ### Changed
