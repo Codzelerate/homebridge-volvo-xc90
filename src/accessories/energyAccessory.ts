@@ -81,10 +81,10 @@ export class EnergyAccessory {
         .onGet(() => this.evRange);
 
       // Charge target — shows what % the car is set to charge to
-      this.chargeTargetService = accessory.getService('Charge Target')
-        || accessory.addService(Service.HumiditySensor, 'Charge Target', 'charge-target');
+      this.chargeTargetService = accessory.getService('Charge Limit')
+        || accessory.addService(Service.HumiditySensor, 'Charge Limit', 'charge-target');
       this.chargeTargetService.addOptionalCharacteristic(Characteristic.ConfiguredName);
-      this.chargeTargetService.setCharacteristic(Characteristic.ConfiguredName, 'Charge Target (%)');
+      this.chargeTargetService.setCharacteristic(Characteristic.ConfiguredName, 'Charge Limit');
       this.chargeTargetService.getCharacteristic(Characteristic.CurrentRelativeHumidity)
         .onGet(() => this.chargeTarget);
 
