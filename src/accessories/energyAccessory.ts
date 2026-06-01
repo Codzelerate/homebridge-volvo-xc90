@@ -3,10 +3,14 @@ import { VolvoPlatform } from '../platform';
 import { setAccessoryInfo } from './accessoryInfo';
 
 export class EnergyAccessory {
-  // Fuel level shown as a HumiditySensor (0–100%) — different service type from Battery
-  // so HomeKit renders both in the same accessory detail view
+  // Fuel level — HumiditySensor (0–100%) so HomeKit shows it alongside the Battery service
   private fuelService: ReturnType<PlatformAccessory['addService']> | null = null;
+  // EV battery — Battery service (charge level + charging state)
   private evService: ReturnType<PlatformAccessory['addService']> | null = null;
+  // Range — LightSensor (lux field used to display km, labelled clearly)
+  private tankRangeService: ReturnType<PlatformAccessory['addService']> | null = null;
+  private evRangeService: ReturnType<PlatformAccessory['addService']> | null = null;
+
   private fuelLevel = 100;
   private chargeLevel = 100;
   private readonly tankCapacity: number;
@@ -34,6 +38,15 @@ export class EnergyAccessory {
       this.fuelService.setCharacteristic(Characteristic.ConfiguredName, 'Fuel Level');
       this.fuelService.getCharacteristic(Characteristic.CurrentRelativeHumidity)
         .onGet(() => this.fuelLevel);
+
+      // Tank range shown as a LightSensor — lux field repurposed for km value
+      // ConfiguredName label makes it clear this is km not lux
+      this.tankRangeService = accessory.getService('Tank Range')
+        || accessory.addService(Service.LightSensor, 'Tank Range', 'tank-range');
+      this.tankRangeService.addOptionalCharacteristic(Characteristic.ConfiguredName);
+      this.tankRangeService.setCharacteristic(Characteristic.ConfiguredName, 'Tank Range (km)');
+      this.tankRangeService.getCharacteristic(Characteristic.CurrentAmbientLightLevel)
+        .onGet(() => 1); // placeholder until first poll
     }
 
     if (platform.config.showCharging !== false) {
@@ -49,6 +62,14 @@ export class EnergyAccessory {
         .onGet(() => this.chargeLevel < this.evLowThreshold
           ? Characteristic.StatusLowBattery.BATTERY_LEVEL_LOW
           : Characteristic.StatusLowBattery.BATTERY_LEVEL_NORMAL);
+
+      // EV range
+      this.evRangeService = accessory.getService('EV Range')
+        || accessory.addService(Service.LightSensor, 'EV Range', 'ev-range');
+      this.evRangeService.addOptionalCharacteristic(Characteristic.ConfiguredName);
+      this.evRangeService.setCharacteristic(Characteristic.ConfiguredName, 'EV Range (km)');
+      this.evRangeService.getCharacteristic(Characteristic.CurrentAmbientLightLevel)
+        .onGet(() => 1);
     }
 
     this.poll();
@@ -105,6 +126,26 @@ export class EnergyAccessory {
         );
       } catch (err) {
         this.platform.log.warn('EV battery poll failed:', (err as Error).message);
+      }
+    }
+
+    // Range — fetched from statistics endpoint
+    if (this.tankRangeService || this.evRangeService) {
+      try {
+        const stats = await this.platform.api.getStatistics();
+        if (this.tankRangeService && stats.distanceToEmptyTank !== undefined) {
+          // LightSensor minimum is 0.0001 lux; use max(1, value) to stay valid
+          const km = Math.max(1, stats.distanceToEmptyTank);
+          this.tankRangeService.updateCharacteristic(Characteristic.CurrentAmbientLightLevel, km);
+          this.platform.dbg(`Tank range: ${stats.distanceToEmptyTank} km`);
+        }
+        if (this.evRangeService && stats.distanceToEmptyBattery !== undefined) {
+          const km = Math.max(1, stats.distanceToEmptyBattery);
+          this.evRangeService.updateCharacteristic(Characteristic.CurrentAmbientLightLevel, km);
+          this.platform.dbg(`EV range: ${stats.distanceToEmptyBattery} km`);
+        }
+      } catch (err) {
+        this.platform.log.warn('Range poll failed:', (err as Error).message);
       }
     }
   }

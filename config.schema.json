@@ -114,6 +114,18 @@
         "default": true,
         "description": "EV battery charge level, charging state, and low-charge alert. Only meaningful on the T8 PHEV — disable on petrol-only variants."
       },
+      "showWindows": {
+        "title": "Show Windows",
+        "type": "boolean",
+        "default": true,
+        "description": "Contact sensor tile showing open/closed state for all windows (front left, front right, rear left, rear right) and the sunroof. Summary tile shows Open if any window is ajar."
+      },
+      "showDiagnostics": {
+        "title": "Show Diagnostics",
+        "type": "boolean",
+        "default": true,
+        "description": "Contact sensor tile that alerts if any system warning is active: oil level, coolant level, brake fluid, washer fluid, service due, or tyre warnings. Tap the tile to see which specific system triggered."
+      },
       "showHonkFlash": {
         "title": "Show Honk & Flash (combined)",
         "type": "boolean",
@@ -160,7 +172,7 @@
       "description": "Choose which tiles appear in the Home app. All shown by default.",
       "expandable": true,
       "expanded": true,
-      "items": ["showLock", "showClimate", "showEngine", "showHonkFlash", "showHonk", "showFlash", "showDoors", "showFuel", "showCharging"]
+      "items": ["showLock", "showClimate", "showEngine", "showHonkFlash", "showHonk", "showFlash", "showDoors", "showWindows", "showFuel", "showCharging", "showDiagnostics"]
     },
     {
       "type": "fieldset",

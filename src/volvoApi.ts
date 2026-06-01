@@ -292,6 +292,80 @@ export class VolvoApiClient {
 
   // ── Vehicle data ──────────────────────────────────────────────────────────
 
+  async getWindows(): Promise<Record<string, string>> {
+    this.debug('Polling windows');
+    const token = await this.ensureValidToken();
+    const resp = await this.http.get(
+      `/connected-vehicle/v2/vehicles/${this.vin}/windows`,
+      { headers: this.authHeaders(token) },
+    );
+    const d = resp.data.data;
+    return {
+      frontLeft:  d.frontLeftWindow?.value  ?? 'UNKNOWN',
+      frontRight: d.frontRightWindow?.value ?? 'UNKNOWN',
+      rearLeft:   d.rearLeftWindow?.value   ?? 'UNKNOWN',
+      rearRight:  d.rearRightWindow?.value  ?? 'UNKNOWN',
+      sunroof:    d.sunroof?.value          ?? 'UNKNOWN',
+    };
+  }
+
+  async getDiagnostics(): Promise<{
+    oilLevel: string;
+    coolantLevel: string;
+    brakeFluid: string;
+    washerFluid: string;
+    serviceWarning: string;
+    distanceToService: number | undefined;
+    timeToService: number | undefined;
+    tyreFrontLeft: string;
+    tyreFrontRight: string;
+    tyreRearLeft: string;
+    tyreRearRight: string;
+  }> {
+    this.debug('Polling diagnostics');
+    const token = await this.ensureValidToken();
+
+    const [engine, brakes, diag, tyres] = await Promise.all([
+      this.http.get(`/connected-vehicle/v2/vehicles/${this.vin}/engine`,      { headers: this.authHeaders(token) }),
+      this.http.get(`/connected-vehicle/v2/vehicles/${this.vin}/brakes`,      { headers: this.authHeaders(token) }),
+      this.http.get(`/connected-vehicle/v2/vehicles/${this.vin}/diagnostics`, { headers: this.authHeaders(token) }),
+      this.http.get(`/connected-vehicle/v2/vehicles/${this.vin}/tyres`,       { headers: this.authHeaders(token) }),
+    ]);
+
+    const e = engine.data.data;
+    const b = brakes.data.data;
+    const d = diag.data.data;
+    const t = tyres.data.data;
+
+    return {
+      oilLevel:          e.oilLevelWarning?.value             ?? 'UNKNOWN',
+      coolantLevel:      e.engineCoolantLevelWarning?.value   ?? 'UNKNOWN',
+      brakeFluid:        b.brakeFluidLevelWarning?.value      ?? 'UNKNOWN',
+      washerFluid:       d.washerFluidLevelWarning?.value     ?? 'UNKNOWN',
+      serviceWarning:    d.serviceWarning?.value              ?? 'UNKNOWN',
+      distanceToService: d.distanceToService?.value           as number | undefined,
+      timeToService:     d.timeToService?.value               as number | undefined,
+      tyreFrontLeft:     t.frontLeft?.value                   ?? 'UNKNOWN',
+      tyreFrontRight:    t.frontRight?.value                  ?? 'UNKNOWN',
+      tyreRearLeft:      t.rearLeft?.value                    ?? 'UNKNOWN',
+      tyreRearRight:     t.rearRight?.value                   ?? 'UNKNOWN',
+    };
+  }
+
+  async getStatistics(): Promise<{ distanceToEmptyTank?: number; distanceToEmptyBattery?: number }> {
+    this.debug('Polling statistics');
+    const token = await this.ensureValidToken();
+    const resp = await this.http.get(
+      `/connected-vehicle/v2/vehicles/${this.vin}/statistics`,
+      { headers: this.authHeaders(token) },
+    );
+    const d = resp.data.data;
+    return {
+      distanceToEmptyTank:    d.distanceToEmptyTank?.value    as number | undefined,
+      distanceToEmptyBattery: d.distanceToEmptyBattery?.value as number | undefined,
+    };
+  }
+
   async getDoorsAndLocks(): Promise<VehicleStatus> {
     this.debug('Polling doors and locks');
     const token = await this.ensureValidToken();

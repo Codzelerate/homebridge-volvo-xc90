@@ -14,7 +14,9 @@ import { VolvoApiClient, TokenSet, AuthFlowState, VehicleStatus } from './volvoA
 import { LockAccessory } from './accessories/lockAccessory';
 import { ControlsAccessory } from './accessories/controlsAccessory';
 import { DoorsAccessory } from './accessories/doorsAccessory';
+import { WindowsAccessory } from './accessories/windowsAccessory';
 import { EnergyAccessory } from './accessories/energyAccessory';
+import { DiagnosticsAccessory } from './accessories/diagnosticsAccessory';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const { version: PLUGIN_VERSION } = require('../package.json') as { version: string };
@@ -37,6 +39,8 @@ export interface VolvoConfig extends PlatformConfig {
   showHonk?: boolean;
   showFlash?: boolean;
   showHonkFlash?: boolean;
+  showWindows?: boolean;
+  showDiagnostics?: boolean;
   tankCapacityLiters?: number;
   evLowChargeThreshold?: number;
   forceReauth?: boolean;
@@ -287,6 +291,18 @@ export class VolvoPlatform implements DynamicPlatformPlugin {
         name: 'Volvo Doors',
         Class: DoorsAccessory,
         show: this.config.showDoors !== false,
+      },
+      {
+        id: `${vin}-windows`,
+        name: 'Volvo Windows',
+        Class: WindowsAccessory,
+        show: this.config.showWindows !== false,
+      },
+      {
+        id: `${vin}-diagnostics`,
+        name: 'Volvo Diagnostics',
+        Class: DiagnosticsAccessory,
+        show: this.config.showDiagnostics !== false,
       },
       {
         id: `${vin}-fuel`,

@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.17] - 2026-06-01
+
+### Added
+- **Volvo Windows** tile — contact sensor summary (Open if any window is ajar) with individual sensors for Front Left Window, Front Right Window, Rear Left Window, Rear Right Window, and Sunroof
+- **Volvo Diagnostics** tile — contact sensor summary (Open = any warning active) with individual sensors for Oil Level, Coolant Level, Brake Fluid, Washer Fluid, Service Due, and all four tyre warnings (Front Left/Right, Rear Left/Right). Startup log always shows service interval.
+- **Tank Range (km)** and **EV Range (km)** sensors on the Energy tile — shows kilometres to empty for both the petrol tank and EV battery using the LightSensor service (value displayed in km, labelled clearly)
+
 ## [1.0.16] - 2026-06-01
 
 ### Fixed
