@@ -497,6 +497,25 @@ export class VolvoApiClient {
     return result;
   }
 
+  async getLocation(): Promise<{ latitude: number; longitude: number; heading: number; timestamp: string } | null> {
+    this.debug('Polling location');
+    const token = await this.ensureValidToken();
+    const resp = await this.http.get(
+      `/location/v1/vehicles/${this.vin}/location`,
+      { headers: this.authHeaders(token) },
+    );
+    const coords = resp.data?.data?.geometry?.coordinates;
+    const props  = resp.data?.data?.properties;
+    if (!coords || coords.length < 2) return null;
+    // GeoJSON order is [longitude, latitude, altitude]
+    return {
+      longitude: coords[0] as number,
+      latitude:  coords[1] as number,
+      heading:   Number(props?.heading ?? 0),
+      timestamp: props?.timestamp ?? '',
+    };
+  }
+
   async getSupportedCommands(): Promise<string[]> {
     this.debug('Fetching supported commands');
     const token = await this.ensureValidToken();

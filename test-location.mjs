@@ -14,8 +14,24 @@ import path from 'path';
 import https from 'https';
 import { homedir } from 'os';
 
-const STATE_FILE = path.join(homedir(), '.homebridge', 'homebridge-volvo-xc90.json');
-const CONFIG_FILE = path.join(homedir(), '.homebridge', 'config.json');
+// Homebridge stores files in /var/lib/homebridge on most Pi installs.
+// Falls back to ~/.homebridge if that path doesn't exist.
+function findFile(filename) {
+  const candidates = [
+    `/var/lib/homebridge/${filename}`,
+    path.join(homedir(), '.homebridge', filename),
+    path.join(homedir(), filename),
+  ];
+  for (const p of candidates) {
+    if (fs.existsSync(p)) return p;
+  }
+  throw new Error(`Could not find ${filename} — tried: ${candidates.join(', ')}`);
+}
+
+const STATE_FILE = findFile('homebridge-volvo-xc90.json');
+const CONFIG_FILE = findFile('config.json');
+console.log(`Using state:  ${STATE_FILE}`);
+console.log(`Using config: ${CONFIG_FILE}`);
 
 // ── Load stored tokens ────────────────────────────────────────────────────────
 const state = JSON.parse(fs.readFileSync(STATE_FILE, 'utf-8'));

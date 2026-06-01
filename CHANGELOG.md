@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.1] - 2026-06-01
+
+### Added
+- **Car at Home** occupancy sensor — polls the Volvo Location API (`/location/v1/vehicles/{vin}/location`) and shows Occupied when the car is within the configured home radius, Not Occupied when away. Uses the Haversine formula for accurate distance calculation.
+- `showLocation` config toggle (off by default)
+- `homeLatitude`, `homeLongitude`, `homeRadiusMeters` (default 200m) config options
+
 ## [1.1.0] - 2026-06-01
 
 This release consolidates a full day of feature development. No breaking changes — all existing config options continue to work. New accessories register automatically on first restart; old accessories migrate cleanly.

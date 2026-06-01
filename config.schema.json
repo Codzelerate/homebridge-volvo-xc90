@@ -132,6 +132,30 @@
         "default": true,
         "description": "On (default): EV Range and Tank Range appear as their own standalone tiles in the room view. Off: range values are shown as sub-sensors inside the Energy tile detail view."
       },
+      "showLocation": {
+        "title": "Show Car at Home sensor",
+        "type": "boolean",
+        "default": false,
+        "description": "Adds an Occupancy Sensor that shows Occupied when the car is within the home radius, and Not Occupied when it is away. Requires homeLatitude and homeLongitude to be set."
+      },
+      "homeLatitude": {
+        "title": "Home latitude",
+        "type": "number",
+        "description": "Latitude of your home in decimal degrees. Find it in Google Maps by right-clicking your home — the first number shown."
+      },
+      "homeLongitude": {
+        "title": "Home longitude",
+        "type": "number",
+        "description": "Longitude of your home in decimal degrees. Find it in Google Maps by right-clicking your home — the second number shown."
+      },
+      "homeRadiusMeters": {
+        "title": "Home radius (metres)",
+        "type": "integer",
+        "default": 200,
+        "minimum": 50,
+        "maximum": 2000,
+        "description": "How close the car must be to count as home. Default 200m. Increase if the car parks on the street rather than your driveway."
+      },
       "showDiagnostics": {
         "title": "Show Diagnostics",
         "type": "boolean",
@@ -184,7 +208,7 @@
       "description": "Choose which tiles and sensors appear in the Home app. Most are on by default; Honk only and Flash only are off — enable them only if your VIN supports those commands (check 'Supported commands:' in the Homebridge log on startup).",
       "expandable": true,
       "expanded": true,
-      "items": ["showLock", "showClimate", "showEngine", "showHonkFlash", "showHonk", "showFlash", "showDoors", "showWindows", "showFuel", "showCharging", "showRange", "rangeStandalone", "showDiagnostics"]
+      "items": ["showLock", "showClimate", "showEngine", "showHonkFlash", "showHonk", "showFlash", "showDoors", "showWindows", "showFuel", "showCharging", "showRange", "rangeStandalone", "showDiagnostics", "showLocation", "homeLatitude", "homeLongitude", "homeRadiusMeters"]
     },
     {
       "type": "fieldset",

@@ -18,6 +18,7 @@ import { WindowsAccessory } from './accessories/windowsAccessory';
 import { EnergyAccessory } from './accessories/energyAccessory';
 import { EVRangeAccessory, TankRangeAccessory } from './accessories/rangeAccessory';
 import { DiagnosticsAccessory } from './accessories/diagnosticsAccessory';
+import { LocationAccessory } from './accessories/locationAccessory';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const { version: PLUGIN_VERSION } = require('../package.json') as { version: string };
@@ -44,6 +45,10 @@ export interface VolvoConfig extends PlatformConfig {
   showDiagnostics?: boolean;
   showRange?: boolean;
   rangeStandalone?: boolean;
+  showLocation?: boolean;
+  homeLatitude?: number;
+  homeLongitude?: number;
+  homeRadiusMeters?: number;
   tankCapacityLiters?: number;
   evLowChargeThreshold?: number;
   forceReauth?: boolean;
@@ -324,6 +329,12 @@ export class VolvoPlatform implements DynamicPlatformPlugin {
         name: 'Volvo Energy',
         Class: EnergyAccessory,
         show: this.config.showFuel !== false || this.config.showCharging !== false,
+      },
+      {
+        id: `${vin}-location`,
+        name: 'Car at Home',
+        Class: LocationAccessory,
+        show: this.config.showLocation === true,
       },
     ];
 
