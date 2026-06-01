@@ -7,7 +7,7 @@
 
 A [Homebridge](https://homebridge.io) plugin that integrates your **Volvo XC90 2016** (Sensus) with Apple HomeKit via the official [Volvo Connected Vehicle API v2](https://developer.volvocars.com/apis/connected-vehicle/v2/overview/) and [Energy API v2](https://developer.volvocars.com/apis/energy/v2/overview/).
 
-Control and monitor your car directly from the Apple Home app and Siri — lock/unlock, climate pre-conditioning, remote engine start, honk & flash, door and window sensors, fuel level, EV battery, diagnostics, and more (T8 PHEV).
+Control and monitor your car directly from the Apple Home app and Siri — lock/unlock, climate pre-conditioning, remote engine start, honk and flash, door and window sensors, fuel level, EV battery, km-to-empty range, diagnostics, and more (T8 PHEV).
 
 ---
 
@@ -38,7 +38,9 @@ Control and monitor your car directly from the Apple Home app and Siri — lock/
 | **Volvo Controls** | Switch (up to 5) | Climate, Honk and Flash, Honk only, Flash only, Remote Start — all in one tile |
 | **Volvo Doors** | Contact Sensors | Summary tile + individual sensors for all 6 openings |
 | **Volvo Windows** | Contact Sensors | Summary tile + individual sensors for all 4 windows and sunroof |
-| **Volvo Energy** | Battery + Sensors | EV battery, charger plug status, charge target, EV range, fuel level, and tank range — all in one tile |
+| **Volvo Energy** | Battery + Humidity + Contact | EV battery with charging state, EV charge %, fuel level %, and charger plug status |
+| **EV Range km** | Temperature Sensor | Kilometres remaining on EV battery — standalone tile or inside Energy tile |
+| **Tank Range km** | Light Sensor | Kilometres remaining on petrol tank — standalone tile or inside Energy tile |
 | **Volvo Diagnostics** | Contact Sensors | Summary alert tile + individual sensors for oil, coolant, brake fluid, washer fluid, service due, and all 4 tyres |
 
 All accessories update on a configurable poll interval (default: 30 minutes) and reflect the latest state from the Volvo backend.
@@ -159,12 +161,14 @@ You need to re-authenticate when:
 | **Show Climate Pre-condition** | On | Climate switch inside the Controls tile |
 | **Show Remote Start** | On | Remote engine start switch inside the Controls tile |
 | **Show Honk and Flash (combined)** | On | Single momentary switch that honks and flashes simultaneously |
-| **Show Honk only** | Off | Separate momentary switch for horn only — enable if your VIN supports the `HONK` command (check the `Supported commands:` log line on startup) |
+| **Show Honk only** | Off | Separate momentary switch for horn only — enable if your VIN supports the `HONK` command (check `Supported commands:` in the log on startup) |
 | **Show Flash only** | Off | Separate momentary switch for lights only — enable if your VIN supports the `FLASH` command |
 | **Show Doors** | On | Contact sensor summary tile + 6 individual door/hood/tailgate sensors |
 | **Show Windows** | On | Contact sensor summary tile + 5 individual window and sunroof sensors |
 | **Show Fuel Level** | On | Petrol tank % inside the Energy tile |
-| **Show EV Battery** | On | EV charge level, charging state, charger plug status, charge target, and EV range inside the Energy tile (T8 PHEV only) |
+| **Show EV Battery** | On | EV charge level, charging state, and charger plug status inside the Energy tile (T8 PHEV only) |
+| **Show Range** | On | Km-to-empty for EV battery and petrol tank. Display style controlled by the Range view option below |
+| **Range view** | On (standalone) | **On**: EV Range km and Tank Range km appear as their own standalone room tiles. **Off**: range values appear as sub-sensors inside the Energy tile detail view |
 | **Show Diagnostics** | On | Alert tile that fires if any system warning is active, with individual sensors for each warning |
 
 ### Behaviour
@@ -196,6 +200,8 @@ You need to re-authenticate when:
       "showWindows": true,
       "showFuel": true,
       "showCharging": true,
+      "showRange": true,
+      "rangeStandalone": true,
       "showDiagnostics": true,
       "tankCapacityLiters": 70,
       "evLowChargeThreshold": 20,
@@ -251,20 +257,16 @@ A **Contact Sensor** tile with an at-a-glance summary: shows **Open** if any win
 ---
 
 ### Volvo Energy
-A single tile showing all energy and range data. Tap the tile to see every sensor:
+A single tile covering EV and fuel energy status. Tap the tile to see all sensors:
 
 | Sensor | Type | What it shows |
 |---|---|---|
-| **EV Battery** | Battery | Charge % and charging state (Charging / Not Charging / Not Chargeable) |
-| **Charger Connected** | Contact Sensor | Closed = cable plugged in · Open = no cable |
-| **Charge Target (%)** | Humidity | The % your car is set to charge to (e.g. 80% for battery health) |
-| **EV Range (km)** | Light Sensor | Estimated kilometres remaining on EV battery |
+| **EV Battery** | Battery | Charge % and charging state (Charging / Not Charging / Not Chargeable). Low-battery alert fires below the configured threshold (default 20%). |
+| **EV Charge** | Humidity | Current EV charge % at a glance — same value as EV Battery, humidity-style display for quick reading |
+| **Charger Connected** | Contact Sensor | Closed = charging cable plugged in · Open = no cable |
 | **Fuel Level** | Humidity | Petrol tank % (calculated from litres ÷ tank capacity) |
-| **Tank Range (km)** | Light Sensor | Estimated kilometres remaining on petrol tank |
 
 > **EV sensors are T8 PHEV only.** Disable **Show EV Battery** in plugin settings if your variant is petrol-only.
-
-A low-battery notification fires when EV charge drops below the configured threshold (default 20%).
 
 #### EV charging states
 
@@ -273,6 +275,23 @@ A low-battery notification fires when EV charge drops below the configured thres
 | **Charging** | Cable connected and actively charging |
 | **Not Charging** | Cable connected but charging is paused or complete |
 | **Not Chargeable** | No cable connected |
+
+---
+
+### EV Range km and Tank Range km
+
+Km-to-empty for the EV battery and petrol tank. These use intentionally different HomeKit sensor types to prevent the Home app from grouping them into a single averaged tile:
+
+| Tile | Type | Unit shown | Range |
+|---|---|---|---|
+| **EV Range km** | Temperature Sensor | °C | 0–100 km (fits typical EV range) |
+| **Tank Range km** | Light Sensor | lux | 0–100,000 km (fits any tank range) |
+
+The unit labels (°C, lux) are a HomeKit limitation — no native "km" sensor type exists. The tile names make the meaning clear.
+
+**Display mode** — controlled by **Range view** in plugin settings:
+- **Standalone** (default): each appears as its own tile in the room view
+- **Combined**: both appear as sub-sensors inside the Volvo Energy tile detail view
 
 ---
 
@@ -286,14 +305,14 @@ A **Contact Sensor** tile that shows **Open** (alert) if any vehicle system has 
 | **Brake Fluid** | Low brake fluid level |
 | **Washer Fluid** | Low windscreen washer fluid |
 | **Service Due** | Volvo service warning is active |
-| **Tyre — Front Left** | TPMS warning on front left tyre |
-| **Tyre — Front Right** | TPMS warning on front right tyre |
-| **Tyre — Rear Left** | TPMS warning on rear left tyre |
-| **Tyre — Rear Right** | TPMS warning on rear right tyre |
+| **Tyre - Front Left** | TPMS warning on front left tyre |
+| **Tyre - Front Right** | TPMS warning on front right tyre |
+| **Tyre - Rear Left** | TPMS warning on rear left tyre |
+| **Tyre - Rear Right** | TPMS warning on rear right tyre |
 
-The Homebridge log also prints the service interval on every poll:
+The Homebridge log prints the service interval on every poll:
 ```
-Diagnostics: All OK | Service in 1 month(s) / 21151 km
+[Volvo XC90] Diagnostics: All OK | Service in 1 month(s) / 21151 km
 ```
 
 ---
@@ -331,10 +350,10 @@ Example output:
 [DEBUG] Doors: locked=true, doors={"frontLeft":false,...}
 [DEBUG] → GET https://api.volvocars.com/energy/v2/vehicles/YV1XX.../state
 [DEBUG] ← 200 /energy/v2/vehicles/YV1XX.../state
-[DEBUG] EV poll: 100% (target 100%) | CONNECTED | DONE | AC | power: PROVIDING_POWER | ~0min to full | 28km range
+[DEBUG] EV poll: 100% | CONNECTED | DONE | AC | power: PROVIDING_POWER | ~0min to full | 28km range
 [DEBUG] Charger: plugged in (CONNECTED)
-[DEBUG] Tank range: 550 km
 [DEBUG] EV range: 28 km
+[DEBUG] Tank range: 550 km
 [DEBUG] Diagnostics: All OK | Service in 1 month(s) / 21151 km
 ```
 
@@ -369,6 +388,12 @@ Confirm your Volvo On Call subscription is active. Lock and unlock commands requ
 
 **Fuel level shows wrong percentage**
 The API returns litres only. If your tank capacity differs from the default (70 L), set **Fuel tank capacity** in plugin settings to match your variant.
+
+**EV Range shows values above 100°C**
+The Temperature Sensor type used for EV Range is capped at 100°C. If your EV range somehow exceeds 100 km, the tile will show 100. In practice the XC90 T8 EV range is well within this limit.
+
+**Range tiles show as a single averaged tile in the room view**
+This happens when EV Range and Tank Range were previously both LightSensor type. Update to the latest plugin version and restart — EV Range now uses TemperatureSensor, which prevents HomeKit from merging them.
 
 **Diagnostics tile always shows Open**
 Enable debug and check the log for `Diagnostics poll failed` — this usually means a scope or connectivity issue. All required scopes are included in the plugin's OAuth request so a fresh re-authentication should resolve it.
