@@ -13,6 +13,7 @@ export class EnergyAccessory {
 
   private fuelLevel = 100;
   private chargeLevel = 100;
+  private chargerPluggedIn = true; // assume plugged in until first poll
   private tankRange = 1;
   private evRange = 1;
   private readonly tankCapacity: number;
@@ -125,7 +126,9 @@ export class EnergyAccessory {
         || accessory.addService(Service.ContactSensor, 'Charger Connected', 'charger-connected');
       this.chargerConnectedService.setCharacteristic(Characteristic.ConfiguredName, 'Charger Connected');
       this.chargerConnectedService.getCharacteristic(Characteristic.ContactSensorState)
-        .onGet(() => Characteristic.ContactSensorState.CONTACT_DETECTED);
+        .onGet(() => this.chargerPluggedIn
+          ? Characteristic.ContactSensorState.CONTACT_DETECTED
+          : Characteristic.ContactSensorState.CONTACT_NOT_DETECTED);
     }
 
     this.poll();
@@ -181,14 +184,14 @@ export class EnergyAccessory {
         this.evService.updateCharacteristic(Characteristic.ChargingState, chargingState);
 
         if (this.chargerConnectedService) {
-          const pluggedIn = conn !== 'DISCONNECTED' && conn !== 'UNSPECIFIED' && conn !== '';
+          this.chargerPluggedIn = conn !== 'DISCONNECTED' && conn !== 'UNSPECIFIED' && conn !== '';
           this.chargerConnectedService.updateCharacteristic(
             Characteristic.ContactSensorState,
-            pluggedIn
+            this.chargerPluggedIn
               ? Characteristic.ContactSensorState.CONTACT_DETECTED
               : Characteristic.ContactSensorState.CONTACT_NOT_DETECTED,
           );
-          this.platform.dbg(`Charger: ${pluggedIn ? 'plugged in' : 'unplugged'} (${conn})`);
+          this.platform.dbg(`Charger: ${this.chargerPluggedIn ? 'plugged in' : 'unplugged'} (${conn})`);
         }
 
         this.platform.dbg(

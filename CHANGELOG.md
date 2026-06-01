@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.2] - 2026-06-01
+
+### Fixed
+- **Charger Connected sensor stuck on Closed** — `onGet` was hardcoded to return CONTACT_DETECTED (plugged in) regardless of actual state. Added `chargerPluggedIn` instance property updated by poll; `onGet` now returns the last known state. Same pattern as the earlier fix applied to fuel level, EV charge, and range sensors.
+
 ## [1.1.1] - 2026-06-01
 
 ### Added
