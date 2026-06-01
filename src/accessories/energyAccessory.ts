@@ -93,17 +93,23 @@ export class EnergyAccessory {
           ? Characteristic.StatusLowBattery.BATTERY_LEVEL_LOW
           : Characteristic.StatusLowBattery.BATTERY_LEVEL_NORMAL);
 
-      // Combined view: EV Range as sub-service inside this tile
+      // Combined view: EV Range as TemperatureSensor sub-service (different type from Tank's LightSensor)
       if (showRange && !standalone) {
-        this.evRangeService = accessory.services.find(s => s.subtype === 'ev-range' && s.UUID === Service.LightSensor.UUID)
-          || accessory.addService(Service.LightSensor, 'EV Range km', 'ev-range');
+        // Migrate any legacy LightSensor ev-range service
+        const legacyEvRange = accessory.services.find(s => s.subtype === 'ev-range' && s.UUID === Service.LightSensor.UUID);
+        if (legacyEvRange) accessory.removeService(legacyEvRange);
+
+        this.evRangeService = accessory.services.find(s => s.subtype === 'ev-range' && s.UUID === Service.TemperatureSensor.UUID)
+          || accessory.addService(Service.TemperatureSensor, 'EV Range km', 'ev-range');
         this.evRangeService.addOptionalCharacteristic(Characteristic.ConfiguredName);
         this.evRangeService.setCharacteristic(Characteristic.ConfiguredName, 'EV Range km');
-        this.evRangeService.getCharacteristic(Characteristic.CurrentAmbientLightLevel)
-          .onGet(() => Math.max(0.0001, this.evRange));
+        this.evRangeService.getCharacteristic(Characteristic.CurrentTemperature)
+          .onGet(() => Math.min(100, this.evRange));
       } else {
-        const svc = accessory.services.find(s => s.subtype === 'ev-range' && s.UUID === Service.LightSensor.UUID);
-        if (svc) accessory.removeService(svc);
+        for (const UUID of [Service.LightSensor.UUID, Service.TemperatureSensor.UUID]) {
+          const svc = accessory.services.find(s => s.subtype === 'ev-range' && s.UUID === UUID);
+          if (svc) accessory.removeService(svc);
+        }
       }
 
       // EV Charge — HumiditySensor showing charge % at a glance, like Fuel Level
@@ -207,7 +213,7 @@ export class EnergyAccessory {
         }
         if (this.evRangeService && stats.distanceToEmptyBattery !== undefined) {
           this.evRange = stats.distanceToEmptyBattery;
-          this.evRangeService.updateCharacteristic(Characteristic.CurrentAmbientLightLevel, Math.max(0.0001, this.evRange));
+          this.evRangeService.updateCharacteristic(Characteristic.CurrentTemperature, Math.min(100, this.evRange));
           this.platform.dbg(`EV range: ${this.evRange} km`);
         }
       } catch (err) {

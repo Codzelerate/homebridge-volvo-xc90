@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.28] - 2026-06-01
+
+### Changed
+- **EV Range** switched from LightSensor to TemperatureSensor (shows km as °C) — prevents HomeKit from grouping EV Range and Tank Range into a single averaged "Light" summary tile in the room view. Two different sensor types = two distinct tiles that can't be merged.
+- Applies in both standalone tile mode and combined (inside Energy tile) mode.
+
 ## [1.0.27] - 2026-06-01
 
 ### Added
