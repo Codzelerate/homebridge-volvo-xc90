@@ -106,7 +106,7 @@
         "title": "Show Fuel Level",
         "type": "boolean",
         "default": true,
-        "description": "Fuel level as a percentage tile with a low-fuel alert below 15%."
+        "description": "Petrol tank percentage and estimated range (km to empty) inside the Energy tile."
       },
       "showCharging": {
         "title": "Show EV Battery",
@@ -169,7 +169,7 @@
     {
       "type": "fieldset",
       "title": "Accessories",
-      "description": "Choose which tiles appear in the Home app. All shown by default.",
+      "description": "Choose which tiles and sensors appear in the Home app. Most are on by default; Honk only and Flash only are off — enable them only if your VIN supports those commands (check 'Supported commands:' in the Homebridge log on startup).",
       "expandable": true,
       "expanded": true,
       "items": ["showLock", "showClimate", "showEngine", "showHonkFlash", "showHonk", "showFlash", "showDoors", "showWindows", "showFuel", "showCharging", "showDiagnostics"]
