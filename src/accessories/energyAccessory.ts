@@ -7,9 +7,14 @@ export class EnergyAccessory {
   private evService: ReturnType<PlatformAccessory['addService']> | null = null;
   private evChargeService: ReturnType<PlatformAccessory['addService']> | null = null;
   private chargerConnectedService: ReturnType<PlatformAccessory['addService']> | null = null;
+  // Range sub-services — only used when rangeStandalone === false (combined view)
+  private tankRangeService: ReturnType<PlatformAccessory['addService']> | null = null;
+  private evRangeService: ReturnType<PlatformAccessory['addService']> | null = null;
 
   private fuelLevel = 100;
   private chargeLevel = 100;
+  private tankRange = 1;
+  private evRange = 1;
   private readonly tankCapacity: number;
   private readonly evLowThreshold: number;
 
@@ -28,14 +33,19 @@ export class EnergyAccessory {
     const legacyBattery = accessory.getService(Service.Battery);
     if (legacyBattery && !legacyBattery.subtype) accessory.removeService(legacyBattery);
 
-    // Remove legacy LightSensor range services (now separate accessories)
-    for (const subtype of ['tank-range', 'ev-range']) {
-      const legacy = accessory.services.find(
-        s => s.UUID === Service.LightSensor.UUID && s.subtype === subtype,
-      );
-      if (legacy) {
-        platform.log.info(`Migrating range sensor '${subtype}' to standalone accessory`);
-        accessory.removeService(legacy);
+    const standalone = platform.config.rangeStandalone !== false;
+    const showRange  = platform.config.showRange !== false;
+
+    // When switching to standalone mode, remove any cached LightSensor range sub-services
+    if (standalone) {
+      for (const subtype of ['tank-range', 'ev-range']) {
+        const legacy = accessory.services.find(
+          s => s.UUID === Service.LightSensor.UUID && s.subtype === subtype,
+        );
+        if (legacy) {
+          platform.log.info(`Range sensor '${subtype}' moved to standalone tile — removing from Energy tile`);
+          accessory.removeService(legacy);
+        }
       }
     }
 
@@ -52,6 +62,20 @@ export class EnergyAccessory {
       this.fuelService.setCharacteristic(Characteristic.ConfiguredName, 'Fuel Level');
       this.fuelService.getCharacteristic(Characteristic.CurrentRelativeHumidity)
         .onGet(() => this.fuelLevel);
+
+      // Combined view: Tank Range as sub-service inside this tile
+      if (showRange && !standalone) {
+        this.tankRangeService = accessory.services.find(s => s.subtype === 'tank-range' && s.UUID === Service.LightSensor.UUID)
+          || accessory.addService(Service.LightSensor, 'Tank Range km', 'tank-range');
+        this.tankRangeService.addOptionalCharacteristic(Characteristic.ConfiguredName);
+        this.tankRangeService.setCharacteristic(Characteristic.ConfiguredName, 'Tank Range km');
+        this.tankRangeService.getCharacteristic(Characteristic.CurrentAmbientLightLevel)
+          .onGet(() => Math.max(0.0001, this.tankRange));
+      } else {
+        // Remove if switching back to standalone
+        const svc = accessory.services.find(s => s.subtype === 'tank-range' && s.UUID === Service.LightSensor.UUID);
+        if (svc) accessory.removeService(svc);
+      }
     }
 
     if (platform.config.showCharging !== false) {
@@ -68,6 +92,19 @@ export class EnergyAccessory {
         .onGet(() => this.chargeLevel < this.evLowThreshold
           ? Characteristic.StatusLowBattery.BATTERY_LEVEL_LOW
           : Characteristic.StatusLowBattery.BATTERY_LEVEL_NORMAL);
+
+      // Combined view: EV Range as sub-service inside this tile
+      if (showRange && !standalone) {
+        this.evRangeService = accessory.services.find(s => s.subtype === 'ev-range' && s.UUID === Service.LightSensor.UUID)
+          || accessory.addService(Service.LightSensor, 'EV Range km', 'ev-range');
+        this.evRangeService.addOptionalCharacteristic(Characteristic.ConfiguredName);
+        this.evRangeService.setCharacteristic(Characteristic.ConfiguredName, 'EV Range km');
+        this.evRangeService.getCharacteristic(Characteristic.CurrentAmbientLightLevel)
+          .onGet(() => Math.max(0.0001, this.evRange));
+      } else {
+        const svc = accessory.services.find(s => s.subtype === 'ev-range' && s.UUID === Service.LightSensor.UUID);
+        if (svc) accessory.removeService(svc);
+      }
 
       // EV Charge — HumiditySensor showing charge % at a glance, like Fuel Level
       this.evChargeService = accessory.services.find(s => s.subtype === 'ev-charge' && s.UUID === Service.HumiditySensor.UUID)
@@ -156,6 +193,25 @@ export class EnergyAccessory {
         );
       } catch (err) {
         this.platform.log.warn('EV battery poll failed:', (err as Error).message);
+      }
+    }
+
+    // Range poll — only in combined (non-standalone) mode
+    if (this.tankRangeService || this.evRangeService) {
+      try {
+        const stats = await this.platform.api.getStatistics();
+        if (this.tankRangeService && stats.distanceToEmptyTank !== undefined) {
+          this.tankRange = stats.distanceToEmptyTank;
+          this.tankRangeService.updateCharacteristic(Characteristic.CurrentAmbientLightLevel, Math.max(0.0001, this.tankRange));
+          this.platform.dbg(`Tank range: ${this.tankRange} km`);
+        }
+        if (this.evRangeService && stats.distanceToEmptyBattery !== undefined) {
+          this.evRange = stats.distanceToEmptyBattery;
+          this.evRangeService.updateCharacteristic(Characteristic.CurrentAmbientLightLevel, Math.max(0.0001, this.evRange));
+          this.platform.dbg(`EV range: ${this.evRange} km`);
+        }
+      } catch (err) {
+        this.platform.log.warn('Range poll failed:', (err as Error).message);
       }
     }
   }

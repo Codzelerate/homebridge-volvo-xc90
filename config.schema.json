@@ -121,10 +121,16 @@
         "description": "Contact sensor tile showing open/closed state for all windows (front left, front right, rear left, rear right) and the sunroof. Summary tile shows Open if any window is ajar."
       },
       "showRange": {
-        "title": "Show Range tiles",
+        "title": "Show Range",
         "type": "boolean",
         "default": true,
-        "description": "Standalone tiles showing EV Range km and Tank Range km as light sensor values. Each appears as its own tile in the room view."
+        "description": "Show km-to-empty for EV battery and fuel tank. Display style is controlled by the Range view option below."
+      },
+      "rangeStandalone": {
+        "title": "Range view",
+        "type": "boolean",
+        "default": true,
+        "description": "On (default): EV Range and Tank Range appear as their own standalone tiles in the room view. Off: range values are shown as sub-sensors inside the Energy tile detail view."
       },
       "showDiagnostics": {
         "title": "Show Diagnostics",
@@ -178,7 +184,7 @@
       "description": "Choose which tiles and sensors appear in the Home app. Most are on by default; Honk only and Flash only are off — enable them only if your VIN supports those commands (check 'Supported commands:' in the Homebridge log on startup).",
       "expandable": true,
       "expanded": true,
-      "items": ["showLock", "showClimate", "showEngine", "showHonkFlash", "showHonk", "showFlash", "showDoors", "showWindows", "showFuel", "showCharging", "showRange", "showDiagnostics"]
+      "items": ["showLock", "showClimate", "showEngine", "showHonkFlash", "showHonk", "showFlash", "showDoors", "showWindows", "showFuel", "showCharging", "showRange", "rangeStandalone", "showDiagnostics"]
     },
     {
       "type": "fieldset",

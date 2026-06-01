@@ -43,6 +43,7 @@ export interface VolvoConfig extends PlatformConfig {
   showWindows?: boolean;
   showDiagnostics?: boolean;
   showRange?: boolean;
+  rangeStandalone?: boolean;
   tankCapacityLiters?: number;
   evLowChargeThreshold?: number;
   forceReauth?: boolean;
@@ -310,13 +311,13 @@ export class VolvoPlatform implements DynamicPlatformPlugin {
         id: `${vin}-range-ev`,
         name: 'EV Range km',
         Class: EVRangeAccessory,
-        show: this.config.showRange !== false && this.config.showCharging !== false,
+        show: this.config.showRange !== false && this.config.showCharging !== false && this.config.rangeStandalone !== false,
       },
       {
         id: `${vin}-range-tank`,
         name: 'Tank Range km',
         Class: TankRangeAccessory,
-        show: this.config.showRange !== false && this.config.showFuel !== false,
+        show: this.config.showRange !== false && this.config.showFuel !== false && this.config.rangeStandalone !== false,
       },
       {
         id: `${vin}-fuel`,

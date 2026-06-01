@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.27] - 2026-06-01
+
+### Added
+- `rangeStandalone` config option — **On** (default): EV Range and Tank Range appear as standalone room tiles; **Off**: range sensors shown as sub-services inside the Energy tile detail view. Switching either way migrates cleanly on restart.
+
 ## [1.0.26] - 2026-06-01
 
 ### Added
