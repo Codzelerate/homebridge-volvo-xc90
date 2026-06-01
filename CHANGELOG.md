@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.23] - 2026-06-01
+
+### Fixed
+- Charge Target (%) onGet was hardcoded to 100 instead of returning the last polled value — now stored in an instance property and returned correctly
+- Range sensors confirmed as LightSensor (shows value on tile) — CO2/AirQuality approach discarded as it hides the number behind Normal/Abnormal status
+
 ## [1.0.22] - 2026-06-01
 
 ### Fixed

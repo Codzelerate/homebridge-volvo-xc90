@@ -17,6 +17,7 @@ export class EnergyAccessory {
 
   private fuelLevel = 100;
   private chargeLevel = 100;
+  private chargeTarget = 100;
   private tankRange = 1;   // km, default 1 (LightSensor minimum)
   private evRange = 1;     // km
   private readonly tankCapacity: number;
@@ -83,7 +84,7 @@ export class EnergyAccessory {
       this.chargeTargetService.addOptionalCharacteristic(Characteristic.ConfiguredName);
       this.chargeTargetService.setCharacteristic(Characteristic.ConfiguredName, 'Charge Target (%)');
       this.chargeTargetService.getCharacteristic(Characteristic.CurrentRelativeHumidity)
-        .onGet(() => 100);
+        .onGet(() => this.chargeTarget);
 
       // Charger connected — ContactSensor: closed = plugged in, open = unplugged
       this.chargerConnectedService = accessory.getService('Charger Connected')
@@ -143,10 +144,8 @@ export class EnergyAccessory {
 
         // Charge target
         if (this.chargeTargetService && data.targetChargeLevel !== undefined) {
-          this.chargeTargetService.updateCharacteristic(
-            Characteristic.CurrentRelativeHumidity,
-            Math.min(100, Math.round(data.targetChargeLevel)),
-          );
+          this.chargeTarget = Math.min(100, Math.round(data.targetChargeLevel));
+          this.chargeTargetService.updateCharacteristic(Characteristic.CurrentRelativeHumidity, this.chargeTarget);
         }
 
         // Charger connected
