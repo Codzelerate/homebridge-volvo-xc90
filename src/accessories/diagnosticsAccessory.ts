@@ -24,6 +24,7 @@ type ServiceMap = Map<SensorKey | 'summary', ReturnType<PlatformAccessory['addSe
 
 export class DiagnosticsAccessory {
   private services: ServiceMap = new Map();
+  private lastWarningState: boolean | null = null;
 
   constructor(
     private readonly platform: VolvoPlatform,
@@ -99,10 +100,14 @@ export class DiagnosticsAccessory {
         );
       }
 
-      this.platform.log.info(
-        `Diagnostics: ${anyWarning ? '⚠️  WARNING ACTIVE' : 'All OK'} | ` +
-        `Service in ${diag.timeToService ?? '?'} month(s) / ${diag.distanceToService ?? '?'} km`,
-      );
+      // Log state changes at info level; routine polls at debug level only
+      const serviceInfo = `Service in ${diag.timeToService ?? '?'} month(s) / ${diag.distanceToService ?? '?'} km`;
+      if (anyWarning !== this.lastWarningState) {
+        this.platform.log.info(`Diagnostics: ${anyWarning ? 'WARNING ACTIVE' : 'All OK'} | ${serviceInfo}`);
+        this.lastWarningState = anyWarning;
+      } else {
+        this.platform.dbg(`Diagnostics: ${anyWarning ? 'WARNING ACTIVE' : 'All OK'} | ${serviceInfo}`);
+      }
     } catch (err) {
       this.platform.log.warn('Diagnostics poll failed:', (err as Error).message);
     }

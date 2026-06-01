@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.4] - 2026-06-01
+
+### Changed
+- Diagnostics summary log (`All OK | Service in X month(s) / Y km`) is now only printed at `info` level when the warning state **changes**. Routine polls log at `debug` level only. Eliminates log spam at short poll intervals.
+
 ## [1.1.3] - 2026-06-01
 
 ### Fixed
