@@ -44,6 +44,9 @@ export class DiagnosticsAccessory {
       // Find by subtype — display name may have changed across versions
       const svc = accessory.services.find(existing => existing.subtype === s.key && existing.UUID === Service.ContactSensor.UUID)
         || accessory.addService(Service.ContactSensor, s.label, s.key);
+      // Update both Name and ConfiguredName — Name is what HAP validates on cache load,
+      // so stale values (e.g. em-dash from older versions) must be corrected here
+      svc.setCharacteristic(Characteristic.Name, s.label);
       svc.setCharacteristic(Characteristic.ConfiguredName, s.label);
       this.services.set(s.key, svc);
     }

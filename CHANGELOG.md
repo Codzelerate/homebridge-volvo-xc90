@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.3] - 2026-06-01
+
+### Fixed
+- **Persistent HAP Name warnings for Tyre sensors** — `ConfiguredName` and `Name` are separate HAP characteristics. We were only updating `ConfiguredName` after finding a service by subtype, so the `Name` characteristic in the cache kept its old em-dash value (`Tyre — Front Left`) and triggered the warning on every restart. Now explicitly sets both `Name` and `ConfiguredName` to the corrected label — cache is written correctly after the first restart with this version, warnings gone from the second restart onward.
+
 ## [1.1.2] - 2026-06-01
 
 ### Fixed
