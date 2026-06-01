@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.21] - 2026-06-01
+
+### Fixed
+- **Diagnostics crash on startup**: tyre sensor subtypes (`tyreFrontLeft` etc.) already existed in cache under old display names with em dashes. Service lookup now uses subtype matching instead of display name matching so renames never cause UUID conflicts — applied to Doors, Windows, and Diagnostics accessories.
+
 ## [1.0.20] - 2026-06-01
 
 ### Fixed

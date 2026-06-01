@@ -34,14 +34,15 @@ export class DiagnosticsAccessory {
 
     setAccessoryInfo(platform, accessory, 'XC90 — Diagnostics');
 
-    // Summary sensor drives the tile
-    const summary = accessory.getService('All Systems OK')
+    // Summary sensor drives the tile — find by subtype so renames don't cause conflicts
+    const summary = accessory.services.find(s => s.subtype === 'summary' && s.UUID === Service.ContactSensor.UUID)
       || accessory.addService(Service.ContactSensor, 'All Systems OK', 'summary');
     summary.setCharacteristic(Characteristic.ConfiguredName, 'All Systems OK');
     this.services.set('summary', summary);
 
     for (const s of SENSORS) {
-      const svc = accessory.getService(s.label)
+      // Find by subtype — display name may have changed across versions
+      const svc = accessory.services.find(existing => existing.subtype === s.key && existing.UUID === Service.ContactSensor.UUID)
         || accessory.addService(Service.ContactSensor, s.label, s.key);
       svc.setCharacteristic(Characteristic.ConfiguredName, s.label);
       this.services.set(s.key, svc);

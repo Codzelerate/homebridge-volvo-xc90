@@ -25,14 +25,15 @@ export class WindowsAccessory {
 
     setAccessoryInfo(platform, accessory, 'XC90 — Windows');
 
-    // Summary sensor drives the tile — shows Open if any window is open
-    const summary = accessory.getService('All Windows')
+    // Summary sensor drives the tile — find by subtype so renames don't cause conflicts
+    const summary = accessory.services.find(s => s.subtype === 'summary' && s.UUID === Service.ContactSensor.UUID)
       || accessory.addService(Service.ContactSensor, 'All Windows', 'summary');
     summary.setCharacteristic(Characteristic.ConfiguredName, 'All Windows');
     this.services.set('summary', summary);
 
     for (const win of WINDOW_SENSORS) {
-      const svc = accessory.getService(win.label)
+      // Find by subtype — safe against display name changes across versions
+      const svc = accessory.services.find(s => s.subtype === win.key && s.UUID === Service.ContactSensor.UUID)
         || accessory.addService(Service.ContactSensor, win.label, win.key);
       svc.setCharacteristic(Characteristic.ConfiguredName, win.label);
       this.services.set(win.key, svc);

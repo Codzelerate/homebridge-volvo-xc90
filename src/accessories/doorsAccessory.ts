@@ -27,13 +27,14 @@ export class DoorsAccessory {
     setAccessoryInfo(platform, accessory, 'XC90 — Doors');
 
     // Summary sensor added first — HomeKit uses the first service as the tile state
-    const summary = accessory.getService('All Doors')
+    const summary = accessory.services.find(s => s.subtype === 'summary' && s.UUID === Service.ContactSensor.UUID)
       || accessory.addService(Service.ContactSensor, 'All Doors', 'summary');
     summary.setCharacteristic(Characteristic.ConfiguredName, 'All Doors');
     this.services.set('summary', summary);
 
     for (const door of DOOR_SENSORS) {
-      const svc = accessory.getService(door.label)
+      // Find by subtype — safe against display name changes across versions
+      const svc = accessory.services.find(s => s.subtype === door.key && s.UUID === Service.ContactSensor.UUID)
         || accessory.addService(Service.ContactSensor, door.label, door.key);
       svc.setCharacteristic(Characteristic.ConfiguredName, door.label);
       this.services.set(door.key, svc);
