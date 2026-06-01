@@ -21,6 +21,7 @@ Control and monitor your car directly from the Apple Home app and Siri — lock/
   - [Re-authenticating](#re-authenticating)
 - [Configuration reference](#configuration-reference)
 - [HomeKit accessories](#homekit-accessories)
+- [Finding your home coordinates](#car-at-home)
 - [Getting your VCC API Key](#getting-your-vcc-api-key)
 - [Finding your VIN](#finding-your-vin)
 - [Debug mode](#debug-mode)
@@ -42,6 +43,7 @@ Control and monitor your car directly from the Apple Home app and Siri — lock/
 | **EV Range km** | Temperature Sensor | Kilometres remaining on EV battery — standalone tile or inside Energy tile |
 | **Tank Range km** | Light Sensor | Kilometres remaining on petrol tank — standalone tile or inside Energy tile |
 | **Volvo Diagnostics** | Contact Sensors | Summary alert tile + individual sensors for oil, coolant, brake fluid, washer fluid, service due, and all 4 tyres |
+| **Car at Home** | Occupancy Sensor | Occupied when car is within configured home radius, Not Occupied when away |
 
 All accessories update on a configurable poll interval (default: 30 minutes) and reflect the latest state from the Volvo backend.
 
@@ -170,6 +172,10 @@ You need to re-authenticate when:
 | **Show Range** | On | Km-to-empty for EV battery and petrol tank. Display style controlled by the Range view option below |
 | **Range view** | On (standalone) | **On**: EV Range km and Tank Range km appear as their own standalone room tiles. **Off**: range values appear as sub-sensors inside the Energy tile detail view |
 | **Show Diagnostics** | On | Alert tile that fires if any system warning is active, with individual sensors for each warning |
+| **Show Car at Home sensor** | Off | Occupancy sensor that shows Occupied when the car is within the home radius. Requires home coordinates below. |
+| **Home latitude** | — | Decimal degrees latitude of your home. Right-click your home in Google Maps — the first number shown. |
+| **Home longitude** | — | Decimal degrees longitude of your home. Right-click your home in Google Maps — the second number shown. |
+| **Home radius (metres)** | 200 | How close the car must be to count as home. Increase if the car parks on the street. |
 
 ### Behaviour
 
@@ -203,6 +209,10 @@ You need to re-authenticate when:
       "showRange": true,
       "rangeStandalone": true,
       "showDiagnostics": true,
+      "showLocation": false,
+      "homeLatitude": 0.0,
+      "homeLongitude": 0.0,
+      "homeRadiusMeters": 200,
       "tankCapacityLiters": 70,
       "evLowChargeThreshold": 20,
       "engineStartDuration": 15,
@@ -317,6 +327,30 @@ The Homebridge log prints the service interval on every poll:
 
 ---
 
+### Car at Home
+An **Occupancy Sensor** tile that shows **Occupied** when the car is within your configured home radius and **Not Occupied** when it is away. Useful for automations — for example, turn on the garage light when the car arrives home.
+
+**Setup:**
+1. Enable **Show Car at Home sensor** in plugin settings
+2. Right-click your home in [Google Maps](https://maps.google.com) — the coordinates appear at the top of the context menu
+3. Enter the first number as **Home latitude** and the second as **Home longitude**
+4. Set **Home radius** (default 200 m — increase if your car regularly parks on the street)
+
+**How it works:**
+- The plugin polls the Volvo Location API on every poll interval
+- Distance from home is calculated using the Haversine formula
+- The sensor flips when the car crosses the radius boundary
+- The Homebridge log prints coordinates, heading, and distance on every poll:
+
+```
+[Volvo XC90] Car is now AWAY (1243m from home)
+[DEBUG] Location: 52.XXXXXX, 4.XXXXXX | heading 270° | 1243m from home | AWAY (radius 200m)
+```
+
+> **Note:** Volvo only updates the GPS position when the car is moving or the engine is on. If the car has been parked for a long time, the position reflects the last known location — which is accurate enough for home/away detection in practice.
+
+---
+
 ## Getting your VCC API Key
 
 1. Go to [developer.volvocars.com](https://developer.volvocars.com) and sign in with your Volvo ID
@@ -355,6 +389,7 @@ Example output:
 [DEBUG] EV range: 28 km
 [DEBUG] Tank range: 550 km
 [DEBUG] Diagnostics: All OK | Service in 1 month(s) / 21151 km
+[DEBUG] Location: 52.XXXXXX, 4.XXXXXX | heading 0° | 12m from home | AT HOME (radius 200m)
 ```
 
 Disable debug once everything is working to keep your logs clean.
@@ -400,6 +435,11 @@ Enable debug and check the log for `Diagnostics poll failed` — this usually me
 
 **Windows tile always shows Closed even though a window is open**
 Window state is reported by the car's sensors — if the car has been stationary with ignition off for a long time, the API may return stale data until the next ignition cycle.
+
+**Car at Home always shows Not Occupied**
+- Confirm **homeLatitude** and **homeLongitude** are set correctly in plugin settings — if both are 0 the sensor will always show Not Occupied
+- The location timestamp in the debug log shows when the car last reported its position — if stale, drive the car briefly to refresh the GPS fix
+- Try increasing **Home radius** if the parked position is slightly offset from your home coordinates
 
 ---
 
