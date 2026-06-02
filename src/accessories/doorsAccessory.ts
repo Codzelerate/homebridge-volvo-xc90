@@ -36,6 +36,7 @@ export class DoorsAccessory {
       // Find by subtype — safe against display name changes across versions
       const svc = accessory.services.find(s => s.subtype === door.key && s.UUID === Service.ContactSensor.UUID)
         || accessory.addService(Service.ContactSensor, door.label, door.key);
+      svc.displayName = door.label;
       svc.setCharacteristic(Characteristic.ConfiguredName, door.label);
       this.services.set(door.key, svc);
       platform.dbg(`Registered door sensor: ${door.label}`);

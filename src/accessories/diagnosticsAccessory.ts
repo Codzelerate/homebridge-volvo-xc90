@@ -47,6 +47,7 @@ export class DiagnosticsAccessory {
     // Summary sensor drives the tile
     const summary = accessory.services.find(s => s.subtype === 'summary' && s.UUID === Service.ContactSensor.UUID)
       || accessory.addService(Service.ContactSensor, 'All Systems OK', 'summary');
+    summary.displayName = 'All Systems OK';
     summary.setCharacteristic(Characteristic.Name, 'All Systems OK');
     summary.setCharacteristic(Characteristic.ConfiguredName, 'All Systems OK');
     this.services.set('summary', summary);
@@ -64,6 +65,7 @@ export class DiagnosticsAccessory {
     const serviceSvc = accessory.services.find(
       s => s.subtype === 'serviceWarning' && s.UUID === Service.FilterMaintenance.UUID,
     ) || accessory.addService(Service.FilterMaintenance, 'Service Due', 'serviceWarning');
+    serviceSvc.displayName = 'Service Due';
     serviceSvc.setCharacteristic(Characteristic.Name, 'Service Due');
     serviceSvc.setCharacteristic(Characteristic.ConfiguredName, 'Service Due');
     serviceSvc.addOptionalCharacteristic(Characteristic.FilterLifeLevel);
@@ -88,6 +90,10 @@ export class DiagnosticsAccessory {
         || (s.type === 'leak'
           ? accessory.addService(Service.LeakSensor,    s.label, s.key)
           : accessory.addService(Service.ContactSensor, s.label, s.key));
+      // Update displayName so the cache stores the corrected value — HAP initialises
+      // the Name characteristic from displayName on every load, so updating only the
+      // characteristic is not enough. Setting displayName directly fixes the warning permanently.
+      svc.displayName = s.label;
       svc.setCharacteristic(Characteristic.Name, s.label);
       svc.setCharacteristic(Characteristic.ConfiguredName, s.label);
       this.services.set(s.key, svc);

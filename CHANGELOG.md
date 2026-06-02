@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.1] - 2026-06-02
+
+### Fixed
+- **Persistent HAP Name warnings for Tyre sensors** — permanently fixed by updating `service.displayName` directly in addition to the `Name` characteristic. HAP-nodejs initialises the `Name` characteristic from `displayName` on every cache load, so updating only the characteristic was insufficient — the old em-dash value kept being restored from the cached `displayName`. Applied to Diagnostics, Doors, and Windows accessories.
+
 ## [1.2.0] - 2026-06-02
 
 ### Added

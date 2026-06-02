@@ -35,6 +35,7 @@ export class WindowsAccessory {
       // Find by subtype — safe against display name changes across versions
       const svc = accessory.services.find(s => s.subtype === win.key && s.UUID === Service.ContactSensor.UUID)
         || accessory.addService(Service.ContactSensor, win.label, win.key);
+      svc.displayName = win.label;
       svc.setCharacteristic(Characteristic.ConfiguredName, win.label);
       this.services.set(win.key, svc);
     }
