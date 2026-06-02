@@ -42,7 +42,7 @@ Control and monitor your car directly from the Apple Home app and Siri — lock/
 | **Volvo Energy** | Battery + Humidity + Contact | EV battery with charging state, EV charge %, fuel level %, and charger plug status |
 | **EV Range km** | Temperature Sensor | Kilometres remaining on EV battery — standalone tile or inside Energy tile |
 | **Tank Range km** | Light Sensor | Kilometres remaining on petrol tank — standalone tile or inside Energy tile |
-| **Volvo Diagnostics** | Contact Sensors | Summary alert tile + individual sensors for oil, coolant, brake fluid, washer fluid, service due, and all 4 tyres |
+| **Volvo Diagnostics** | Contact + Leak Sensors | Summary alert tile + individual sensors for oil, coolant, brake fluid, washer fluid (Leak Sensor), service due, and all 4 tyres (Contact Sensor) |
 | **Car at Home** | Occupancy Sensor | Occupied when car is within configured home radius, Not Occupied when away |
 
 All accessories update on a configurable poll interval (default: 30 minutes) and reflect the latest state from the Volvo backend.
@@ -306,19 +306,21 @@ The unit labels (°C, lux) are a HomeKit limitation — no native "km" sensor ty
 ---
 
 ### Volvo Diagnostics
-A **Contact Sensor** tile that shows **Open** (alert) if any vehicle system has a warning — **Closed** when all systems are OK. Tap the tile to see which specific sensor triggered:
+A **Contact Sensor** summary tile that shows **Open** (alert) if any vehicle system has a warning — **Closed** when all systems are OK. Tap the tile to see which specific sensor triggered.
 
-| Sensor | Triggers when |
-|---|---|
-| **Oil Level** | Low oil warning from engine |
-| **Coolant Level** | Low coolant warning from engine |
-| **Brake Fluid** | Low brake fluid level |
-| **Washer Fluid** | Low windscreen washer fluid |
-| **Service Due** | Volvo service warning is active |
-| **Tyre - Front Left** | TPMS warning on front left tyre |
-| **Tyre - Front Right** | TPMS warning on front right tyre |
-| **Tyre - Rear Left** | TPMS warning on rear left tyre |
-| **Tyre - Rear Right** | TPMS warning on rear right tyre |
+Fluid-related sensors use the **Leak Sensor** type (water-drop icon, "Leak Detected" state) for accurate semantics. Non-fluid warnings use **Contact Sensor**.
+
+| Sensor | Type | Triggers when |
+|---|---|---|
+| **Oil Level** | Leak Sensor | Low oil warning from engine |
+| **Coolant Level** | Leak Sensor | Low coolant warning from engine |
+| **Brake Fluid** | Leak Sensor | Low brake fluid level |
+| **Washer Fluid** | Leak Sensor | Low windscreen washer fluid |
+| **Service Due** | Contact Sensor | Volvo service warning is active |
+| **Tyre - Front Left** | Contact Sensor | TPMS warning on front left tyre |
+| **Tyre - Front Right** | Contact Sensor | TPMS warning on front right tyre |
+| **Tyre - Rear Left** | Contact Sensor | TPMS warning on rear left tyre |
+| **Tyre - Rear Right** | Contact Sensor | TPMS warning on rear right tyre |
 
 The Homebridge log prints the service interval on every poll:
 ```

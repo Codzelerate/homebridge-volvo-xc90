@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.5] - 2026-06-01
+
+### Changed
+- **Fluid diagnostic sensors now use LeakSensor** — Oil Level, Coolant Level, Brake Fluid, and Washer Fluid switch from ContactSensor to LeakSensor. The water-drop icon and "Leak Detected" state are semantically accurate for fluid warnings and visually distinct from non-fluid alerts. Service Due and tyre sensors remain as ContactSensor. Migration runs automatically on first restart — no manual action needed.
+
 ## [1.1.4] - 2026-06-01
 
 ### Changed
