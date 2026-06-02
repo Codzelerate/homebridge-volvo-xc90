@@ -71,6 +71,30 @@
         "maximum": 15,
         "description": "How long the engine runs when started remotely. Max 15 minutes (API limit)."
       },
+      "serviceIntervalMonths": {
+        "title": "Service interval (months)",
+        "type": "integer",
+        "default": 12,
+        "minimum": 1,
+        "maximum": 36,
+        "description": "How many months between services. Used to calculate the Service Due % in the Diagnostics tile. Default is 12 (annual service)."
+      },
+      "serviceIntervalKm": {
+        "title": "Service interval (km)",
+        "type": "integer",
+        "default": 30000,
+        "minimum": 1000,
+        "maximum": 100000,
+        "description": "How many km between services. Used alongside the months interval — the lower % of the two is shown. Set to 0 to disable. Common Volvo intervals: 20,000 / 25,000 / 30,000 km."
+      },
+      "serviceAlertThreshold": {
+        "title": "Service alert threshold (%)",
+        "type": "integer",
+        "default": 20,
+        "minimum": 5,
+        "maximum": 50,
+        "description": "The Service Due sensor flips to Change Filter when service life drops below this %. Default 20% — roughly 2-3 months before a 12-month service is due."
+      },
       "pollInterval": {
         "title": "Poll interval (seconds)",
         "type": "integer",
@@ -162,6 +186,12 @@
         "default": true,
         "description": "Contact sensor tile that alerts if any system warning is active: oil level, coolant level, brake fluid, washer fluid, service due, or tyre warnings. Tap the tile to see which specific system triggered."
       },
+      "showLeftOpen": {
+        "title": "Show Left Open sensor",
+        "type": "boolean",
+        "default": false,
+        "description": "Alerts when you lock the car but leave a door, window, sunroof, hood, or tailgate open. The sensor name updates dynamically to describe what was left open — e.g. 'Volvo: Door · Sunroof' — so the HomeKit notification tells you exactly what to go close. Enable notifications for this sensor in the Home app (tap the sensor → Settings → Notifications). Off by default."
+      },
       "showHonkFlash": {
         "title": "Show Honk and Flash (combined)",
         "type": "boolean",
@@ -197,36 +227,73 @@
   "layout": [
     {
       "type": "fieldset",
-      "title": "Always Required",
+      "title": "Required",
+      "description": "These two fields are always needed.",
       "items": ["vccApiKey", "vin"]
     },
     {
       "type": "fieldset",
-      "title": "First-time Setup",
-      "description": "Fill in for initial authentication only. Once logged in, these can all be removed.",
+      "title": "Authentication",
+      "description": "For first-time login only. Fill in, save, restart, enter the OTP code Volvo emails you, then save and restart again. Remove email, password, and OTP once authenticated — only VCC API Key and VIN are needed going forward.",
       "expandable": true,
       "expanded": true,
       "items": ["username", "password", "otp", "forceReauth"]
     },
     {
       "type": "fieldset",
-      "title": "Accessories",
-      "description": "Choose which tiles and sensors appear in the Home app. Most are on by default; Honk only and Flash only are off — enable them only if your VIN supports those commands (check 'Supported commands:' in the Homebridge log on startup).",
+      "title": "Controls",
+      "description": "Which switches appear inside the Volvo Controls tile.",
       "expandable": true,
-      "expanded": true,
-      "items": ["showLock", "showClimate", "showEngine", "showHonkFlash", "showHonk", "showFlash", "showDoors", "showWindows", "showFuel", "showCharging", "showRange", "rangeStandalone", "showDiagnostics", "showLocation", "homeLatitude", "homeLongitude", "homeRadiusMeters"]
+      "expanded": false,
+      "items": ["showLock", "showClimate", "showEngine", "showHonkFlash", "showHonk", "showFlash"]
     },
     {
       "type": "fieldset",
-      "title": "Behaviour",
-      "items": ["tankCapacityLiters", "evLowChargeThreshold", "engineStartDuration", "pollInterval"]
+      "title": "Sensors",
+      "description": "Which contact sensor tiles appear in the Home app.",
+      "expandable": true,
+      "expanded": false,
+      "items": ["showDoors", "showWindows", "showDiagnostics", "showLeftOpen"]
+    },
+    {
+      "type": "fieldset",
+      "title": "Energy",
+      "description": "Fuel level, EV battery, and range sensors.",
+      "expandable": true,
+      "expanded": false,
+      "items": ["showFuel", "showCharging", "showRange", "rangeStandalone"]
+    },
+    {
+      "type": "fieldset",
+      "title": "Location",
+      "description": "Car at Home occupancy sensor. Requires your home coordinates.",
+      "expandable": true,
+      "expanded": false,
+      "items": ["showLocation", "homeLatitude", "homeLongitude", "homeRadiusMeters"]
+    },
+    {
+      "type": "fieldset",
+      "title": "Vehicle",
+      "description": "Specs specific to your car. Defaults match the XC90 2016 T8 PHEV.",
+      "expandable": true,
+      "expanded": false,
+      "items": ["tankCapacityLiters", "engineStartDuration", "serviceIntervalMonths", "serviceIntervalKm"]
+    },
+    {
+      "type": "fieldset",
+      "title": "Alerts",
+      "description": "Thresholds that trigger HomeKit notifications.",
+      "expandable": true,
+      "expanded": false,
+      "items": ["evLowChargeThreshold", "serviceAlertThreshold"]
     },
     {
       "type": "fieldset",
       "title": "Advanced",
+      "description": "Rarely needed. Change poll interval, enable the manual refresh switch, or turn on debug logging.",
       "expandable": true,
       "expanded": false,
-      "items": ["showRefresh", "debug"]
+      "items": ["pollInterval", "showRefresh", "debug"]
     }
   ]
 }

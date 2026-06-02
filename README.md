@@ -44,6 +44,7 @@ Control and monitor your car directly from the Apple Home app and Siri — lock/
 | **Tank Range km** | Light Sensor | Kilometres remaining on petrol tank — standalone tile or inside Energy tile |
 | **Volvo Diagnostics** | Contact + Leak Sensors | Summary alert tile + individual sensors for oil, coolant, brake fluid, washer fluid (Leak Sensor), service due, and all 4 tyres (Contact Sensor) |
 | **Car at Home** | Occupancy Sensor | Occupied when car is within configured home radius, Not Occupied when away |
+| **Left Open** | Contact Sensor | Alerts when car is locked but a door, window, sunroof, hood, or tailgate is still open. Sensor name updates to describe exactly what was left open. |
 
 All accessories update on a configurable poll interval (default: 30 minutes) and reflect the latest state from the Volvo backend.
 
@@ -172,6 +173,7 @@ You need to re-authenticate when:
 | **Show Range** | On | Km-to-empty for EV battery and petrol tank. Display style controlled by the Range view option below |
 | **Range view** | On (standalone) | **On**: EV Range km and Tank Range km appear as their own standalone room tiles. **Off**: range values appear as sub-sensors inside the Energy tile detail view |
 | **Show Diagnostics** | On | Alert tile that fires if any system warning is active, with individual sensors for each warning |
+| **Show Left Open sensor** | Off | Alerts when locked with something left open. Enable notifications for this sensor in the Home app. |
 
 ### Advanced
 
@@ -184,14 +186,21 @@ You need to re-authenticate when:
 | **Home longitude** | — | Decimal degrees longitude of your home. Right-click your home in Google Maps — the second number shown. |
 | **Home radius (metres)** | 200 | How close the car must be to count as home. Increase if the car parks on the street. |
 
-### Behaviour
+### Vehicle
 
 | Field | Default | Description |
 |---|---|---|
 | **Fuel tank capacity (litres)** | 70 | Used to calculate fuel %. Standard XC90 2016 tank is 70 L. |
-| **EV low charge alert threshold (%)** | 20 | HomeKit sends a low-battery notification when EV charge drops below this level. |
 | **Engine start duration (minutes)** | 15 | How long the engine runs when started remotely (max 15 min, enforced by Volvo). |
-| **Poll interval (seconds)** | 1800 | How often the plugin fetches vehicle state. Default is 30 minutes to stay within the 10,000 requests/day API limit. |
+| **Service interval (months)** | 12 | Used to calculate Service Due % in the Diagnostics tile. Default is 12 (annual). |
+| **Service interval (km)** | 30000 | Used alongside the months interval — whichever gives the lower % is shown. Common Volvo intervals: 20,000 / 25,000 / 30,000 km. |
+
+### Alerts
+
+| Field | Default | Description |
+|---|---|---|
+| **EV low charge alert threshold (%)** | 20 | HomeKit sends a low-battery notification when EV charge drops below this level. |
+| **Service alert threshold (%)** | 20 | Service Due sensor flips to "Change Filter" when service life drops below this %. Default 20% — roughly 2–3 months before a 12-month service. |
 
 ### Manual config.json
 
@@ -325,7 +334,7 @@ Fluid-related sensors use the **Leak Sensor** type (water-drop icon, "Leak Detec
 | **Coolant Level** | Leak Sensor | Low coolant warning from engine |
 | **Brake Fluid** | Leak Sensor | Low brake fluid level |
 | **Washer Fluid** | Leak Sensor | Low windscreen washer fluid |
-| **Service Due** | Contact Sensor | Volvo service warning is active |
+| **Service Due** | Filter Maintenance | Shows % of service life remaining. Flips to "Change Filter" when below the alert threshold or when Volvo's own service warning activates. |
 | **Tyre - Front Left** | Contact Sensor | TPMS warning on front left tyre |
 | **Tyre - Front Right** | Contact Sensor | TPMS warning on front right tyre |
 | **Tyre - Rear Left** | Contact Sensor | TPMS warning on rear left tyre |
@@ -359,6 +368,40 @@ An **Occupancy Sensor** tile that shows **Occupied** when the car is within your
 ```
 
 > **Note:** Volvo only updates the GPS position when the car is moving or the engine is on. If the car has been parked for a long time, the position reflects the last known location — which is accurate enough for home/away detection in practice.
+
+---
+
+### Left Open
+
+A **Contact Sensor** that alerts when the car is **locked** but at least one door, window, sunroof, hood, or tailgate is still open. Designed to catch the "I forgot to close the sunroof" scenario before you walk too far away.
+
+**How it works:**
+- Polls every cycle (same interval as all other accessories)
+- Evaluates: `locked = true` AND `any opening is open`
+- When triggered: sensor name updates to describe exactly what is open — e.g. `"Volvo: Door · Sunroof"`
+- The HomeKit notification reads: **"Volvo: Door · Sunroof is Open"** — no need to open any app
+- Alert fires **once** when the condition first becomes true, not on every poll
+- Clears automatically when the car is unlocked or all openings are closed
+
+**Label format:**
+
+| What's open | Sensor name |
+|---|---|
+| One door | `Volvo: Door` |
+| Multiple doors | `Volvo: Doors` |
+| One window | `Volvo: Window` |
+| Multiple windows | `Volvo: Windows` |
+| Sunroof | `Volvo: Sunroof` |
+| Hood | `Volvo: Hood` |
+| Tailgate | `Volvo: Tailgate` |
+| Combination | `Volvo: Doors · Sunroof` |
+
+**Setup:**
+1. Enable **Show Left Open sensor** in plugin settings (Sensors section)
+2. Restart Homebridge
+3. In the Home app, find the **Left Open** sensor → tap Settings → enable **Notifications**
+
+> Automations that reference this sensor work by UUID and remain functional even as the name changes dynamically. The automation display in the Home app will reflect the current name.
 
 ---
 

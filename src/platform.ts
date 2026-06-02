@@ -19,6 +19,7 @@ import { EnergyAccessory } from './accessories/energyAccessory';
 import { EVRangeAccessory, TankRangeAccessory } from './accessories/rangeAccessory';
 import { DiagnosticsAccessory } from './accessories/diagnosticsAccessory';
 import { LocationAccessory } from './accessories/locationAccessory';
+import { LeftOpenAccessory } from './accessories/leftOpenAccessory';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const { version: PLUGIN_VERSION } = require('../package.json') as { version: string };
@@ -50,6 +51,10 @@ export interface VolvoConfig extends PlatformConfig {
   homeLongitude?: number;
   homeRadiusMeters?: number;
   showRefresh?: boolean;
+  showLeftOpen?: boolean;
+  serviceIntervalMonths?: number;
+  serviceIntervalKm?: number;
+  serviceAlertThreshold?: number;
   tankCapacityLiters?: number;
   evLowChargeThreshold?: number;
   forceReauth?: boolean;
@@ -349,6 +354,12 @@ export class VolvoPlatform implements DynamicPlatformPlugin {
         name: 'Car at Home',
         Class: LocationAccessory,
         show: this.config.showLocation === true,
+      },
+      {
+        id: `${vin}-left-open`,
+        name: 'Left Open',
+        Class: LeftOpenAccessory,
+        show: this.config.showLeftOpen === true,
       },
     ];
 

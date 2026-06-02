@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-06-02
+
+### Added
+- **Left Open sensor** — opt-in ContactSensor that alerts when the car is locked but a door, window, sunroof, hood, or tailgate is still open. Sensor name updates dynamically to describe what was left open — e.g. `"Volvo: Door · Sunroof"` — so the HomeKit notification is fully self-contained. Enable via **Sensors → Show Left Open sensor**, then enable notifications for the sensor in the Home app.
+- **Service Due now uses FilterMaintenance** — replaced ContactSensor with a FilterMaintenance service showing % of service life remaining (`FilterLifeLevel`) and a "Change Filter" alert (`FilterChangeIndication`). Fires proactively when service life drops below a configurable threshold, before Volvo's own warning activates.
+- **`serviceIntervalMonths`** config (default 12) — months between services, used to calculate service life %
+- **`serviceIntervalKm`** config (default 30,000) — km between services; whichever metric gives the lower % is used (binding constraint)
+- **`serviceAlertThreshold`** config (default 20%) — Change Filter alert fires when service life drops below this level
+
+### Changed
+- **Plugin settings reorganised into 9 collapsible sections** — Required (always open), Authentication (open), Controls, Sensors, Energy, Location, Vehicle, Alerts, Advanced (all collapsed). Reduces visual clutter significantly.
+- Behaviour section split into **Vehicle** (tank capacity, engine duration, service intervals) and **Alerts** (EV low charge, service alert threshold)
+
 ## [1.1.6] - 2026-06-02
 
 ### Added
