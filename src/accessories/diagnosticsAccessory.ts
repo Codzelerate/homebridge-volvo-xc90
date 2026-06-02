@@ -67,6 +67,7 @@ export class DiagnosticsAccessory {
     ) || accessory.addService(Service.FilterMaintenance, 'Service Due', 'serviceWarning');
     serviceSvc.displayName = 'Service Due';
     serviceSvc.setCharacteristic(Characteristic.Name, 'Service Due');
+    serviceSvc.addOptionalCharacteristic(Characteristic.ConfiguredName);
     serviceSvc.setCharacteristic(Characteristic.ConfiguredName, 'Service Due');
     serviceSvc.addOptionalCharacteristic(Characteristic.FilterLifeLevel);
     serviceSvc.getCharacteristic(Characteristic.FilterChangeIndication)
