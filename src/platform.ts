@@ -290,7 +290,7 @@ export class VolvoPlatform implements DynamicPlatformPlugin {
     const vin = this.config.vin;
 
     // Migrate: unregister legacy single-purpose accessories that were merged into combined tiles
-    for (const legacyId of [`${vin}-engine`, `${vin}-charging`]) {
+    for (const legacyId of [`${vin}-engine`, `${vin}-charging`, `${vin}-service-due`]) {
       const legacyUuid = this.hbApi.hap.uuid.generate(legacyId);
       const legacy = this.accessories.find(a => a.UUID === legacyUuid);
       if (legacy) {
