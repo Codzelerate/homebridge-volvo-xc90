@@ -41,6 +41,7 @@ export class DoorsAccessory {
       platform.dbg(`Registered door sensor: ${door.label}`);
     }
 
+    platform.registerPoll(() => this.poll());
     this.poll();
     setInterval(() => this.poll(), opts.pollInterval);
   }

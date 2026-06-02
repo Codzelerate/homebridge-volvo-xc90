@@ -131,6 +131,7 @@ export class EnergyAccessory {
           : Characteristic.ContactSensorState.CONTACT_NOT_DETECTED);
     }
 
+    platform.registerPoll(() => this.poll());
     this.poll();
     setInterval(() => this.poll(), opts.pollInterval);
   }

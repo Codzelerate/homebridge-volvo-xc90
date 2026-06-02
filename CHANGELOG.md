@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.6] - 2026-06-02
+
+### Added
+- **Refresh switch** — opt-in momentary switch inside the Controls tile that triggers an immediate poll of all accessories in parallel. Useful for checking the latest state (charger status, door state, etc.) without waiting for the next scheduled poll. Enable via **Advanced → Show Refresh switch** in plugin settings. Off by default.
+
+### Changed
+- Platform now maintains a poll registry — each accessory registers its `poll()` function on startup so `refreshAll()` can fire them all via `Promise.allSettled` (one failure does not block others).
+
 ## [1.1.5] - 2026-06-01
 
 ### Changed

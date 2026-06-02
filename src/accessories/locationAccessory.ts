@@ -47,6 +47,7 @@ export class LocationAccessory {
       platform.log.warn('Location: homeLatitude and homeLongitude are not configured — Car at Home sensor will always show Not Occupied.');
     }
 
+    platform.registerPoll(() => this.poll());
     this.poll();
     setInterval(() => this.poll(), opts.pollInterval);
   }

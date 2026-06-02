@@ -36,7 +36,7 @@ Control and monitor your car directly from the Apple Home app and Siri — lock/
 | Tile | HomeKit type | What it does |
 |---|---|---|
 | **Volvo Lock** | Lock Mechanism | Lock and unlock your car |
-| **Volvo Controls** | Switch (up to 5) | Climate, Honk and Flash, Honk only, Flash only, Remote Start — all in one tile |
+| **Volvo Controls** | Switch (up to 6) | Climate, Honk and Flash, Honk only, Flash only, Remote Start, Refresh — all in one tile |
 | **Volvo Doors** | Contact Sensors | Summary tile + individual sensors for all 6 openings |
 | **Volvo Windows** | Contact Sensors | Summary tile + individual sensors for all 4 windows and sunroof |
 | **Volvo Energy** | Battery + Humidity + Contact | EV battery with charging state, EV charge %, fuel level %, and charger plug status |
@@ -172,6 +172,13 @@ You need to re-authenticate when:
 | **Show Range** | On | Km-to-empty for EV battery and petrol tank. Display style controlled by the Range view option below |
 | **Range view** | On (standalone) | **On**: EV Range km and Tank Range km appear as their own standalone room tiles. **Off**: range values appear as sub-sensors inside the Energy tile detail view |
 | **Show Diagnostics** | On | Alert tile that fires if any system warning is active, with individual sensors for each warning |
+
+### Advanced
+
+| Field | Default | Description |
+|---|---|---|
+| **Show Refresh switch** | Off | Adds a momentary Refresh switch to the Controls tile. Flipping it polls all accessories immediately — useful for checking charger status, door state, etc. without waiting for the next scheduled poll. |
+| **Debug logging** | Off | Logs every API request, response, and state change. Disable once everything is working. |
 | **Show Car at Home sensor** | Off | Occupancy sensor that shows Occupied when the car is within the home radius. Requires home coordinates below. |
 | **Home latitude** | — | Decimal degrees latitude of your home. Right-click your home in Google Maps — the first number shown. |
 | **Home longitude** | — | Decimal degrees longitude of your home. Right-click your home in Google Maps — the second number shown. |
@@ -217,6 +224,7 @@ You need to re-authenticate when:
       "evLowChargeThreshold": 20,
       "engineStartDuration": 15,
       "pollInterval": 1800,
+      "showRefresh": false,
       "debug": false
     }
   ]
@@ -240,6 +248,7 @@ A single tile containing up to five momentary or toggle switches, all visible in
 - **Honk** *(off by default)* — Momentary switch for horn only. Enable via `showHonk` after confirming your VIN supports the `HONK` command.
 - **Flash** *(off by default)* — Momentary switch for lights only. Enable via `showFlash` after confirming your VIN supports the `FLASH` command.
 - **Remote Start** — Start the engine remotely for the configured duration (max 15 minutes). Turns off automatically when the timer expires, or switch it off early to stop immediately.
+- **Refresh** *(off by default)* — Momentary switch that immediately polls all accessories in parallel. Resets to off after 1 second. Enable via `showRefresh` in Advanced settings.
 
 > To check which commands your VIN supports, look for the `Supported commands:` line in the Homebridge log on startup.
 

@@ -180,6 +180,12 @@
         "default": false,
         "description": "Momentary switch that flashes the lights only (no honk). Enable if your VIN supports the separate 'FLASH' command — check the 'Supported commands:' line in the Homebridge log on startup."
       },
+      "showRefresh": {
+        "title": "Show Refresh switch",
+        "type": "boolean",
+        "default": false,
+        "description": "Adds a momentary 'Refresh' switch to the Controls tile. Flipping it triggers an immediate poll of all accessories — useful for checking the latest charger status, door state, etc. without waiting for the next scheduled poll."
+      },
       "debug": {
         "title": "Debug logging",
         "type": "boolean",
@@ -220,7 +226,7 @@
       "title": "Advanced",
       "expandable": true,
       "expanded": false,
-      "items": ["debug"]
+      "items": ["showRefresh", "debug"]
     }
   ]
 }

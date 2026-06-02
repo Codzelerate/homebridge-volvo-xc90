@@ -39,6 +39,7 @@ export class WindowsAccessory {
       this.services.set(win.key, svc);
     }
 
+    platform.registerPoll(() => this.poll());
     this.poll();
     setInterval(() => this.poll(), opts.pollInterval);
   }

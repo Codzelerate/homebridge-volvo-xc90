@@ -49,6 +49,7 @@ export interface VolvoConfig extends PlatformConfig {
   homeLatitude?: number;
   homeLongitude?: number;
   homeRadiusMeters?: number;
+  showRefresh?: boolean;
   tankCapacityLiters?: number;
   evLowChargeThreshold?: number;
   forceReauth?: boolean;
@@ -72,6 +73,19 @@ export class VolvoPlatform implements DynamicPlatformPlugin {
   // Shared cache so LockAccessory and DoorsAccessory share one API call per cycle
   private doorsCache: { data: VehicleStatus; ts: number } | null = null;
   private doorsCacheInFlight: Promise<VehicleStatus> | null = null;
+
+  // Poll registry — accessories register here so the refresh switch can trigger all at once
+  private readonly pollRegistry: Array<() => Promise<void>> = [];
+
+  registerPoll(fn: () => Promise<void>): void {
+    this.pollRegistry.push(fn);
+  }
+
+  async refreshAll(): Promise<void> {
+    this.log.info('Manual refresh triggered — polling all accessories');
+    await Promise.allSettled(this.pollRegistry.map(fn => fn()));
+    this.log.info('Manual refresh complete');
+  }
 
   async getCachedDoorsAndLocks(): Promise<VehicleStatus> {
     if (this.doorsCache && Date.now() - this.doorsCache.ts < 5_000) {

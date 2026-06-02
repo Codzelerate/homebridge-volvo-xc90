@@ -8,6 +8,7 @@ export class ControlsAccessory {
   private honkService: ReturnType<PlatformAccessory['addService']> | null = null;
   private flashService: ReturnType<PlatformAccessory['addService']> | null = null;
   private honkFlashService: ReturnType<PlatformAccessory['addService']> | null = null;
+  private refreshService: ReturnType<PlatformAccessory['addService']> | null = null;
   private climateActive = false;
   private engineRunning = false;
 
@@ -135,6 +136,27 @@ export class ControlsAccessory {
         });
     } else {
       const s = accessory.getService('Honk and Flash');
+      if (s) accessory.removeService(s);
+    }
+
+    if (platform.config.showRefresh === true) {
+      this.refreshService = accessory.getService('Refresh')
+        || accessory.addService(Service.Switch, 'Refresh', 'refresh');
+      this.refreshService.addOptionalCharacteristic(Characteristic.ConfiguredName);
+      this.refreshService.setCharacteristic(Characteristic.ConfiguredName, 'Refresh');
+      this.refreshService.getCharacteristic(Characteristic.On)
+        .onGet(() => false)
+        .onSet(async (value: CharacteristicValue) => {
+          if (!value) return;
+          platform.log.info('Manual refresh triggered from HomeKit');
+          try {
+            await platform.refreshAll();
+          } finally {
+            setTimeout(() => this.refreshService!.updateCharacteristic(Characteristic.On, false), 1000);
+          }
+        });
+    } else {
+      const s = accessory.getService('Refresh');
       if (s) accessory.removeService(s);
     }
 

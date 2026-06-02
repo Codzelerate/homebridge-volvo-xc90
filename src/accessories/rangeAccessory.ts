@@ -43,6 +43,7 @@ class RangeAccessory {
         .onGet(() => Math.max(0.0001, this.rangeKm));
     }
 
+    platform.registerPoll(() => this.poll());
     this.poll();
     setInterval(() => this.poll(), opts.pollInterval);
   }

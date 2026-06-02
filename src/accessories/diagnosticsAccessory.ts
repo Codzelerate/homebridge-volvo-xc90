@@ -66,6 +66,7 @@ export class DiagnosticsAccessory {
       this.services.set(s.key, svc);
     }
 
+    platform.registerPoll(() => this.poll());
     this.poll();
     setInterval(() => this.poll(), opts.pollInterval);
   }
