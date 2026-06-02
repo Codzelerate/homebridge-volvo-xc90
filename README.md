@@ -42,7 +42,7 @@ Control and monitor your car directly from the Apple Home app and Siri — lock/
 | **Volvo Energy** | Battery + Humidity + Contact | EV battery with charging state, EV charge %, fuel level %, and charger plug status |
 | **EV Range km** | Temperature Sensor | Kilometres remaining on EV battery — standalone tile or inside Energy tile |
 | **Tank Range km** | Light Sensor | Kilometres remaining on petrol tank — standalone tile or inside Energy tile |
-| **Volvo Diagnostics** | Contact + Leak Sensors | Summary alert tile + individual sensors for oil, coolant, brake fluid, washer fluid (Leak Sensor), service due, and all 4 tyres (Contact Sensor) |
+| **Volvo Diagnostics** | Contact + Leak Sensors | Summary alert tile (**faults only** — oil, coolant, brake fluid, washer fluid, tyres) + Service Due as a separate independent sensor |
 | **Car at Home** | Occupancy Sensor | Occupied when car is within configured home radius, Not Occupied when away |
 | **Left Open** | Contact Sensor | Alerts when car is locked but a door, window, sunroof, hood, or tailgate is still open. Sensor name updates to describe exactly what was left open. |
 
@@ -200,7 +200,7 @@ You need to re-authenticate when:
 | Field | Default | Description |
 |---|---|---|
 | **EV low charge alert threshold (%)** | 20 | HomeKit sends a low-battery notification when EV charge drops below this level. |
-| **Service alert threshold (%)** | 20 | Service Due sensor flips to "Change Filter" when service life drops below this %. Default 20% — roughly 2–3 months before a 12-month service. |
+| **Service alert threshold (%)** | 20 | Service Due sensor flips to Open when service life drops below this %. Default 20% — roughly 2–3 months before a 12-month service. |
 
 ### Manual config.json
 
@@ -324,25 +324,29 @@ The unit labels (°C, lux) are a HomeKit limitation — no native "km" sensor ty
 ---
 
 ### Volvo Diagnostics
-A **Contact Sensor** summary tile that shows **Open** (alert) if any vehicle system has a warning — **Closed** when all systems are OK. Tap the tile to see which specific sensor triggered.
+The **"All Systems OK"** summary tile shows **Open** only when an actual fault is detected — **Closed** when no faults are present. Tap the tile to see which specific sensor triggered.
 
-Fluid-related sensors use the **Leak Sensor** type (water-drop icon, "Leak Detected" state) for accurate semantics. Non-fluid warnings use **Contact Sensor**.
+**Service Due does not affect the summary.** A scheduled maintenance reminder and a system fault are different things. Keeping them separate means "All Systems OK: Open" always means something genuinely needs attention right now.
 
-| Sensor | Type | Triggers when |
-|---|---|---|
-| **Oil Level** | Leak Sensor | Low oil warning from engine |
-| **Coolant Level** | Leak Sensor | Low coolant warning from engine |
-| **Brake Fluid** | Leak Sensor | Low brake fluid level |
-| **Washer Fluid** | Leak Sensor | Low windscreen washer fluid |
-| **Service Due** | Filter Maintenance | Shows % of service life remaining. Flips to "Change Filter" when below the alert threshold or when Volvo's own service warning activates. |
-| **Tyre - Front Left** | Contact Sensor | TPMS warning on front left tyre |
-| **Tyre - Front Right** | Contact Sensor | TPMS warning on front right tyre |
-| **Tyre - Rear Left** | Contact Sensor | TPMS warning on rear left tyre |
-| **Tyre - Rear Right** | Contact Sensor | TPMS warning on rear right tyre |
+Fluid sensors use **Leak Sensor** (water-drop icon). Non-fluid faults use **Contact Sensor**.
+
+| Sensor | Type | Triggers when | Affects summary |
+|---|---|---|---|
+| **Oil Level** | Leak Sensor | Low oil warning from engine | ✅ Yes |
+| **Coolant Level** | Leak Sensor | Low coolant warning from engine | ✅ Yes |
+| **Brake Fluid** | Leak Sensor | Low brake fluid level | ✅ Yes |
+| **Washer Fluid** | Leak Sensor | Low windscreen washer fluid | ✅ Yes |
+| **Service Due** | Contact Sensor | Below service alert threshold % or Volvo warning active | ❌ No — independent |
+| **Tyre - Front Left** | Contact Sensor | TPMS warning | ✅ Yes |
+| **Tyre - Front Right** | Contact Sensor | TPMS warning | ✅ Yes |
+| **Tyre - Rear Left** | Contact Sensor | TPMS warning | ✅ Yes |
+| **Tyre - Rear Right** | Contact Sensor | TPMS warning | ✅ Yes |
+
+Enable notifications independently: **All Systems OK** for genuine faults, **Service Due** for scheduled maintenance. They are completely independent.
 
 The Homebridge log prints the service interval on every poll:
 ```
-[Volvo XC90] Diagnostics: All OK | Service in 1 month(s) / 21151 km
+[Volvo XC90] Diagnostics: All OK | Service in 1 month(s) / 21128 km (8% remaining)
 ```
 
 ---

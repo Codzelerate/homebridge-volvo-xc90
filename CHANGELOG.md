@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.5] - 2026-06-02
+
+### Changed
+- **Service Due no longer affects "All Systems OK" summary** — a scheduled maintenance reminder and an actual system fault are semantically different. The summary now only triggers for genuine faults (fluid warnings, tyre warnings). Service Due is a separate independent ContactSensor — enable notifications on it independently.
+- Service Due reverted from FilterMaintenance back to ContactSensor (embedded in Diagnostics tile). The standalone FilterMaintenance accessory showed "Not Supported" in the Home app. ContactSensor shows cleanly in the Diagnostics detail view and supports independent notifications.
+- Removed standalone `ServiceDueAccessory` — it was broken ("Not Supported" in Home app).
+
 ## [1.2.4] - 2026-06-02
 
 ### Changed

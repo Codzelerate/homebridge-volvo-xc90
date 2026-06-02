@@ -20,7 +20,6 @@ import { EVRangeAccessory, TankRangeAccessory } from './accessories/rangeAccesso
 import { DiagnosticsAccessory } from './accessories/diagnosticsAccessory';
 import { LocationAccessory } from './accessories/locationAccessory';
 import { LeftOpenAccessory } from './accessories/leftOpenAccessory';
-import { ServiceDueAccessory } from './accessories/serviceDueAccessory';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const { version: PLUGIN_VERSION } = require('../package.json') as { version: string };
@@ -330,12 +329,6 @@ export class VolvoPlatform implements DynamicPlatformPlugin {
         id: `${vin}-diagnostics`,
         name: 'Volvo Diagnostics',
         Class: DiagnosticsAccessory,
-        show: this.config.showDiagnostics !== false,
-      },
-      {
-        id: `${vin}-service-due`,
-        name: 'Service Due',
-        Class: ServiceDueAccessory,
         show: this.config.showDiagnostics !== false,
       },
       {
