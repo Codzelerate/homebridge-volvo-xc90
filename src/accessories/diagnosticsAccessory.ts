@@ -27,8 +27,9 @@ type ServiceMap = Map<SensorKey | 'summary' | 'serviceWarning', ReturnType<Platf
 export class DiagnosticsAccessory {
   private services: ServiceMap = new Map();
   private lastWarningState: boolean | null = null;
-  private filterLifeLevel = 100;
-  private filterChangeNeeded = false;
+  // Service warning state — kept here so the summary tile reflects service due status
+  // even though the FilterMaintenance display is handled by ServiceDueAccessory
+  private serviceChangeNeeded = false;
   private readonly serviceIntervalMonths: number;
   private readonly serviceIntervalKm: number;
   private readonly serviceAlertThreshold: number;
@@ -54,31 +55,16 @@ export class DiagnosticsAccessory {
     summary.setCharacteristic(Characteristic.ConfiguredName, 'All Systems OK');
     this.services.set('summary', summary);
 
-    // Service Due — FilterMaintenance
-    // Migrate from old ContactSensor if present
-    const legacyServiceContact = accessory.services.find(
-      s => s.subtype === 'serviceWarning' && s.UUID === Service.ContactSensor.UUID,
-    );
-    if (legacyServiceContact) {
-      platform.log.info('Migrating Service Due to FilterMaintenance');
-      accessory.removeService(legacyServiceContact);
+    // Remove any legacy ServiceWarning sub-services from this accessory
+    // (ContactSensor from pre-v1.2.0, FilterMaintenance from v1.2.0–v1.2.3)
+    // Service Due is now a standalone accessory (ServiceDueAccessory)
+    for (const uuid of [Service.ContactSensor.UUID, Service.FilterMaintenance.UUID]) {
+      const legacy = accessory.services.find(s => s.subtype === 'serviceWarning' && s.UUID === uuid);
+      if (legacy) {
+        platform.log.info('Removing Service Due sub-service — now a standalone tile');
+        accessory.removeService(legacy);
+      }
     }
-
-    const serviceSvc = accessory.services.find(
-      s => s.subtype === 'serviceWarning' && s.UUID === Service.FilterMaintenance.UUID,
-    ) || accessory.addService(Service.FilterMaintenance, 'Service Due', 'serviceWarning');
-    serviceSvc.displayName = 'Service Due';
-    serviceSvc.setCharacteristic(Characteristic.Name, 'Service Due');
-    serviceSvc.addOptionalCharacteristic(Characteristic.ConfiguredName);
-    serviceSvc.setCharacteristic(Characteristic.ConfiguredName, 'Service Due');
-    serviceSvc.addOptionalCharacteristic(Characteristic.FilterLifeLevel);
-    serviceSvc.getCharacteristic(Characteristic.FilterChangeIndication)
-      .onGet(() => this.filterChangeNeeded
-        ? Characteristic.FilterChangeIndication.CHANGE_FILTER
-        : Characteristic.FilterChangeIndication.FILTER_OK);
-    serviceSvc.getCharacteristic(Characteristic.FilterLifeLevel)
-      .onGet(() => this.filterLifeLevel);
-    this.services.set('serviceWarning', serviceSvc);
 
     // Fluid (LeakSensor) and Tyre (ContactSensor) sensors
     for (const s of SENSORS) {
@@ -128,26 +114,14 @@ export class DiagnosticsAccessory {
       const diag = await this.platform.api.getDiagnostics();
       const { Characteristic } = this.platform;
 
-      // --- Service Due (FilterMaintenance) ---
-      this.filterLifeLevel   = this.calcFilterLifeLevel(diag.timeToService, diag.distanceToService);
-      const apiWarning       = isWarning(diag.serviceWarning);
-      this.filterChangeNeeded = apiWarning || this.filterLifeLevel < this.serviceAlertThreshold;
-
-      const serviceSvc = this.services.get('serviceWarning');
-      if (serviceSvc) {
-        serviceSvc.updateCharacteristic(Characteristic.FilterLifeLevel, this.filterLifeLevel);
-        serviceSvc.updateCharacteristic(
-          Characteristic.FilterChangeIndication,
-          this.filterChangeNeeded
-            ? Characteristic.FilterChangeIndication.CHANGE_FILTER
-            : Characteristic.FilterChangeIndication.FILTER_OK,
-        );
-        this.platform.dbg(
-          `Service: ${this.filterLifeLevel}% life remaining` +
-          ` (${diag.timeToService ?? '?'} month(s) / ${diag.distanceToService ?? '?'} km)` +
-          ` | alert: ${this.filterChangeNeeded}`,
-        );
-      }
+      // --- Service Due state (drives summary only — display handled by ServiceDueAccessory) ---
+      const filterLifeLevel = this.calcFilterLifeLevel(diag.timeToService, diag.distanceToService);
+      this.serviceChangeNeeded = isWarning(diag.serviceWarning) || filterLifeLevel < this.serviceAlertThreshold;
+      this.platform.dbg(
+        `Service: ${filterLifeLevel}% remaining` +
+        ` (${diag.timeToService ?? '?'} month(s) / ${diag.distanceToService ?? '?'} km)` +
+        ` | ${this.serviceChangeNeeded ? 'CHANGE FILTER' : 'OK'}`,
+      );
 
       // --- Fluid and Tyre sensors ---
       const warningMap: Record<SensorKey, boolean> = {
@@ -185,7 +159,7 @@ export class DiagnosticsAccessory {
       }
 
       // --- Summary tile ---
-      const anyWarning = Object.values(warningMap).some(Boolean) || this.filterChangeNeeded;
+      const anyWarning = Object.values(warningMap).some(Boolean) || this.serviceChangeNeeded;
       const summary = this.services.get('summary');
       if (summary) {
         summary.updateCharacteristic(
@@ -197,7 +171,7 @@ export class DiagnosticsAccessory {
       }
 
       // Log on state change only
-      const serviceInfo = `Service in ${diag.timeToService ?? '?'} month(s) / ${diag.distanceToService ?? '?'} km (${this.filterLifeLevel}% remaining)`;
+      const serviceInfo = `Service in ${diag.timeToService ?? '?'} month(s) / ${diag.distanceToService ?? '?'} km (${filterLifeLevel}% remaining)`;
       if (anyWarning !== this.lastWarningState) {
         this.platform.log.info(`Diagnostics: ${anyWarning ? 'WARNING ACTIVE' : 'All OK'} | ${serviceInfo}`);
         this.lastWarningState = anyWarning;
