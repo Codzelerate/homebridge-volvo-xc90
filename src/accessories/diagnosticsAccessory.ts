@@ -27,6 +27,8 @@ type ServiceMap = Map<SensorKey | 'summary' | 'serviceWarning', ReturnType<Platf
 export class DiagnosticsAccessory {
   private services: ServiceMap = new Map();
   private lastWarningState: boolean | null = null;
+  private filterLifeLevel = 100;
+  private filterChangeNeeded = false;
   private readonly serviceIntervalMonths: number;
   private readonly serviceIntervalKm: number;
   private readonly serviceAlertThreshold: number;
@@ -71,9 +73,11 @@ export class DiagnosticsAccessory {
     serviceSvc.setCharacteristic(Characteristic.ConfiguredName, 'Service Due');
     serviceSvc.addOptionalCharacteristic(Characteristic.FilterLifeLevel);
     serviceSvc.getCharacteristic(Characteristic.FilterChangeIndication)
-      .onGet(() => Characteristic.FilterChangeIndication.FILTER_OK);
+      .onGet(() => this.filterChangeNeeded
+        ? Characteristic.FilterChangeIndication.CHANGE_FILTER
+        : Characteristic.FilterChangeIndication.FILTER_OK);
     serviceSvc.getCharacteristic(Characteristic.FilterLifeLevel)
-      .onGet(() => 100);
+      .onGet(() => this.filterLifeLevel);
     this.services.set('serviceWarning', serviceSvc);
 
     // Fluid (LeakSensor) and Tyre (ContactSensor) sensors
@@ -125,23 +129,23 @@ export class DiagnosticsAccessory {
       const { Characteristic } = this.platform;
 
       // --- Service Due (FilterMaintenance) ---
-      const filterLifeLevel = this.calcFilterLifeLevel(diag.timeToService, diag.distanceToService);
-      const apiWarning      = isWarning(diag.serviceWarning);
-      const alertThreshold  = apiWarning || filterLifeLevel < this.serviceAlertThreshold;
+      this.filterLifeLevel   = this.calcFilterLifeLevel(diag.timeToService, diag.distanceToService);
+      const apiWarning       = isWarning(diag.serviceWarning);
+      this.filterChangeNeeded = apiWarning || this.filterLifeLevel < this.serviceAlertThreshold;
 
       const serviceSvc = this.services.get('serviceWarning');
       if (serviceSvc) {
-        serviceSvc.updateCharacteristic(Characteristic.FilterLifeLevel, filterLifeLevel);
+        serviceSvc.updateCharacteristic(Characteristic.FilterLifeLevel, this.filterLifeLevel);
         serviceSvc.updateCharacteristic(
           Characteristic.FilterChangeIndication,
-          alertThreshold
+          this.filterChangeNeeded
             ? Characteristic.FilterChangeIndication.CHANGE_FILTER
             : Characteristic.FilterChangeIndication.FILTER_OK,
         );
         this.platform.dbg(
-          `Service: ${filterLifeLevel}% life remaining` +
+          `Service: ${this.filterLifeLevel}% life remaining` +
           ` (${diag.timeToService ?? '?'} month(s) / ${diag.distanceToService ?? '?'} km)` +
-          ` | alert: ${alertThreshold}`,
+          ` | alert: ${this.filterChangeNeeded}`,
         );
       }
 
@@ -181,7 +185,7 @@ export class DiagnosticsAccessory {
       }
 
       // --- Summary tile ---
-      const anyWarning = Object.values(warningMap).some(Boolean) || alertThreshold;
+      const anyWarning = Object.values(warningMap).some(Boolean) || this.filterChangeNeeded;
       const summary = this.services.get('summary');
       if (summary) {
         summary.updateCharacteristic(
@@ -193,7 +197,7 @@ export class DiagnosticsAccessory {
       }
 
       // Log on state change only
-      const serviceInfo = `Service in ${diag.timeToService ?? '?'} month(s) / ${diag.distanceToService ?? '?'} km (${filterLifeLevel}% remaining)`;
+      const serviceInfo = `Service in ${diag.timeToService ?? '?'} month(s) / ${diag.distanceToService ?? '?'} km (${this.filterLifeLevel}% remaining)`;
       if (anyWarning !== this.lastWarningState) {
         this.platform.log.info(`Diagnostics: ${anyWarning ? 'WARNING ACTIVE' : 'All OK'} | ${serviceInfo}`);
         this.lastWarningState = anyWarning;
