@@ -253,7 +253,15 @@
       "description": "Which contact sensor tiles appear in the Home app.",
       "expandable": true,
       "expanded": false,
-      "items": ["showDoors", "showWindows", "showDiagnostics", "showLeftOpen"]
+      "items": ["showDoors", "showWindows", "showLeftOpen"]
+    },
+    {
+      "type": "fieldset",
+      "title": "Diagnostics",
+      "description": "Vehicle health panel: oil, coolant, brake fluid, washer fluid, service due, and all 4 tyres. This is the most API-intensive feature (4 endpoints per poll). Turn it off to roughly halve daily API usage if you don't need it.",
+      "expandable": true,
+      "expanded": false,
+      "items": ["showDiagnostics"]
     },
     {
       "type": "fieldset",

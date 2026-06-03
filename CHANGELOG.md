@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.8] - 2026-06-02
+
+### Changed
+- **Diagnostics promoted to its own config section** — previously the `Show Diagnostics` toggle was buried inside the Sensors section. It now has a dedicated "Diagnostics" category in plugin settings, since it is the most API-intensive feature (4 endpoints per poll) and the clearest single lever for reducing daily API usage.
+
+### Documentation
+- README API usage section expanded: quotes Volvo's current 10,000 requests/day allowance (flagged as subject to change), a poll-interval reference table with daily call estimates and % of limit, and a comparison of calls saved by disabling Diagnostics vs keeping all features on.
+
 ## [1.2.7] - 2026-06-02
 
 ### Changed

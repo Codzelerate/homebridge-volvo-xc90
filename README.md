@@ -172,8 +172,8 @@ You need to re-authenticate when:
 | **Show EV Battery** | On | EV charge level, charging state, and charger plug status inside the Energy tile (T8 PHEV only) |
 | **Show Range** | On | Km-to-empty for EV battery and petrol tank. Display style controlled by the Range view option below |
 | **Range view** | On (standalone) | **On**: EV Range km and Tank Range km appear as their own standalone room tiles. **Off**: range values appear as sub-sensors inside the Energy tile detail view |
-| **Show Diagnostics** | On | Alert tile that fires if any system warning is active, with individual sensors for each warning |
 | **Show Left Open sensor** | Off | Alerts when locked with something left open. Enable notifications for this sensor in the Home app. |
+| **Show Diagnostics** | On | Vehicle health panel (own config section). The most API-intensive feature — polls 4 endpoints per cycle. Turn off to roughly halve daily API usage. See [API usage](#api-usage). |
 
 ### Advanced
 
@@ -456,13 +456,42 @@ Disable debug once everything is working to keep your logs clean.
 
 ## API usage
 
-The Volvo API allows 10,000 requests per day. Each poll cycle fetches the latest vehicle state across several endpoints. To stay well within the limit, the plugin:
+> **Daily limit:** Volvo's developer platform currently allows **10,000 requests per day** per application. This figure is set by Volvo and is **subject to change** — always check the current quota on the [Volvo Developer Portal](https://developer.volvocars.com) before tuning a low poll interval. All numbers below assume this 10,000/day allowance.
+
+Each poll cycle fetches the latest vehicle state across several endpoints. To stay well within the limit, the plugin:
 
 - **Deduplicates shared endpoints** — accessories that need the same data (e.g. Doors and Left Open both need door/lock state; the two range tiles both need statistics) share a single API call per cycle rather than each making their own.
 - **Uses an adaptive in-cycle cache** — the dedup window scales with your poll interval (10%, with a 5-second floor) and can never carry data across cycles, so every poll fetches fresh state.
 - **Always fetches fresh on manual refresh** — the Refresh switch clears the cache first, so it never returns stale data.
 
-At the default 30-minute interval the plugin uses roughly 500 requests per day. Even at an aggressive 150-second interval it stays around 5,800 — comfortably under the limit.
+### Choosing a poll interval
+
+With **all features enabled**, each poll cycle makes **10 API calls**. Token refreshes add roughly 48 calls per day on top.
+
+| Interval | Calls/day (all features) | % of 10,000 limit |
+|---|---|---|
+| 1800s (30 min, default) | ~530 | 5% |
+| 300s (5 min) | ~2,930 | 29% |
+| 150s | ~5,810 | 58% |
+| 120s | ~7,250 | 72% |
+| ~87s | ~9,980 | ~100% (hard floor — avoid) |
+
+**Recommended minimum: 120s** with all features on, which leaves comfortable headroom for token refreshes, transient retries, and manual refreshes (each press = 10 calls).
+
+### Saving calls by disabling Diagnostics (informational)
+
+The **Diagnostics** category is by far the heaviest feature — it polls 4 separate endpoints (`/engine`, `/brakes`, `/diagnostics`, `/tyres`) every cycle. Turning it off (**Diagnostics → Show Diagnostics**) drops each cycle from 10 calls to 6:
+
+| Interval | All features (10/cycle) | Diagnostics off (6/cycle) | Saved/day |
+|---|---|---|---|
+| 1800s (30 min) | ~530 | ~338 | ~192 |
+| 300s (5 min) | ~2,930 | ~1,776 | ~1,154 |
+| 150s | ~5,810 | ~3,506 | ~2,304 |
+| 120s | ~7,250 | ~4,370 | ~2,880 |
+
+With Diagnostics off, the safe minimum interval drops from ~120s to roughly **65s**. This is purely informational — keep Diagnostics on if you want vehicle health monitoring; the default 30-minute interval is well within budget either way.
+
+> The Controls switches (Climate, Remote Start, Honk, Flash, Refresh) never poll — they only make an API call when you press them, so they cost nothing in the daily budget.
 
 ---
 
