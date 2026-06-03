@@ -47,7 +47,7 @@ export class WindowsAccessory {
 
   private async poll(): Promise<void> {
     try {
-      const windows = await this.platform.api.getWindows();
+      const windows = await this.platform.getCachedWindows();
       const { Characteristic } = this.platform;
 
       const anyOpen = Object.values(windows).some(v => v === 'OPEN');

@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.7] - 2026-06-02
+
+### Changed
+- **API call deduplication** — the `/windows` and `/statistics` endpoints were each being fetched twice per poll cycle (Windows + Left Open share windows; both range tiles share statistics). A shared in-cycle cache now collapses these to one call each: 12 → 10 calls per cycle, roughly 1,150 fewer API calls per day at a 150s interval.
+- The cache uses in-flight request deduplication (joins concurrent requests for the same endpoint), an adaptive TTL (10% of the poll interval, floored at 5s and capped at half the interval so it can never survive into the next cycle), a generation counter and identity guard so a manual refresh always fetches genuinely fresh data. No staleness risk on regular polls or manual refresh.
+
 ## [1.2.6] - 2026-06-02
 
 ### Fixed

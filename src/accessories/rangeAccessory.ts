@@ -51,7 +51,7 @@ class RangeAccessory {
   private async poll(): Promise<void> {
     const { Characteristic } = this.platform;
     try {
-      const stats = await this.platform.api.getStatistics();
+      const stats = await this.platform.getCachedStatistics();
       const km = this.type === 'ev'
         ? stats.distanceToEmptyBattery
         : stats.distanceToEmptyTank;

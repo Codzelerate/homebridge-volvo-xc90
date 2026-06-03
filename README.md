@@ -454,6 +454,18 @@ Disable debug once everything is working to keep your logs clean.
 
 ---
 
+## API usage
+
+The Volvo API allows 10,000 requests per day. Each poll cycle fetches the latest vehicle state across several endpoints. To stay well within the limit, the plugin:
+
+- **Deduplicates shared endpoints** — accessories that need the same data (e.g. Doors and Left Open both need door/lock state; the two range tiles both need statistics) share a single API call per cycle rather than each making their own.
+- **Uses an adaptive in-cycle cache** — the dedup window scales with your poll interval (10%, with a 5-second floor) and can never carry data across cycles, so every poll fetches fresh state.
+- **Always fetches fresh on manual refresh** — the Refresh switch clears the cache first, so it never returns stale data.
+
+At the default 30-minute interval the plugin uses roughly 500 requests per day. Even at an aggressive 150-second interval it stays around 5,800 — comfortably under the limit.
+
+---
+
 ## Troubleshooting
 
 **Plugin doesn't appear in the Home app after install**

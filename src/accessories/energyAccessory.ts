@@ -209,7 +209,7 @@ export class EnergyAccessory {
     // Range poll — only in combined (non-standalone) mode
     if (this.tankRangeService || this.evRangeService) {
       try {
-        const stats = await this.platform.api.getStatistics();
+        const stats = await this.platform.getCachedStatistics();
         if (this.tankRangeService && stats.distanceToEmptyTank !== undefined) {
           this.tankRange = stats.distanceToEmptyTank;
           this.tankRangeService.updateCharacteristic(Characteristic.CurrentAmbientLightLevel, Math.max(0.0001, this.tankRange));

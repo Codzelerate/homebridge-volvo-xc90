@@ -78,7 +78,7 @@ export class LeftOpenAccessory {
     try {
       const [status, windows] = await Promise.all([
         this.platform.getCachedDoorsAndLocks(),
-        this.platform.api.getWindows(),
+        this.platform.getCachedWindows(),
       ]);
 
       if (!status.doors) return;

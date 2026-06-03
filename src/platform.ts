@@ -75,9 +75,74 @@ export class VolvoPlatform implements DynamicPlatformPlugin {
   public readonly config: VolvoConfig;
   private readonly storageFile: string;
 
-  // Shared cache so LockAccessory and DoorsAccessory share one API call per cycle
-  private doorsCache: { data: VehicleStatus; ts: number } | null = null;
-  private doorsCacheInFlight: Promise<VehicleStatus> | null = null;
+  // Generic in-cycle cache with in-flight deduplication.
+  //
+  // Purpose: collapse duplicate API calls that fire within the SAME poll cycle.
+  // It must NEVER serve data across poll cycles — each 150s poll, and every manual
+  // refresh, gets genuinely fresh data. Two guarantees enforce this:
+  //
+  //   1. Adaptive TTL — capped at half the poll interval, so the cache is always
+  //      expired by the time the next cycle starts (even on a hand-edited low interval).
+  //   2. Manual refresh calls invalidateCache() first, clearing everything so the
+  //      Refresh switch always fetches fresh and never joins a pre-refresh request.
+  //
+  // The in-flight map is the primary deduper: accessories poll in the same macrotask
+  // batch, so the first to request an endpoint starts the fetch and the rest join the
+  // same promise. The TTL store is a secondary safety net for slight timing drift.
+  private readonly cacheStore = new Map<string, { data: unknown; ts: number }>();
+  private readonly cacheInFlight = new Map<string, Promise<unknown>>();
+  // Incremented on every invalidateCache(). A fetch only writes its result to the
+  // store if the generation is unchanged since it started — so a request that began
+  // before a manual refresh can never overwrite fresher post-refresh data.
+  private cacheGeneration = 0;
+
+  private get cacheTtlMs(): number {
+    const pollMs = (this.config.pollInterval ?? 1800) * 1000;
+    // Scale the dedup window with the poll interval (10%), with a 5s floor for short
+    // intervals and a half-interval ceiling so the cache can NEVER survive into the
+    // next poll cycle — guaranteeing every regular poll fetches fresh data.
+    const tenPercent = Math.floor(pollMs * 0.10);
+    const floored    = Math.max(tenPercent, 5_000);
+    return Math.min(floored, Math.floor(pollMs / 2));
+  }
+
+  getCached<T>(key: string, fetcher: () => Promise<T>): Promise<T> {
+    const cached = this.cacheStore.get(key);
+    if (cached && Date.now() - cached.ts < this.cacheTtlMs) {
+      this.dbg(`cache[${key}]: hit`);
+      return Promise.resolve(cached.data as T);
+    }
+    const inFlight = this.cacheInFlight.get(key);
+    if (inFlight) {
+      this.dbg(`cache[${key}]: joining in-flight request`);
+      return inFlight as Promise<T>;
+    }
+    const generation = this.cacheGeneration;
+    const promise = fetcher()
+      .then(data => {
+        // Only write to the store if no invalidation happened since this fetch began —
+        // discards stale data from a request that started before a manual refresh.
+        if (generation === this.cacheGeneration) {
+          this.cacheStore.set(key, { data, ts: Date.now() });
+        }
+        // Identity guard: only clear if we are still the owning request for this key.
+        if (this.cacheInFlight.get(key) === promise) this.cacheInFlight.delete(key);
+        return data;
+      })
+      .catch(err => {
+        if (this.cacheInFlight.get(key) === promise) this.cacheInFlight.delete(key);
+        throw err;
+      });
+    this.cacheInFlight.set(key, promise);
+    return promise;
+  }
+
+  /** Wipe all cached and in-flight data so the next fetch is guaranteed fresh. */
+  invalidateCache(): void {
+    this.cacheGeneration++;
+    this.cacheStore.clear();
+    this.cacheInFlight.clear();
+  }
 
   // Poll registry — accessories register here so the refresh switch can trigger all at once
   private readonly pollRegistry: Array<() => Promise<void>> = [];
@@ -88,30 +153,23 @@ export class VolvoPlatform implements DynamicPlatformPlugin {
 
   async refreshAll(): Promise<void> {
     this.log.info('Manual refresh triggered — polling all accessories');
+    // Clear everything so the manual refresh fetches genuinely fresh data and never
+    // joins an in-flight request that started before the user pressed Refresh.
+    this.invalidateCache();
     await Promise.allSettled(this.pollRegistry.map(fn => fn()));
     this.log.info('Manual refresh complete');
   }
 
-  async getCachedDoorsAndLocks(): Promise<VehicleStatus> {
-    if (this.doorsCache && Date.now() - this.doorsCache.ts < 5_000) {
-      this.dbg('getCachedDoorsAndLocks: returning cached result');
-      return this.doorsCache.data;
-    }
-    if (this.doorsCacheInFlight) {
-      this.dbg('getCachedDoorsAndLocks: joining in-flight request');
-      return this.doorsCacheInFlight;
-    }
-    this.doorsCacheInFlight = this.api.getDoorsAndLocks()
-      .then(data => {
-        this.doorsCache = { data, ts: Date.now() };
-        this.doorsCacheInFlight = null;
-        return data;
-      })
-      .catch(err => {
-        this.doorsCacheInFlight = null;
-        throw err;
-      });
-    return this.doorsCacheInFlight;
+  getCachedDoorsAndLocks(): Promise<VehicleStatus> {
+    return this.getCached('doors', () => this.api.getDoorsAndLocks());
+  }
+
+  getCachedWindows(): Promise<Record<string, string>> {
+    return this.getCached('windows', () => this.api.getWindows());
+  }
+
+  getCachedStatistics(): Promise<{ distanceToEmptyTank?: number; distanceToEmptyBattery?: number }> {
+    return this.getCached('statistics', () => this.api.getStatistics());
   }
 
   constructor(
