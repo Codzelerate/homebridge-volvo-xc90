@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.9] - 2026-06-03
+
+### Documentation
+- Added Home app screenshots to the README — hero shot, Controls tile, Energy tile, Diagnostics fluids, and the full sensor grid. Images are served from GitHub raw URLs so they render on both GitHub and npm.
+
+### Changed
+- Added a `files` whitelist to package.json (`dist`, `config.schema.json`) so the npm package no longer ships source, docs, images, or test scripts — package size dropped to ~49 kB.
+- `build` script now cleans `dist/` first (`rm -rf dist && tsc`), removing stale compiled output from accessories that were merged or removed in earlier versions.
+
 ## [1.2.8] - 2026-06-02
 
 ### Changed

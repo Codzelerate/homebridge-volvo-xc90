@@ -3,3 +3,5 @@ dist/
 *.js.map
 .env
 scripts/
+
+.DS_Store

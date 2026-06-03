@@ -9,6 +9,10 @@ A [Homebridge](https://homebridge.io) plugin that integrates your **Volvo XC90 2
 
 Control and monitor your car directly from the Apple Home app and Siri — lock/unlock, climate pre-conditioning, remote engine start, honk and flash, door and window sensors, fuel level, EV battery, km-to-empty range, diagnostics, and more (T8 PHEV).
 
+<p align="center">
+  <img src="https://raw.githubusercontent.com/Codzelerate/homebridge-volvo-xc90/main/docs/images/home-view.png" alt="Volvo room in the Apple Home app showing lock, climate, remote start, honk and flash controls" width="320">
+</p>
+
 ---
 
 ## Contents
@@ -47,6 +51,10 @@ Control and monitor your car directly from the Apple Home app and Siri — lock/
 | **Left Open** | Contact Sensor | Alerts when car is locked but a door, window, sunroof, hood, or tailgate is still open. Sensor name updates to describe exactly what was left open. |
 
 All accessories update on a configurable poll interval (default: 30 minutes) and reflect the latest state from the Volvo backend.
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/Codzelerate/homebridge-volvo-xc90/main/docs/images/sensors.png" alt="Door, window, tyre, charger, service due, and left open contact sensors in the Home app" width="320">
+</p>
 
 ---
 
@@ -250,7 +258,12 @@ A **Lock Mechanism** tile. Tap to lock or unlock. State is polled from the API a
 ---
 
 ### Volvo Controls
-A single tile containing up to five momentary or toggle switches, all visible in the detail view:
+A single tile containing up to six momentary or toggle switches, all visible in the detail view:
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/Codzelerate/homebridge-volvo-xc90/main/docs/images/controls.png" alt="Climate, Remote Start, Flash, Honk, Honk and Flash, and Refresh switches" width="420">
+</p>
+
 
 - **Climate** — Start or stop cabin pre-conditioning (heating or cooling based on outside temperature). Stays on until you turn it off. Useful in automations, e.g. start climate 20 minutes before a calendar event.
 - **Honk and Flash** — Momentary switch that honks the horn and flashes the lights together. Resets to off automatically after 1.5 seconds.
@@ -286,6 +299,11 @@ A **Contact Sensor** tile with an at-a-glance summary: shows **Open** if any win
 
 ### Volvo Energy
 A single tile covering EV and fuel energy status. Tap the tile to see all sensors:
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/Codzelerate/homebridge-volvo-xc90/main/docs/images/energy.png" alt="EV Charge 100% and Fuel Level 96% tiles" width="420">
+</p>
+
 
 | Sensor | Type | What it shows |
 |---|---|---|
@@ -329,6 +347,11 @@ The **"All Systems OK"** summary tile shows **Open** only when an actual fault i
 **Service Due does not affect the summary.** A scheduled maintenance reminder and a system fault are different things. Keeping them separate means "All Systems OK: Open" always means something genuinely needs attention right now.
 
 Fluid sensors use **Leak Sensor** (water-drop icon). Non-fluid faults use **Contact Sensor**.
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/Codzelerate/homebridge-volvo-xc90/main/docs/images/diagnostics.png" alt="Brake Fluid, Coolant Level, Oil Level, and Washer Fluid leak sensors" width="420">
+</p>
+
 
 | Sensor | Type | Triggers when | Affects summary |
 |---|---|---|---|
