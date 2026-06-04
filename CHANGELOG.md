@@ -5,7 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.2.10] - 2026-06-04
+## [1.2.11] - 2026-06-04
+
+### Fixed
+- **Reverted the `conve:engine_start_stop` scope added in 1.2.10** — it broke authentication entirely. The public OAuth client this plugin uses for the headless OTP login is not permitted to request that scope, so the authorization server rejected the whole login with `invalid_scope`, leaving users unable to obtain a token. If you updated to 1.2.10 and re-authenticated, update to 1.2.11 and re-authenticate again to restore access.
+
+### Known limitation
+- Remote Start (engine start/stop) is **not currently supported**. It requires the `conve:engine_start_stop` scope, which the public app credential used by this plugin's OTP login is not allowed to request. See the Remote Start note in the README.
+
+## [1.2.10] - 2026-06-04 [YANKED]
+> This version added an OAuth scope that breaks authentication. Use 1.2.11 instead.
 
 ### Fixed
 - **Remote Start failing with HTTP 403** — the OAuth scope list was missing `conve:engine_start_stop`, the permission required to invoke the engine start/stop command. We requested `conve:engine_status` (read-only) but not the start/stop scope, so Volvo rejected the command even though the vehicle supports it.

@@ -17,7 +17,6 @@ const AUTH_SCOPES = [
   'conve:diagnostics_engine_status',
   'conve:diagnostics_workshop',
   'conve:doors_status',
-  'conve:engine_start_stop',
   'conve:engine_status',
   'conve:fuel_status',
   'conve:honk_flash',
