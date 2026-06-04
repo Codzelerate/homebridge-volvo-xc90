@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.10] - 2026-06-04
+
+### Fixed
+- **Remote Start failing with HTTP 403** — the OAuth scope list was missing `conve:engine_start_stop`, the permission required to invoke the engine start/stop command. We requested `conve:engine_status` (read-only) but not the start/stop scope, so Volvo rejected the command even though the vehicle supports it.
+
+### Action required
+- **You must re-authenticate** for this fix to take effect. A stored refresh token cannot gain a new scope — mint a fresh one: plugin settings → **Authentication** → enter your Volvo ID email + password, enable **Force re-authentication**, save and restart, then enter the OTP Volvo emails you. See [Re-authenticating](https://github.com/Codzelerate/homebridge-volvo-xc90#re-authenticating).
+
 ## [1.2.9] - 2026-06-03
 
 ### Documentation
