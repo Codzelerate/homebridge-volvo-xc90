@@ -544,7 +544,7 @@ Open the Homebridge UI → **Child Bridges** tab → find Volvo XC90 → **Reset
 Confirm your Volvo On Call subscription is active. Lock and unlock commands require an active subscription.
 
 **Remote Start fails with "status code 403"**
-This means your stored login is missing the engine start/stop permission. [Re-authenticate](#re-authenticating) (Authentication → Force re-authentication) to mint a fresh token that includes it. Note that Volvo also enforces preconditions for remote start — the car must be locked with all doors, hood, and tailgate closed.
+Remote engine start is **not currently supported** by this plugin. It requires the `conve:engine_start_stop` OAuth scope, which the public app credential used by the plugin's headless login is not permitted to request — Volvo gates remote engine start more tightly than other commands (such as climate, which does work). There is no workaround within the current authentication model. Turn **Show Remote Start** off to hide the switch.
 
 **Fuel level shows wrong percentage**
 The API returns litres only. If your tank capacity differs from the default (70 L), set **Fuel tank capacity** in plugin settings to match your variant.
