@@ -368,7 +368,7 @@ export class VolvoPlatform implements DynamicPlatformPlugin {
         id: `${vin}-climate`,
         name: 'Volvo Controls',
         Class: ControlsAccessory,
-        show: this.config.showClimate !== false || this.config.showEngine !== false ||
+        show: this.config.showClimate !== false || this.config.showEngine === true ||
               this.config.showHonkFlash !== false || this.config.showHonk === true || this.config.showFlash === true,
       },
       {

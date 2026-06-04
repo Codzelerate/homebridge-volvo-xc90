@@ -160,7 +160,10 @@ export class ControlsAccessory {
       if (s) accessory.removeService(s);
     }
 
-    if (platform.config.showEngine !== false) {
+    // Remote Start is opt-in (default off). Volvo's public OAuth client cannot be
+    // granted the conve:engine_start_stop scope, so the command returns 403. The
+    // switch is kept for the rare setup where it might work, but hidden by default.
+    if (platform.config.showEngine === true) {
       this.engineService = accessory.getService('Remote Start')
         || accessory.addService(Service.Switch, 'Remote Start', 'engine');
       this.engineService.addOptionalCharacteristic(Characteristic.ConfiguredName);
@@ -188,6 +191,10 @@ export class ControlsAccessory {
             platform.log.error('Engine command failed:', (err as Error).message);
           }
         });
+    } else {
+      // Remove the cached Remote Start switch for users who had it before it was hidden
+      const s = accessory.getService('Remote Start');
+      if (s) accessory.removeService(s);
     }
   }
 }

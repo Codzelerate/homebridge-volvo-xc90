@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.12] - 2026-06-04
+
+### Changed
+- **Remote Start switch is now hidden by default** (`showEngine` defaults to off). Remote engine start is not supported — Volvo does not permit the `conve:engine_start_stop` scope for this plugin's login method. The switch and its code are kept (in case Volvo ever loosens this) but no longer appear unless explicitly enabled. The cached switch is removed automatically on restart for users who had it.
+
 ## [1.2.11] - 2026-06-04
 
 ### Fixed

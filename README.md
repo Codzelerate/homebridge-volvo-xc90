@@ -7,7 +7,7 @@
 
 A [Homebridge](https://homebridge.io) plugin that integrates your **Volvo XC90 2016** (Sensus) with Apple HomeKit via the official [Volvo Connected Vehicle API v2](https://developer.volvocars.com/apis/connected-vehicle/v2/overview/) and [Energy API v2](https://developer.volvocars.com/apis/energy/v2/overview/).
 
-Control and monitor your car directly from the Apple Home app and Siri — lock/unlock, climate pre-conditioning, remote engine start, honk and flash, door and window sensors, fuel level, EV battery, km-to-empty range, diagnostics, and more (T8 PHEV).
+Control and monitor your car directly from the Apple Home app and Siri — lock/unlock, climate pre-conditioning, honk and flash, door and window sensors, fuel level, EV battery, km-to-empty range, diagnostics, and more (T8 PHEV).
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/Codzelerate/homebridge-volvo-xc90/main/docs/images/home-view.png" alt="Volvo room in the Apple Home app showing lock, climate, remote start, honk and flash controls" width="320">
@@ -40,7 +40,7 @@ Control and monitor your car directly from the Apple Home app and Siri — lock/
 | Tile | HomeKit type | What it does |
 |---|---|---|
 | **Volvo Lock** | Lock Mechanism | Lock and unlock your car |
-| **Volvo Controls** | Switch (up to 6) | Climate, Honk and Flash, Honk only, Flash only, Remote Start, Refresh — all in one tile |
+| **Volvo Controls** | Switch (up to 5) | Climate, Honk and Flash, Honk only, Flash only, Refresh — all in one tile |
 | **Volvo Doors** | Contact Sensors | Summary tile + individual sensors for all 6 openings |
 | **Volvo Windows** | Contact Sensors | Summary tile + individual sensors for all 4 windows and sunroof |
 | **Volvo Energy** | Battery + Humidity + Contact | EV battery with charging state, EV charge %, fuel level %, and charger plug status |
@@ -170,7 +170,7 @@ You need to re-authenticate when:
 |---|---|---|
 | **Show Lock** | On | Lock / unlock tile |
 | **Show Climate Pre-condition** | On | Climate switch inside the Controls tile |
-| **Show Remote Start** | On | Remote engine start switch inside the Controls tile |
+| **Show Remote Start** | Off | **Not supported** — Volvo blocks the required permission for this plugin's login method (returns 403). Hidden by default; see [Troubleshooting](#troubleshooting). |
 | **Show Honk and Flash (combined)** | On | Single momentary switch that honks and flashes simultaneously |
 | **Show Honk only** | Off | Separate momentary switch for horn only — enable if your VIN supports the `HONK` command (check `Supported commands:` in the log on startup) |
 | **Show Flash only** | Off | Separate momentary switch for lights only — enable if your VIN supports the `FLASH` command |
@@ -222,7 +222,7 @@ You need to re-authenticate when:
       "vin": "YV1XXXXXXXXX00000",
       "showLock": true,
       "showClimate": true,
-      "showEngine": true,
+      "showEngine": false,
       "showHonkFlash": true,
       "showHonk": false,
       "showFlash": false,
@@ -269,8 +269,9 @@ A single tile containing up to six momentary or toggle switches, all visible in 
 - **Honk and Flash** — Momentary switch that honks the horn and flashes the lights together. Resets to off automatically after 1.5 seconds.
 - **Honk** *(off by default)* — Momentary switch for horn only. Enable via `showHonk` after confirming your VIN supports the `HONK` command.
 - **Flash** *(off by default)* — Momentary switch for lights only. Enable via `showFlash` after confirming your VIN supports the `FLASH` command.
-- **Remote Start** — Start the engine remotely for the configured duration (max 15 minutes). Turns off automatically when the timer expires, or switch it off early to stop immediately.
 - **Refresh** *(off by default)* — Momentary switch that immediately polls all accessories in parallel. Resets to off after 1 second. Enable via `showRefresh` in Advanced settings.
+
+> **Remote Start is not supported** and is hidden by default. Volvo does not permit the engine start/stop permission for this plugin's login method, so the command fails with a 403 error. See [Troubleshooting](#troubleshooting) for the full explanation.
 
 > To check which commands your VIN supports, look for the `Supported commands:` line in the Homebridge log on startup.
 
@@ -544,7 +545,7 @@ Open the Homebridge UI → **Child Bridges** tab → find Volvo XC90 → **Reset
 Confirm your Volvo On Call subscription is active. Lock and unlock commands require an active subscription.
 
 **Remote Start fails with "status code 403"**
-Remote engine start is **not currently supported** by this plugin. It requires the `conve:engine_start_stop` OAuth scope, which the public app credential used by the plugin's headless login is not permitted to request — Volvo gates remote engine start more tightly than other commands (such as climate, which does work). There is no workaround within the current authentication model. Turn **Show Remote Start** off to hide the switch.
+Remote engine start is **not currently supported** by this plugin, and the switch is hidden by default. It requires the `conve:engine_start_stop` OAuth scope, which the public app credential used by the plugin's headless login is not permitted to request — Volvo gates remote engine start more tightly than other commands (such as climate, which does work). There is no workaround within the current authentication model, so the switch stays off unless you explicitly enable **Show Remote Start**.
 
 **Fuel level shows wrong percentage**
 The API returns litres only. If your tank capacity differs from the default (70 L), set **Fuel tank capacity** in plugin settings to match your variant.
