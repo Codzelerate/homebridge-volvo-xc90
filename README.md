@@ -30,6 +30,7 @@ Control and monitor your car directly from the Apple Home app and Siri — lock/
 - [Finding your VIN](#finding-your-vin)
 - [Debug mode](#debug-mode)
 - [Troubleshooting](#troubleshooting)
+- [Known limitations & roadmap](#known-limitations--roadmap)
 - [Changelog](#changelog)
 - [Built by Codzelerate](#built-by-codzelerate)
 
@@ -566,6 +567,32 @@ Window state is reported by the car's sensors — if the car has been stationary
 - Confirm **homeLatitude** and **homeLongitude** are set correctly in plugin settings — if both are 0 the sensor will always show Not Occupied
 - The location timestamp in the debug log shows when the car last reported its position — if stale, drive the car briefly to refresh the GPS fix
 - Try increasing **Home radius** if the parked position is slightly offset from your home coordinates
+
+---
+
+## Known limitations & roadmap
+
+Every plugin makes trade-offs. These are the ones we made on purpose — what the plugin deliberately *doesn't* do yet, why, and what it would take to change that. If a limitation below matters to you, the fastest way to move it up the list is to 👍 the matching [GitHub issue](https://github.com/Codzelerate/homebridge-volvo-xc90/issues) — these decisions are demand-driven.
+
+### Remote Start — deferred by design
+
+**The short version:** you can't remotely start the engine through this plugin, and that's a conscious choice rather than a missing feature.
+
+**The problem.** Volvo splits its commands into permission tiers. Lower-risk actions — lock, unlock, climate pre-conditioning, honk, flash — are granted to the login method this plugin uses (a fast, headless email-and-OTP flow that needs nothing more than your Volvo credentials). Starting the engine is treated as higher-risk, and Volvo refuses to grant that one permission to this login method. The result is a flat `403 Forbidden` — not a bug we can patch, but a door Volvo has locked on their side.
+
+**What it would take.** The only way around it is to stop borrowing the login method and have each user register their *own* developer application with Volvo, then log in through a browser-based redirect flow (a web page opens, you sign in, Volvo bounces you back to a local callback with a code to paste in). It's a well-trodden path — it's how the Home Assistant integration does remote start — but it adds real setup friction: registering an app, configuring a callback URL, and a multi-step browser dance on every re-login.
+
+**Why we're not doing it now.** The single best thing about this plugin is that you go from install to a working car tile in about two minutes. Bolting on a second, heavier login path — purely to unlock one command that *also* only works when the car is already locked and fully closed — would tax every user's setup for a feature few would use. We'd rather keep the on-ramp frictionless and treat Remote Start as opt-in plumbing we add *if* enough people ask.
+
+**The plan.** If demand is there, a future release could support optional user-supplied OAuth credentials *alongside* the current quick login — frictionless by default, with remote start available to those willing to do the extra setup. Best of both, only built once it's wanted.
+
+### Data freshness — bounded by the car, not the plugin
+
+Your XC90's modem only phones home to Volvo when the car is awake. Park it and the modem eventually goes dormant, and Volvo's servers keep serving the *last state they were told* — sometimes hours old. The plugin always fetches the freshest data Volvo has, but it cannot be fresher than what the car last reported. This is why a sensor can occasionally lag reality (the charger you just unplugged, the door you just closed) until the car next wakes up. There's no plugin-side fix; it's a property of how the vehicle reports. The manual **Refresh** switch pulls the latest Volvo *has*, but cannot wake a sleeping car.
+
+### Everything is poll-based, not push
+
+HomeKit updates on a schedule (your poll interval), not the instant something changes, because Volvo's API offers no push/webhook channel. Tighten the interval for snappier updates, or tap **Refresh** for an on-demand pull — but true real-time isn't on the table until Volvo offers it.
 
 ---
 
