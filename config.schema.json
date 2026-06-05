@@ -130,10 +130,10 @@
         "description": "Switch to start / stop climate pre-conditioning."
       },
       "showEngine": {
-        "title": "Show Remote Start (not supported)",
+        "title": "Show Remote Start",
         "type": "boolean",
         "default": false,
-        "description": "Off by default. Remote engine start is NOT currently supported — Volvo does not permit the required engine start/stop permission for the login method this plugin uses, so the command returns a 403 error. The switch is left available only in case Volvo changes this; leave it off unless you know it works for your setup."
+        "description": "Off by default. Requires OAuth authentication (clientId + clientSecret) with the conve:engine_start_stop scope enabled on your Volvo Developer app. Has no effect under the legacy OTP flow."
       },
       "showDoors": {
         "title": "Show Doors",

@@ -83,6 +83,7 @@ type DebugFn = (msg: string) => void;
 export interface AuthProvider {
   readonly authMethod: 'otp' | 'oauth';
   refreshAccessToken(refreshToken: string): Promise<TokenSet>;
+  supportsEngine(): boolean;
 }
 
 // ── OtpAuthProvider — the existing PingFederate OTP flow ─────────────────────
@@ -234,6 +235,8 @@ export class OtpAuthProvider implements AuthProvider {
     this.debug(`Token refreshed, expires in ${res.data.expires_in}s`);
     return tokens;
   }
+
+  supportsEngine(): boolean { return false; }
 }
 
 // ── OAuthAuthProvider — sanctioned OAuth 2.0 flow with user-owned credentials ─
@@ -249,6 +252,8 @@ export class OAuthAuthProvider implements AuthProvider {
   ) {
     this.debug = debugFn ?? (() => undefined);
   }
+
+  supportsEngine(): boolean { return true; }
 
   async refreshAccessToken(refreshToken: string): Promise<TokenSet> {
     this.debug('Refreshing OAuth access token');

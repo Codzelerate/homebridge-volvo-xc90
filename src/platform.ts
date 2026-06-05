@@ -212,6 +212,8 @@ export class VolvoPlatform implements DynamicPlatformPlugin {
     });
   }
 
+  supportsEngine(): boolean { return this.provider.supportsEngine(); }
+
   dbg(msg: string): void {
     if (this.config.debug) {
       this.log.info(`[DEBUG] ${msg}`);
@@ -421,7 +423,7 @@ export class VolvoPlatform implements DynamicPlatformPlugin {
         id: `${vin}-climate`,
         name: 'Volvo Controls',
         Class: ControlsAccessory,
-        show: this.config.showClimate !== false || this.config.showEngine === true ||
+        show: this.config.showClimate !== false || (this.config.showEngine === true && this.provider.supportsEngine()) ||
               this.config.showHonkFlash !== false || this.config.showHonk === true || this.config.showFlash === true,
       },
       {

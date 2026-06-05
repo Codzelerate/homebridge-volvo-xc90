@@ -169,6 +169,7 @@ class VolvoPlatform {
             }
         });
     }
+    supportsEngine() { return this.provider.supportsEngine(); }
     dbg(msg) {
         if (this.config.debug) {
             this.log.info(`[DEBUG] ${msg}`);
@@ -364,7 +365,7 @@ class VolvoPlatform {
                 id: `${vin}-climate`,
                 name: 'Volvo Controls',
                 Class: controlsAccessory_1.ControlsAccessory,
-                show: this.config.showClimate !== false || this.config.showEngine === true ||
+                show: this.config.showClimate !== false || (this.config.showEngine === true && this.provider.supportsEngine()) ||
                     this.config.showHonkFlash !== false || this.config.showHonk === true || this.config.showFlash === true,
             },
             {

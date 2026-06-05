@@ -67,6 +67,7 @@ export declare class VolvoPlatform implements DynamicPlatformPlugin {
         distanceToEmptyBattery?: number;
     }>;
     constructor(log: Logger, config: PlatformConfig, hbApi: API);
+    supportsEngine(): boolean;
     dbg(msg: string): void;
     private loadState;
     private saveState;

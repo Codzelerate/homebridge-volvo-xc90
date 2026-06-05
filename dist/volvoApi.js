@@ -205,6 +205,7 @@ class OtpAuthProvider {
         this.debug(`Token refreshed, expires in ${res.data.expires_in}s`);
         return tokens;
     }
+    supportsEngine() { return false; }
 }
 exports.OtpAuthProvider = OtpAuthProvider;
 // ── OAuthAuthProvider — sanctioned OAuth 2.0 flow with user-owned credentials ─
@@ -215,6 +216,7 @@ class OAuthAuthProvider {
         this.authMethod = 'oauth';
         this.debug = debugFn ?? (() => undefined);
     }
+    supportsEngine() { return true; }
     async refreshAccessToken(refreshToken) {
         this.debug('Refreshing OAuth access token');
         const basicAuth = 'Basic ' + Buffer.from(`${this.clientId}:${this.clientSecret}`).toString('base64');
