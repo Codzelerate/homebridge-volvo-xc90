@@ -161,6 +161,9 @@ class VolvoPlatform {
             this.otp = otpProvider;
         }
         this.api = new volvoApi_1.VolvoApiClient(this.config.vccApiKey, this.config.vin, this.provider, debugFn);
+        this.api.setOnTokensRefreshed(tokens => {
+            this.saveState({ authMethod: this.provider.authMethod, tokens });
+        });
         this.dbg(`Plugin v${PLUGIN_VERSION} loaded — VIN: ${this.config.vin}`);
         hbApi.on('didFinishLaunching', async () => {
             const authenticated = await this.authenticate();

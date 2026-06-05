@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.1] - 2026-06-05
+
+### Fixed
+- **Concurrent token refresh race condition** — when the access token expired (every ~5 min), all parallel poll calls detected it simultaneously and each fired its own `refreshAccessToken` request. Volvo rotates the refresh token on the first call, so all subsequent concurrent requests received 400 errors, causing every poll to fail. Fixed with an in-flight promise guard: all concurrent callers join the same refresh request rather than launching independent ones.
+- **Runtime-refreshed tokens not persisted** — after the first in-memory token refresh, the state file still held the original startup token. A plugin restart after any runtime refresh would load the stale token, fail, and only recover if the config `refreshToken` was present. The refreshed token is now written to the state file after every successful runtime refresh.
+
+---
+
 ## [1.3.0] - 2026-06-05
 
 ### Added

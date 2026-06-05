@@ -283,6 +283,8 @@ export class VolvoApiClient {
   private http: AxiosInstance;
   private tokens: TokenSet | null = null;
   private debug: DebugFn;
+  private onTokensRefreshed: ((tokens: TokenSet) => void) | null = null;
+  private refreshInFlight: Promise<TokenSet> | null = null;
 
   constructor(
     private readonly vccApiKey: string,
@@ -293,6 +295,10 @@ export class VolvoApiClient {
     this.debug = debugFn ?? (() => undefined);
     this.http = axios.create({ baseURL: BASE_URL });
     this.attachInterceptors();
+  }
+
+  setOnTokensRefreshed(cb: (tokens: TokenSet) => void): void {
+    this.onTokensRefreshed = cb;
   }
 
   private attachInterceptors(): void {
@@ -329,9 +335,20 @@ export class VolvoApiClient {
   private async ensureValidToken(): Promise<string> {
     if (!this.tokens) throw new Error('Not authenticated');
     if (Date.now() >= this.tokens.expiresAt) {
-      this.debug('Access token expired — refreshing');
-      const tokens = await this.provider.refreshAccessToken(this.tokens.refresh_token);
-      this.tokens = tokens;
+      // Deduplicate concurrent refresh calls — Volvo rotates the refresh token on each use,
+      // so multiple simultaneous requests with the same token all fail except the first.
+      if (!this.refreshInFlight) {
+        const current = this.tokens;
+        this.refreshInFlight = this.provider
+          .refreshAccessToken(current.refresh_token)
+          .then(tokens => {
+            this.tokens = tokens;
+            this.onTokensRefreshed?.(tokens);
+            return tokens;
+          })
+          .finally(() => { this.refreshInFlight = null; });
+      }
+      await this.refreshInFlight;
     }
     return this.tokens!.access_token;
   }

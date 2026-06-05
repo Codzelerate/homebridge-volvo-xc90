@@ -202,6 +202,9 @@ export class VolvoPlatform implements DynamicPlatformPlugin {
       this.otp = otpProvider;
     }
     this.api = new VolvoApiClient(this.config.vccApiKey, this.config.vin, this.provider, debugFn);
+    this.api.setOnTokensRefreshed(tokens => {
+      this.saveState({ authMethod: this.provider.authMethod, tokens });
+    });
     this.dbg(`Plugin v${PLUGIN_VERSION} loaded — VIN: ${this.config.vin}`);
 
     hbApi.on('didFinishLaunching', async () => {
