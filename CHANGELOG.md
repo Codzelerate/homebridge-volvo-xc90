@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.3] - 2026-06-05
+
+### Added
+- **Charging ETA sensor** — new Light Sensor sub-service inside the Energy tile showing minutes to full charge. Displays the value when actively charging, 0 when not charging or charge is complete. Appears automatically whenever **Show EV Battery** is enabled — no extra config needed.
+
+---
+
 ## [1.3.2] - 2026-06-05
 
 ### Documentation

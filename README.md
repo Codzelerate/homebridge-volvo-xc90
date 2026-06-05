@@ -347,6 +347,7 @@ A single tile covering EV and fuel energy status. Tap the tile to see all sensor
 |---|---|---|
 | **EV Battery** | Battery | Charge % and charging state (Charging / Not Charging / Not Chargeable). Low-battery alert fires below the configured threshold (default 20%). |
 | **EV Charge** | Humidity | Current EV charge % at a glance — same value as EV Battery, humidity-style display for quick reading |
+| **Charging ETA** | Light Sensor | Minutes to full charge when actively charging · 0 when not charging or complete |
 | **Charger Unplugged** | Contact Sensor | Open (highlighted) = cable unplugged · Closed = plugged in |
 | **Fuel Level** | Humidity | Petrol tank % (calculated from litres ÷ tank capacity) |
 
@@ -620,10 +621,6 @@ HomeKit updates on a schedule (your poll interval), not the instant something ch
 ## Roadmap
 
 Items planned for upcoming releases, in rough priority order.
-
-### Charging time remaining sensor
-
-The Volvo Energy API already returns an estimated time to full charge (e.g. `~150 min`). This will be exposed as a HomeKit sensor so you can see it at a glance without opening debug logs.
 
 ### Resilient polling with exponential backoff
 

@@ -10,12 +10,14 @@ class EnergyAccessory {
         this.fuelService = null;
         this.evService = null;
         this.evChargeService = null;
+        this.chargingEtaService = null;
         this.chargerConnectedService = null;
         // Range sub-services — only used when rangeStandalone === false (combined view)
         this.tankRangeService = null;
         this.evRangeService = null;
         this.fuelLevel = 100;
         this.chargeLevel = 100;
+        this.chargingEta = 0;
         this.chargerPluggedIn = true; // assume plugged in until first poll
         this.tankRange = 1;
         this.evRange = 1;
@@ -107,6 +109,13 @@ class EnergyAccessory {
             this.evChargeService.setCharacteristic(Characteristic.ConfiguredName, 'EV Charge');
             this.evChargeService.getCharacteristic(Characteristic.CurrentRelativeHumidity)
                 .onGet(() => this.chargeLevel);
+            // Charging ETA — LightSensor showing minutes to full charge as lux (0 when not charging)
+            this.chargingEtaService = accessory.services.find(s => s.subtype === 'charging-eta' && s.UUID === Service.LightSensor.UUID)
+                || accessory.addService(Service.LightSensor, 'Charging ETA', 'charging-eta');
+            this.chargingEtaService.addOptionalCharacteristic(Characteristic.ConfiguredName);
+            this.chargingEtaService.setCharacteristic(Characteristic.ConfiguredName, 'Charging ETA');
+            this.chargingEtaService.getCharacteristic(Characteristic.CurrentAmbientLightLevel)
+                .onGet(() => Math.max(0.0001, this.chargingEta));
             // Charger Connected — ContactSensor: closed = plugged in, open = unplugged
             this.chargerConnectedService = accessory.services.find(s => s.subtype === 'charger-connected' && s.UUID === Service.ContactSensor.UUID)
                 || accessory.addService(Service.ContactSensor, 'Charger Unplugged', 'charger-connected');
@@ -164,6 +173,10 @@ class EnergyAccessory {
                     chargingState = Characteristic.ChargingState.NOT_CHARGING;
                 }
                 this.evService.updateCharacteristic(Characteristic.ChargingState, chargingState);
+                if (this.chargingEtaService) {
+                    this.chargingEta = sys === 'CHARGING' ? (data.estimatedChargingTime ?? 0) : 0;
+                    this.chargingEtaService.updateCharacteristic(Characteristic.CurrentAmbientLightLevel, Math.max(0.0001, this.chargingEta));
+                }
                 if (this.chargerConnectedService) {
                     this.chargerPluggedIn = conn !== 'DISCONNECTED' && conn !== 'UNSPECIFIED' && conn !== '';
                     this.chargerConnectedService.updateCharacteristic(Characteristic.ContactSensorState, this.chargerPluggedIn
