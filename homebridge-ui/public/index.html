@@ -39,7 +39,7 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   font-size: 14px;
   line-height: 1.5;
-  padding: 12px 4px 88px;
+  padding: 12px 4px 24px;
 }
 
 /* ── Card ───────────────────────────────────────────────────────────────── */
@@ -337,17 +337,6 @@ textarea.field-input { resize: vertical; min-height: 66px; }
 .collapsed .chevron { transform: rotate(-90deg); }
 .collapsed .coll-body { display: none; }
 
-/* ── Sticky save bar ────────────────────────────────────────────────────── */
-.save-bar {
-  position: fixed; bottom: 0; left: 0; right: 0;
-  background: rgba(13,13,13,.94);
-  border-top: 1px solid var(--border);
-  backdrop-filter: blur(14px);
-  padding: 10px 16px;
-  display: flex; align-items: center; justify-content: space-between; gap: 10px;
-  z-index: 100;
-}
-.save-hint { font-size: 12px; color: var(--text-3); display: flex; align-items: center; gap: 6px; }
 
 /* ── Masked input with reveal toggle ────────────────────────────────────── */
 .input-wrap { position: relative; display: flex; align-items: center; }
@@ -761,14 +750,6 @@ code { font-family: 'SF Mono', ui-monospace, monospace; font-size: 11px; color: 
   </div>
 </div>
 
-<!-- ── SAVE BAR ───────────────────────────────────────────────────────────── -->
-<div class="save-bar">
-  <div class="save-hint" id="saveHint">
-    <span class="dot" style="color:var(--text-3)"></span>
-    No changes
-  </div>
-  <button class="btn btn-primary" id="saveBtn" onclick="saveConfig()">Save Configuration</button>
-</div>
 
 <script>
 /* ── Feature definitions ─────────────────────────────────────────────────── */
@@ -817,7 +798,6 @@ const DEFAULTS = {
 
 let cfg = {};
 let authUrl = '';
-let isDirty = false;
 
 /* ── Bootstrap ───────────────────────────────────────────────────────────── */
 async function init() {
@@ -833,7 +813,6 @@ async function init() {
   }
 
   populate();
-  cleanState();
 }
 
 /* ── Bento builder ───────────────────────────────────────────────────────── */
@@ -993,7 +972,6 @@ async function finishOAuth() {
     const stored = await homebridge.getPluginConfig();
     if (stored && stored.length) cfg = { ...cfg, ...stored[0] };
     updateAuthCard();
-    dirty();
     wsGo(4); // success panel
   } catch (e) {
     showErr('err3', e.message || 'Token exchange failed — check credentials and try from Step 1.');
@@ -1057,31 +1035,17 @@ function badge(id, defs) {
 function showErr(id, msg) { const e = g(id); e.textContent = msg; e.classList.remove('hidden'); }
 function hideErr(id)      { g(id).classList.add('hidden'); }
 
-/* ── Dirty state ─────────────────────────────────────────────────────────── */
-function dirty() {
-  if (isDirty) return;
-  isDirty = true;
-  g('saveHint').innerHTML = '<span class="dot" style="color:var(--amber)"></span> Unsaved changes';
-}
+/* ── Sync config to Homebridge (called on every change) ─────────────────── */
+let syncTimer = null;
+function dirty() { clearTimeout(syncTimer); syncTimer = setTimeout(syncConfig, 300); }
 
-function cleanState() {
-  isDirty = false;
-  g('saveHint').innerHTML = '<span class="dot" style="color:var(--text-3)"></span> All saved';
-}
-
-/* ── Save ────────────────────────────────────────────────────────────────── */
-async function saveConfig() {
-  const vccApiKey = g('cfgVccApiKey').value.trim();
-  const vin       = g('cfgVin').value.trim();
-
-  if (!vccApiKey) { homebridge.toast.error('VCC API Key is required.'); return; }
-  if (vin.length !== 17) { homebridge.toast.error('VIN must be exactly 17 characters.'); return; }
-
+async function syncConfig() {
   const updated = {
     ...cfg,
     platform: 'VolvoXC90',
     name:     g('cfgName').value.trim() || 'Volvo XC90',
-    vccApiKey, vin,
+    vccApiKey: g('cfgVccApiKey').value.trim(),
+    vin:       g('cfgVin').value.trim(),
     evLowChargeThreshold: getNum('cfgEvLow',    20),
     tankCapacityLiters:   getNum('cfgTank',     70),
     engineStartDuration:  getNum('cfgEngDur',   15),
@@ -1096,13 +1060,11 @@ async function saveConfig() {
     forceReauth:  getChk('cfgForceReauth'),
   };
 
-  // Feature toggles
   allFeatures().forEach(f => {
     const cb = g('ft_' + f.id);
     if (cb) updated[f.id] = cb.checked;
   });
 
-  // Location coordinates
   if (updated.showLocation) {
     const lat = parseFloat(g('cfgLat').value);
     const lon = parseFloat(g('cfgLon').value);
@@ -1110,7 +1072,6 @@ async function saveConfig() {
     if (!isNaN(lon)) updated.homeLongitude = lon;
   }
 
-  // OTP fields (only include if non-empty)
   const uname = g('cfgUsername').value.trim();
   const pass  = g('cfgPassword').value.trim();
   const otp   = g('cfgOtp').value.trim();
@@ -1118,7 +1079,6 @@ async function saveConfig() {
   if (pass)  updated.password = pass;  else delete updated.password;
   if (otp)   updated.otp = otp;        else delete updated.otp;
 
-  // Clean up OTP fields if OAuth is fully configured
   if (updated.clientId && updated.clientSecret && updated.refreshToken) {
     delete updated.username;
     delete updated.password;
@@ -1126,22 +1086,10 @@ async function saveConfig() {
     delete updated.forceReauth;
   }
 
-  const btn = g('saveBtn');
-  btn.disabled = true;
-  btn.textContent = 'Saving…';
-
   try {
     await homebridge.updatePluginConfig([updated]);
-    await homebridge.savePluginConfig();
     cfg = updated;
-    cleanState();
-    homebridge.toast.success('Saved — restart the plugin to apply changes.');
-  } catch (e) {
-    homebridge.toast.error('Save failed: ' + (e.message || 'unknown error'));
-  } finally {
-    btn.disabled = false;
-    btn.textContent = 'Save Configuration';
-  }
+  } catch (_) {}
 }
 
 /* ── Reveal toggle ───────────────────────────────────────────────────────── */
