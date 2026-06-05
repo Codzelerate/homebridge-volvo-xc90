@@ -47,7 +47,7 @@ Control and monitor your car directly from the Apple Home app and Siri — lock/
 | **Volvo Controls** | Switch (up to 5) | Climate, Honk and Flash, Honk only, Flash only, Refresh — all in one tile |
 | **Volvo Doors** | Contact Sensors | Summary tile + individual sensors for all 6 openings |
 | **Volvo Windows** | Contact Sensors | Summary tile + individual sensors for all 4 windows and sunroof |
-| **Volvo Energy** | Battery + Humidity + Contact | EV battery with charging state, EV charge %, fuel level %, and charger unplugged alert |
+| **Volvo Energy** | Battery + Humidity + Contact | EV battery with charging state, EV charge %, charging ETA (minutes to full), fuel level %, and charger unplugged alert |
 | **EV Range km** | Temperature Sensor | Kilometres remaining on EV battery — standalone tile or inside Energy tile |
 | **Tank Range km** | Light Sensor | Kilometres remaining on petrol tank — standalone tile or inside Energy tile |
 | **Volvo Diagnostics** | Contact + Leak Sensors | Summary alert tile (**faults only** — oil, coolant, brake fluid, washer fluid, tyres) + Service Due as a separate independent sensor |
@@ -210,7 +210,7 @@ If the token chain expires (Volvo invalidates your session), re-run `npm run oau
 | **Show Doors** | On | Contact sensor summary tile + 6 individual door/hood/tailgate sensors |
 | **Show Windows** | On | Contact sensor summary tile + 5 individual window and sunroof sensors |
 | **Show Fuel Level** | On | Petrol tank % inside the Energy tile |
-| **Show EV Battery** | On | EV charge level, charging state, and charger plug status inside the Energy tile (T8 PHEV only) |
+| **Show EV Battery** | On | EV charge level, charging state, charging ETA, and charger plug status inside the Energy tile (T8 PHEV only) |
 | **Show Range** | On | Km-to-empty for EV battery and petrol tank. Display style controlled by the Range view option below |
 | **Range view** | On (standalone) | **On**: EV Range km and Tank Range km appear as their own standalone room tiles. **Off**: range values appear as sub-sensors inside the Energy tile detail view |
 | **Show Left Open sensor** | Off | Alerts when locked with something left open. Enable notifications for this sensor in the Home app. |
@@ -360,6 +360,8 @@ A single tile covering EV and fuel energy status. Tap the tile to see all sensor
 | **Charging** | Cable connected and actively charging |
 | **Not Charging** | Cable connected but charging is paused or complete |
 | **Not Chargeable** | No cable connected |
+
+The **Charging ETA** sensor shows minutes to full while the state is **Charging** and resets to 0 otherwise. The value is displayed in lux — a HomeKit limitation, same as the range sensors. The tile name makes the meaning clear.
 
 ---
 
