@@ -617,6 +617,24 @@ HomeKit updates on a schedule (your poll interval), not the instant something ch
 
 ---
 
+## Roadmap
+
+Items planned for upcoming releases, in rough priority order.
+
+### Charging time remaining sensor
+
+The Volvo Energy API already returns an estimated time to full charge (e.g. `~150 min`). This will be exposed as a HomeKit sensor so you can see it at a glance without opening debug logs.
+
+### Resilient polling with exponential backoff
+
+Currently a failed poll logs a warning and waits silently until the next scheduled interval. A future release will add exponential backoff — retrying sooner after transient failures and backing off progressively under sustained errors, rather than just dropping the cycle.
+
+### OAuth flow in the Homebridge UI
+
+The current setup requires running a terminal command and copy-pasting a redirect URL. A future release will handle the entire OAuth dance inside the Homebridge settings page — no terminal, no copy-paste, just a button that opens the Volvo login and completes the flow automatically.
+
+---
+
 ## Changelog
 
 See [CHANGELOG.md](CHANGELOG.md) for the full version history.
