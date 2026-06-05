@@ -11,6 +11,8 @@ Control and monitor your car directly from the Apple Home app and Siri — lock/
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/Codzelerate/homebridge-volvo-xc90/main/docs/images/home-view.png" alt="Volvo room in the Apple Home app showing lock, climate, remote start, honk and flash controls" width="320">
+  &nbsp;&nbsp;
+  <img src="https://raw.githubusercontent.com/Codzelerate/homebridge-volvo-xc90/main/docs/images/ui-settings.png" alt="Homebridge plugin settings UI showing OAuth status, Vehicle fields, and feature bento grid" width="200">
 </p>
 
 ---
@@ -95,27 +97,38 @@ sudo systemctl restart homebridge
 
 ## Authentication
 
-v1.3.0 adds **OAuth authentication** using your own Volvo Developer app credentials. OAuth is recommended — it is the only path that supports Remote Start and is fully compliant with Volvo's API terms. The legacy OTP flow continues to work but will be removed in v2.0.0.
+OAuth authentication is the recommended and fully supported path. It is the only method that supports Remote Start and is fully compliant with Volvo's API terms. The legacy OTP flow continues to work but will be removed in v2.0.0.
 
 ### OAuth setup (recommended)
+
+The entire OAuth flow is handled inside the Homebridge settings UI — no terminal, no copy-paste config blocks.
 
 **Prerequisites:** a free developer account at [developer.volvocars.com](https://developer.volvocars.com).
 
 1. Sign in to the Volvo Developer Portal and go to **Your API Applications → Create application**
-2. Name it (e.g. `homebridge`), select all the scopes you want (include `conve:engine_start_stop` for Remote Start), and add a redirect URI — your GitHub profile URL works fine: `https://github.com/<your-username>`
+2. Name it (e.g. `homebridge`), select all the `conve:` scopes (include `conve:engine_start_stop` for Remote Start), and add a redirect URI — your GitHub profile URL works fine: `https://github.com/<your-username>`
 3. **Publish** the app to receive your `client_id` and `client_secret`
-4. Run the OAuth setup tool. The easiest way is via the **Homebridge UI terminal** (terminal icon in the top nav bar — no SSH needed):
-   ```bash
-   cd /var/lib/homebridge/node_modules/homebridge-volvo-xc90 && npm run oauth
-   ```
-5. The tool prints a Volvo authorisation URL — open it in your browser and sign in with your Volvo ID. Your browser will redirect to your registered URL (the page may be blank or 404 — that's expected). Copy the **full URL** from the address bar and paste it back into the tool.
-6. The tool prints a ready-to-paste config block with `clientId`, `clientSecret`, `vccApiKey`, and `refreshToken`.
-7. In Homebridge plugin settings, enter **Client ID**, **Client Secret**, and the **Refresh Token** from the output. **Remove any OTP credentials** if present.
-8. Save and restart. Check the log for:
+4. Open **Homebridge UI → Plugins → Volvo XC90 → Settings**
+5. Click **Set up OAuth →** in the Authentication card
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/Codzelerate/homebridge-volvo-xc90/main/docs/images/ui-oauth-setup.png" alt="OAuth Setup wizard — enter Client ID, Client Secret, and Redirect URI then click Generate Auth URL" width="480">
+</p>
+
+6. Enter your **Client ID**, **Client Secret**, and **Redirect URI**, then click **Generate Auth URL →**
+7. Open the URL in your browser and sign in with your Volvo ID. After the redirect (the page may be blank or 404 — that's expected), copy the **full address bar URL** and paste it back into the wizard
+8. Click **✓ Complete Setup** — the credentials are saved automatically
+9. Click **Save** in the Homebridge settings footer, then restart the plugin
+10. Check the log for:
    ```
    [Volvo XC90] Authentication successful (OAuth)
    ```
-9. **Remove the Refresh Token field** from plugin settings — the plugin rotates it automatically and stores it on disk. If the token ever expires, re-run `npm run oauth`.
+
+> **Terminal fallback:** If you prefer the command-line, the `npm run oauth` setup tool is still available:
+> ```bash
+> cd /var/lib/homebridge/node_modules/homebridge-volvo-xc90 && npm run oauth
+> ```
+> Paste the printed `clientId`, `clientSecret`, and `refreshToken` into the plugin settings manually and save.
 
 ---
 
@@ -144,7 +157,13 @@ The OTP flow uses Volvo's mobile-app credential and does not support Remote Star
 
 ### Re-authenticating (OAuth)
 
-If the token chain expires (Volvo invalidates your session), re-run `npm run oauth` from the plugin directory to get a fresh refresh token and paste it back into plugin settings. The fallback is automatic — if the stored token fails, the plugin retries with the token in your config before giving up.
+If the token chain expires (Volvo invalidates your session):
+
+1. Open **Homebridge UI → Plugins → Volvo XC90 → Settings**
+2. Click **Re-configure OAuth** in the Authentication card and run through the wizard again
+3. Click **Save** and restart the plugin
+
+The token is rotated and persisted automatically on every API call — expiry is rare in normal use. The terminal fallback (`npm run oauth`) remains available if needed.
 
 ### Re-authenticating (OTP)
 
@@ -186,7 +205,7 @@ If the token chain expires (Volvo invalidates your session), re-run `npm run oau
 |---|---|
 | **OAuth Client ID** | Client ID from your published app on developer.volvocars.com. When both Client ID and Client Secret are present the plugin uses OAuth instead of OTP. |
 | **OAuth Client Secret** | Client secret from your published app. |
-| **OAuth Refresh Token** | Initial refresh token from `npm run oauth`. Paste once — the plugin rotates and stores it automatically. Remove this field after the first successful restart. |
+| **OAuth Refresh Token** | Saved automatically by the OAuth Setup UI. If setting up manually via terminal, paste the token from `npm run oauth` once — the plugin rotates and stores it automatically after the first restart. |
 
 ### Authentication — OTP (legacy, will be removed in v2.0.0)
 
@@ -629,9 +648,15 @@ Items planned for upcoming releases, in rough priority order.
 
 Currently a failed poll logs a warning and waits silently until the next scheduled interval. A future release will add exponential backoff — retrying sooner after transient failures and backing off progressively under sustained errors, rather than just dropping the cycle.
 
-### OAuth flow in the Homebridge UI
+### Remove legacy OTP flow (v2.0.0)
 
-The current setup requires running a terminal command and copy-pasting a redirect URL. A future release will handle the entire OAuth dance inside the Homebridge settings page — no terminal, no copy-paste, just a button that opens the Volvo login and completes the flow automatically.
+The OTP authentication path will be removed in v2.0.0 once the majority of users have migrated to OAuth. The OAuth setup UI introduced in v1.3.5 makes migration a 2-minute process — no terminal required.
+
+---
+
+### ✅ Shipped
+
+- **OAuth flow in the Homebridge UI** *(v1.3.5)* — The entire OAuth dance now happens inside the Homebridge settings panel. Enter your credentials, click Generate Auth URL, sign in, paste the redirect — done. No terminal, no copy-paste config blocks.
 
 ---
 
