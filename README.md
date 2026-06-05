@@ -590,9 +590,6 @@ The API returns litres only. If your tank capacity differs from the default (70 
 **EV Range shows values above 100°C**
 The Temperature Sensor type used for EV Range is capped at 100°C. If your EV range somehow exceeds 100 km, the tile will show 100. In practice the XC90 T8 EV range is well within this limit.
 
-**Range tiles show as a single averaged tile in the room view**
-This happens when EV Range and Tank Range were previously both LightSensor type. Update to the latest plugin version and restart — EV Range now uses TemperatureSensor, which prevents HomeKit from merging them.
-
 **Diagnostics tile always shows Open**
 Enable debug and check the log for `Diagnostics poll failed` — this usually means a scope or connectivity issue. All required scopes are included in the plugin's OAuth request so a fresh re-authentication should resolve it.
 
@@ -609,18 +606,6 @@ Window state is reported by the car's sensors — if the car has been stationary
 ## Known limitations & roadmap
 
 Every plugin makes trade-offs. These are the ones we made on purpose — what the plugin deliberately *doesn't* do yet, why, and what it would take to change that. If a limitation below matters to you, the fastest way to move it up the list is to 👍 the matching [GitHub issue](https://github.com/Codzelerate/homebridge-volvo-xc90/issues) — these decisions are demand-driven.
-
-### Remote Start — available under OAuth
-
-Remote Start works in v1.3.0 via OAuth authentication. It is opt-in and requires a few extra setup steps:
-
-1. Register and publish your own app at developer.volvocars.com with `conve:engine_start_stop` enabled
-2. Run `npm run oauth` to get OAuth credentials and paste them into plugin settings
-3. Enable **Show Remote Start** under Controls
-
-Under the legacy OTP flow, Remote Start still returns 403 — Volvo blocks `engine_start_stop` for the mobile-app credential the OTP path borrows. The only path to Remote Start is OAuth.
-
-**One known edge case:** the command returns 422 (Precondition Failed) when the car is plugged in and charging. This is Volvo enforcing that the car must be in a driveable state before the engine will start — it is not a plugin bug.
 
 ### Data freshness — bounded by the car, not the plugin
 
