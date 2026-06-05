@@ -67,7 +67,10 @@ export declare class VolvoApiClient {
     private http;
     private tokens;
     private debug;
+    private onTokensRefreshed;
+    private refreshInFlight;
     constructor(vccApiKey: string, vin: string, provider: AuthProvider, debugFn?: DebugFn);
+    setOnTokensRefreshed(cb: (tokens: TokenSet) => void): void;
     private attachInterceptors;
     setTokens(tokens: TokenSet): void;
     getTokens(): TokenSet | null;

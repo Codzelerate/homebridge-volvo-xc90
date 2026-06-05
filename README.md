@@ -102,15 +102,16 @@ v1.3.0 adds **OAuth authentication** using your own Volvo Developer app credenti
 **Prerequisites:** a free developer account at [developer.volvocars.com](https://developer.volvocars.com).
 
 1. Sign in to the Volvo Developer Portal and go to **Your API Applications → Create application**
-2. Name it (e.g. `homebridge`), select the APIs you want (Connected Vehicle v2, Energy v2), and **enable `conve:engine_start_stop`** if you want Remote Start
-3. Add a redirect URI — the plugin's GitHub URL works: `https://github.com/Codzelerate/homebridge-volvo-xc90`
-4. **Publish** the app to receive your `client_id` and `client_secret`
-5. On your Homebridge server, run the OAuth setup tool from the plugin directory:
+2. Name it (e.g. `homebridge`), select all the scopes you want (include `conve:engine_start_stop` for Remote Start), and add a redirect URI — your GitHub profile URL works fine: `https://github.com/<your-username>`
+3. **Publish** the app to receive your `client_id` and `client_secret`
+4. **On your Mac** (or any machine with Node.js and a browser), run the OAuth setup tool:
    ```bash
    cd /var/lib/homebridge/node_modules/homebridge-volvo-xc90
    npm run oauth
    ```
-6. Follow the prompts — the tool opens the Volvo auth URL, you sign in, copy the redirect URL from your browser, and paste it back. It prints a ready-to-paste config block.
+   > If running remotely via SSH, copy the printed URL and open it in a browser on your Mac instead.
+5. The tool prints a Volvo authorisation URL — open it in your browser and sign in with your Volvo ID. Your browser will redirect to your registered URL (the page may be blank or 404 — that's expected). Copy the **full URL** from the address bar and paste it back into the tool.
+6. The tool prints a ready-to-paste config block with `clientId`, `clientSecret`, `vccApiKey`, and `refreshToken`.
 7. In Homebridge plugin settings, enter **Client ID**, **Client Secret**, and the **Refresh Token** from the output. **Remove any OTP credentials** if present.
 8. Save and restart. Check the log for:
    ```
