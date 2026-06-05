@@ -31,6 +31,9 @@ Control and monitor your car directly from the Apple Home app and Siri — lock/
 - [Debug mode](#debug-mode)
 - [Troubleshooting](#troubleshooting)
 - [Known limitations & roadmap](#known-limitations--roadmap)
+- [Privacy & security](#privacy--security)
+- [Disclaimer](#disclaimer)
+- [Contributing](#contributing)
 - [Changelog](#changelog)
 - [Built by Codzelerate](#built-by-codzelerate)
 
@@ -602,6 +605,48 @@ See [CHANGELOG.md](CHANGELOG.md) for the full version history.
 
 ---
 
+## Privacy & security
+
+- **All communication with Volvo uses HTTPS.**
+- **Your credentials and tokens are stored locally on your Homebridge server** in a plain-text file (`homebridge-volvo-xc90.json`) in the Homebridge storage directory. **They are not encrypted.** Because this file grants access to your vehicle, secure your Homebridge host and restrict access to it accordingly.
+- **No data is sent to any third party.** The plugin communicates only with Volvo's official API endpoints and your local Apple HomeKit. Your VCC API Key, Volvo ID credentials, and OAuth tokens are used solely to authenticate with Volvo's API.
+- The links to codzelerate.com in this README are documentation links only and transmit no vehicle or account data.
+
+## Regional availability
+
+This plugin currently authenticates against Volvo's **European (EU) Volvo ID** endpoints only. Accounts registered in other regions are not yet supported. (Contributions to add other regions are welcome.)
+
+---
+
+## Disclaimer
+
+**This is an unofficial, community-built plugin.** It is **not affiliated with, endorsed by, sponsored by, or supported by Volvo Car Corporation** in any way.
+
+"Volvo", "XC90", "Sensus", "Volvo On Call", and "Volvo ID" are trademarks of Volvo Car Corporation. They are used in this project **for identification and compatibility purposes only**, to describe what the plugin works with. No ownership of or affiliation with these marks is claimed or implied.
+
+This software is provided **"as is", without warranty of any kind**, express or implied, including but not limited to the warranties of merchantability, fitness for a particular purpose, and non-infringement (see the [LICENSE](LICENSE)).
+
+**Use at your own risk.** This plugin can perform real-world actions on a physical vehicle — including unlocking doors, starting climate pre-conditioning, and sounding the horn or flashing the lights. You are solely responsible for using these features safely, lawfully, and only on a vehicle you own or are authorised to control. The authors and contributors accept **no liability** for any damage, loss, injury, unauthorised access, missed alert, or other consequence arising from the use (or inability to use) this plugin.
+
+Remote features depend on Volvo's services, your vehicle's connectivity, and an active Volvo On Call / Volvo Cars subscription. Availability, accuracy, and timeliness are **not guaranteed** (see [Known limitations & roadmap](#known-limitations--roadmap)).
+
+**You are responsible for ensuring your use of this plugin complies with [Volvo's API Terms & Conditions](https://developer.volvocars.com/terms-and-conditions/apis-terms-and-conditions/) and all applicable laws in your jurisdiction.**
+
+---
+
+## Contributing
+
+Contributions are welcome — bug fixes, new sensors, additional regions, or documentation improvements.
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/my-change`)
+3. Make your changes and run `npm run build` to confirm it compiles
+4. Commit with a clear message and open a pull request describing the change
+
+For larger changes, please open an issue first to discuss the approach.
+
+---
+
 ## Built by Codzelerate
 
 This plugin is developed and maintained by [**Codzelerate**](https://www.codzelerate.com?utm_source=github&utm_medium=plugin&utm_campaign=homebridge-volvo-xc90) — a software development studio focused on smart home automation, IoT integrations, and Apple platform development.
@@ -613,3 +658,5 @@ For questions, bug reports, or feature requests, please [open an issue](https://
 ## License
 
 MIT © [Codzelerate](https://www.codzelerate.com?utm_source=github&utm_medium=plugin&utm_campaign=homebridge-volvo-xc90)
+
+This license covers the plugin's own source code only. It does not grant any rights to Volvo's APIs, services, trademarks, or data, and does not represent any permission or licence from Volvo Car Corporation.

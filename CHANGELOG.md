@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.14] - 2026-06-04
+
+### Documentation
+- Added **Disclaimer**, **Privacy & security**, and **Regional availability** sections to the README. The disclaimer covers the unofficial/not-affiliated status, trademark attribution, "as is" no-warranty, use-at-your-own-risk for vehicle actions, and user responsibility for Volvo's API terms and local law. Privacy notes are written to match the actual implementation (tokens stored locally in plain text, EU-only endpoints) rather than over-claiming.
+
 ## [1.2.13] - 2026-06-04
 
 ### Documentation
