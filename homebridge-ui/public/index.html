@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OAuth Setup</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: transparent;
+      color: #eee;
+      margin: 0;
+      padding: 16px;
+      font-size: 14px;
+    }
+    h2 {
+      font-size: 15px;
+      font-weight: 600;
+      margin: 0 0 4px;
+    }
+    label {
+      display: block;
+      color: #aaa;
+      font-size: 12px;
+      margin: 10px 0 4px;
+    }
+    input[type="text"],
+    input[type="password"],
+    textarea {
+      width: 100%;
+      background: #2a2a2a;
+      border: 1px solid #444;
+      border-radius: 6px;
+      color: #eee;
+      padding: 8px 10px;
+      font-size: 13px;
+      box-sizing: border-box;
+      font-family: monospace;
+    }
+    textarea {
+      resize: vertical;
+      min-height: 64px;
+    }
+    input:focus, textarea:focus {
+      outline: none;
+      border-color: #e83e8c;
+    }
+    button {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      margin-top: 10px;
+      transition: opacity 0.15s;
+    }
+    button:hover { opacity: 0.85; }
+    .btn-primary { background: #e83e8c; color: #fff; }
+    .btn-secondary { background: #333; color: #eee; border: 1px solid #555; }
+    .btn-success { background: #28a745; color: #fff; }
+    .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .btn-row button { margin-top: 10px; }
+    .step {
+      background: #1e1e1e;
+      border: 1px solid #333;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+    .step-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+    .step-num {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: #e83e8c;
+      color: #fff;
+      border-radius: 50%;
+      width: 22px;
+      height: 22px;
+      font-size: 11px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    .hint {
+      color: #888;
+      font-size: 12px;
+      margin: 4px 0 0;
+      line-height: 1.5;
+    }
+    .hint a { color: #e83e8c; }
+    .url-box {
+      background: #2a2a2a;
+      border: 1px solid #444;
+      border-radius: 6px;
+      padding: 8px 10px;
+      font-size: 12px;
+      font-family: monospace;
+      word-break: break-all;
+      color: #88ccff;
+      margin-top: 10px;
+      line-height: 1.5;
+    }
+    .success-box {
+      background: #1a3a1a;
+      border: 1px solid #28a745;
+      border-radius: 8px;
+      padding: 16px;
+      display: none;
+    }
+    .success-box strong { color: #5cb85c; }
+    .success-box p { color: #aaa; font-size: 13px; margin: 6px 0 0; }
+    .error-box {
+      background: #3a1a1a;
+      border: 1px solid #dc3545;
+      border-radius: 6px;
+      padding: 10px 12px;
+      color: #f88;
+      font-size: 12px;
+      margin-top: 10px;
+      display: none;
+    }
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+
+<div id="setup">
+
+  <div class="step">
+    <div class="step-header">
+      <span class="step-num">1</span>
+      <h2>App credentials</h2>
+    </div>
+    <p class="hint">
+      Register and publish an app at
+      <a href="https://developer.volvocars.com/account/" target="_blank">developer.volvocars.com</a>.
+      Add your redirect URI (e.g. <code style="color:#aef">https://github.com/your-username</code>)
+      and select all scopes including <code style="color:#aef">conve:engine_start_stop</code> for Remote Start.
+    </p>
+    <label>Client ID</label>
+    <input type="text" id="clientId" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" autocomplete="off">
+    <label>Client Secret</label>
+    <input type="password" id="clientSecret" placeholder="••••••••••••••••" autocomplete="new-password">
+    <label>Redirect URI</label>
+    <input type="text" id="redirectUri" placeholder="https://github.com/your-username" autocomplete="off">
+    <label>VCC API Key</label>
+    <input type="text" id="vccApiKey" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" autocomplete="off">
+    <br>
+    <button class="btn-primary" onclick="generateUrl()">Generate Auth URL</button>
+    <div class="error-box" id="step1Error"></div>
+  </div>
+
+  <div class="step hidden" id="step2">
+    <div class="step-header">
+      <span class="step-num">2</span>
+      <h2>Sign in with your Volvo ID</h2>
+    </div>
+    <p class="hint">Open the URL below in a new tab and sign in. After login your browser redirects to your registered URL — the page may be blank or 404, that's expected.</p>
+    <div class="url-box" id="authUrlDisplay"></div>
+    <div class="btn-row">
+      <button class="btn-secondary" onclick="copyUrl()">Copy URL</button>
+      <button class="btn-primary" onclick="openUrl()">Open in new tab ↗</button>
+    </div>
+  </div>
+
+  <div class="step hidden" id="step3">
+    <div class="step-header">
+      <span class="step-num">3</span>
+      <h2>Paste the redirect URL</h2>
+    </div>
+    <p class="hint">Copy the full URL from the address bar after the redirect and paste it below.</p>
+    <label>Redirect URL (from address bar)</label>
+    <textarea id="redirectResult" placeholder="https://github.com/your-username?code=abc123&state=xyz"></textarea>
+    <br>
+    <button class="btn-success" onclick="completeOAuth()">Complete OAuth</button>
+    <div class="error-box" id="step3Error"></div>
+  </div>
+
+</div>
+
+<div class="success-box" id="successBox">
+  <strong>✓ Authentication successful!</strong>
+  <p>Config saved automatically. Restart the Volvo XC90 plugin to activate OAuth. OTP credentials have been removed.</p>
+</div>
+
+<script>
+  let generatedAuthUrl = '';
+
+  async function init() {
+    try {
+      const configs = await homebridge.getPluginConfig();
+      if (configs && configs.length > 0) {
+        const c = configs[0];
+        if (c.clientId)    document.getElementById('clientId').value    = c.clientId;
+        if (c.clientSecret) document.getElementById('clientSecret').value = c.clientSecret;
+        if (c.vccApiKey)   document.getElementById('vccApiKey').value   = c.vccApiKey;
+      }
+    } catch (_) {
+      // No existing config — fine
+    }
+  }
+
+  async function generateUrl() {
+    const clientId     = document.getElementById('clientId').value.trim();
+    const clientSecret = document.getElementById('clientSecret').value.trim();
+    const redirectUri  = document.getElementById('redirectUri').value.trim();
+    const vccApiKey    = document.getElementById('vccApiKey').value.trim();
+
+    if (!clientId || !clientSecret || !redirectUri || !vccApiKey) {
+      showError('step1Error', 'All fields are required.');
+      return;
+    }
+
+    homebridge.showSpinner();
+    try {
+      const res = await homebridge.request('/generate-auth-url', { clientId, clientSecret, redirectUri, vccApiKey });
+      generatedAuthUrl = res.authUrl;
+      document.getElementById('authUrlDisplay').textContent = generatedAuthUrl;
+      document.getElementById('step2').classList.remove('hidden');
+      document.getElementById('step3').classList.remove('hidden');
+      hideError('step1Error');
+    } catch (e) {
+      showError('step1Error', e.message || 'Failed to generate URL.');
+    } finally {
+      homebridge.hideSpinner();
+    }
+  }
+
+  function copyUrl() {
+    navigator.clipboard.writeText(generatedAuthUrl).then(() => {
+      homebridge.toast.success('URL copied to clipboard');
+    });
+  }
+
+  function openUrl() {
+    window.open(generatedAuthUrl, '_blank');
+  }
+
+  async function completeOAuth() {
+    const redirectUrl = document.getElementById('redirectResult').value.trim();
+    if (!redirectUrl) {
+      showError('step3Error', 'Paste the redirect URL first.');
+      return;
+    }
+
+    homebridge.showSpinner();
+    try {
+      await homebridge.request('/exchange-code', { redirectUrl });
+      document.getElementById('setup').style.display = 'none';
+      document.getElementById('successBox').style.display = 'block';
+      homebridge.toast.success('OAuth configured — restart the plugin to activate.');
+    } catch (e) {
+      showError('step3Error', e.message || 'Token exchange failed. Check your credentials and try again from Step 1.');
+    } finally {
+      homebridge.hideSpinner();
+    }
+  }
+
+  function showError(id, msg) {
+    const el = document.getElementById(id);
+    el.textContent = msg;
+    el.style.display = 'block';
+  }
+
+  function hideError(id) {
+    document.getElementById(id).style.display = 'none';
+  }
+
+  init();
+</script>
+</body>
+</html>

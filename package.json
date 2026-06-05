@@ -8,7 +8,8 @@
   "types": "dist/index.d.ts",
   "files": [
     "dist",
-    "config.schema.json"
+    "config.schema.json",
+    "homebridge-ui"
   ],
   "repository": {
     "type": "git",
@@ -37,6 +38,7 @@
     "homebridge": ">=1.6.0"
   },
   "dependencies": {
+    "@homebridge/plugin-ui-utils": "^2.0.0",
     "@types/qs": "^6.15.1",
     "axios": "^1.7.2",
     "qs": "^6.15.2"
