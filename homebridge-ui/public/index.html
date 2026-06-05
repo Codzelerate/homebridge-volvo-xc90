@@ -429,7 +429,7 @@ code { font-family: 'SF Mono', ui-monospace, monospace; font-size: 11px; color: 
       <input class="field-input mono" id="wRedirectUri" type="text" placeholder="https://github.com/your-username" autocomplete="off">
     </div>
     <div class="alert alert-red hidden" id="err1"></div>
-    <button class="btn btn-primary btn-full" style="margin-top:12px" onclick="genUrl()">Generate Auth URL →</button>
+    <button class="btn btn-primary btn-full" id="genUrlBtn" style="margin-top:12px" onclick="genUrl()">Generate Auth URL →</button>
   </div>
 
   <!-- Step 2 -->
@@ -455,7 +455,7 @@ code { font-family: 'SF Mono', ui-monospace, monospace; font-size: 11px; color: 
         placeholder="https://github.com/your-username?code=abc123&state=xyz"></textarea>
     </div>
     <div class="alert alert-red hidden" id="err3"></div>
-    <button class="btn btn-green btn-full" style="margin-top:12px" onclick="finishOAuth()">✓ Complete Setup</button>
+    <button class="btn btn-green btn-full" id="finishBtn" style="margin-top:12px" onclick="finishOAuth()">✓ Complete Setup</button>
   </div>
 
   <!-- Success -->
@@ -943,18 +943,18 @@ async function genUrl() {
   const uri = g('wRedirectUri').value.trim();
   if (!cid || !sec || !uri) { showErr('err1', 'All three fields are required.'); return; }
 
-  const vccApiKey = g('cfgVccApiKey').value.trim();
-  homebridge.showSpinner();
+  const btn = g('genUrlBtn');
+  setBtnLoading(btn, true, 'Generating…');
+  hideErr('err1');
   try {
-    const res = await homebridge.request('/generate-auth-url', { clientId:cid, clientSecret:sec, redirectUri:uri, vccApiKey });
+    const res = await requestWithTimeout('/generate-auth-url', { clientId:cid, clientSecret:sec, redirectUri:uri, vccApiKey: g('cfgVccApiKey').value.trim() });
     authUrl = res.authUrl;
     g('authUrlBox').textContent = authUrl;
-    hideErr('err1');
     wsGo(2);
   } catch (e) {
-    showErr('err1', e.message || 'Failed to generate URL.');
+    showErr('err1', e.message || 'Failed to generate URL. Check the Homebridge log for details.');
   } finally {
-    homebridge.hideSpinner();
+    setBtnLoading(btn, false, 'Generate Auth URL →');
   }
 }
 
@@ -965,19 +965,36 @@ async function finishOAuth() {
   const redir = g('wRedirectResult').value.trim();
   if (!redir) { showErr('err3', 'Paste the redirect URL first.'); return; }
 
-  homebridge.showSpinner();
+  const btn = g('finishBtn');
+  setBtnLoading(btn, true, 'Exchanging token…');
+  hideErr('err3');
   try {
-    await homebridge.request('/exchange-code', { redirectUrl: redir });
-    // server has saved config; re-read it
+    await requestWithTimeout('/exchange-code', { redirectUrl: redir }, 15000);
     const stored = await homebridge.getPluginConfig();
     if (stored && stored.length) cfg = { ...cfg, ...stored[0] };
     updateAuthCard();
-    wsGo(4); // success panel
+    wsGo(4);
   } catch (e) {
     showErr('err3', e.message || 'Token exchange failed — check credentials and try from Step 1.');
   } finally {
-    homebridge.hideSpinner();
+    setBtnLoading(btn, false, '✓ Complete Setup');
   }
+}
+
+/* ── Request helpers ─────────────────────────────────────────────────────── */
+function requestWithTimeout(route, body, ms = 10000) {
+  return Promise.race([
+    homebridge.request(route, body),
+    new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('Request timed out — check the Homebridge log for server errors.')), ms)
+    ),
+  ]);
+}
+
+function setBtnLoading(btn, loading, label) {
+  if (!btn) return;
+  btn.disabled = loading;
+  btn.textContent = label;
 }
 
 /* ── Location ────────────────────────────────────────────────────────────── */
