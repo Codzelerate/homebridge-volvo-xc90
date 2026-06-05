@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.5] - 2026-06-05
+
+### Added
+- **OAuth Setup UI** — the entire OAuth flow now lives inside the Homebridge settings panel. Enter Client ID, Client Secret, and Redirect URI, click Generate Auth URL, sign in, paste the redirect URL, and you're done. No terminal, no copy-paste config blocks. Credentials are saved to config automatically.
+- **Fully custom settings UI** — replaced the hybrid schema form with a fully custom dark-themed panel: bento grid for feature toggles (Controls / Sensors / Energy), auth status hero card, OAuth wizard with animated 3-step stepper, collapsible sections (Alert Thresholds, Vehicle Specs, Advanced), and reactive config sync with Homebridge's native Save button.
+- **Masked sensitive fields** — VCC API Key and VIN are masked by default with a 👁 show/hide reveal toggle.
+
+### Changed
+- **OAuth setup is now UI-first** — the Homebridge settings panel is the primary path. The terminal `npm run oauth` tool remains available as a fallback.
+- **Reactive config sync** — UI changes are pushed to Homebridge's in-memory config automatically (debounced 300ms). The native Homebridge Save button is the only save action needed — no custom Save button in the UI.
+
+---
+
 ## [1.3.4] - 2026-06-05
 
 ### Changed
