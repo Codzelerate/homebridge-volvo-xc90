@@ -47,6 +47,21 @@
         "default": false,
         "description": "Clears the stored session on next restart, triggering a fresh OTP login. Enable this + add your credentials, save and restart — you will receive a new OTP email. Disable again once authenticated."
       },
+      "clientId": {
+        "title": "OAuth Client ID",
+        "type": "string",
+        "description": "Client ID from your published app on developer.volvocars.com. When both Client ID and Client Secret are present the plugin uses the OAuth flow instead of OTP."
+      },
+      "clientSecret": {
+        "title": "OAuth Client Secret",
+        "type": "string",
+        "description": "Client secret from your published app on developer.volvocars.com."
+      },
+      "refreshToken": {
+        "title": "OAuth Refresh Token",
+        "type": "string",
+        "description": "Initial refresh token obtained from the OAuth setup tool. The plugin rotates and stores this automatically after first use — you only need to paste it here once."
+      },
       "evLowChargeThreshold": {
         "title": "EV low charge alert threshold (%)",
         "type": "integer",
@@ -233,7 +248,15 @@
     },
     {
       "type": "fieldset",
-      "title": "Authentication",
+      "title": "Authentication (OAuth — recommended)",
+      "description": "Register and publish an app at developer.volvocars.com to get your Client ID and Client Secret. Run the OAuth setup tool (npm run oauth) to obtain an initial refresh token, paste it below, then save and restart. Remove the refresh token field once running — the plugin rotates it automatically.",
+      "expandable": true,
+      "expanded": false,
+      "items": ["clientId", "clientSecret", "refreshToken"]
+    },
+    {
+      "type": "fieldset",
+      "title": "Authentication (OTP — legacy, will be removed in v2.0.0)",
       "description": "For first-time login only. Fill in, save, restart, enter the OTP code Volvo emails you, then save and restart again. Remove email, password, and OTP once authenticated — only VCC API Key and VIN are needed going forward.",
       "expandable": true,
       "expanded": true,

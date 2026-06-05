@@ -34,11 +34,11 @@ export interface AuthFlowState {
 }
 type DebugFn = (msg: string) => void;
 export interface AuthProvider {
-    initiateOtpFlow(username: string, password: string): Promise<AuthFlowState>;
-    completeOtpFlow(otp: string, flowState: AuthFlowState): Promise<TokenSet>;
+    readonly authMethod: 'otp' | 'oauth';
     refreshAccessToken(refreshToken: string): Promise<TokenSet>;
 }
 export declare class OtpAuthProvider implements AuthProvider {
+    readonly authMethod: "otp";
     private authCookies;
     private debug;
     constructor(debugFn?: DebugFn);
@@ -47,6 +47,14 @@ export declare class OtpAuthProvider implements AuthProvider {
     initiateOtpFlow(username: string, password: string): Promise<AuthFlowState>;
     completeOtpFlow(otp: string, flowState: AuthFlowState): Promise<TokenSet>;
     private exchangeCode;
+    refreshAccessToken(refreshToken: string): Promise<TokenSet>;
+}
+export declare class OAuthAuthProvider implements AuthProvider {
+    private readonly clientId;
+    private readonly clientSecret;
+    readonly authMethod: "oauth";
+    private debug;
+    constructor(clientId: string, clientSecret: string, debugFn?: DebugFn);
     refreshAccessToken(refreshToken: string): Promise<TokenSet>;
 }
 export declare class VolvoApiClient {

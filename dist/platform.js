@@ -151,7 +151,15 @@ class VolvoPlatform {
         const debugFn = this.config.debug
             ? (msg) => this.log.info(`[DEBUG] ${msg}`)
             : undefined;
-        this.provider = new volvoApi_1.OtpAuthProvider(debugFn);
+        if (this.config.clientId && this.config.clientSecret) {
+            this.provider = new volvoApi_1.OAuthAuthProvider(this.config.clientId, this.config.clientSecret, debugFn);
+            this.otp = null;
+        }
+        else {
+            const otpProvider = new volvoApi_1.OtpAuthProvider(debugFn);
+            this.provider = otpProvider;
+            this.otp = otpProvider;
+        }
         this.api = new volvoApi_1.VolvoApiClient(this.config.vccApiKey, this.config.vin, this.provider, debugFn);
         this.dbg(`Plugin v${PLUGIN_VERSION} loaded — VIN: ${this.config.vin}`);
         hbApi.on('didFinishLaunching', async () => {
@@ -192,14 +200,50 @@ class VolvoPlatform {
             this.log.warn('Force re-auth enabled — clearing stored tokens. Add your OTP once the email arrives, then disable this option.');
             this.saveState({});
         }
-        const state = this.loadState();
+        let state = this.loadState();
+        // Clear stored tokens when the auth method changes so OTP and OAuth tokens never cross-contaminate.
+        if (state.authMethod && state.authMethod !== this.provider.authMethod) {
+            this.log.info(`Auth method changed (${state.authMethod} → ${this.provider.authMethod}) — clearing stored tokens`);
+            this.saveState({});
+            state = {};
+        }
+        // ── OAuth path ────────────────────────────────────────────────────────────
+        if (this.provider.authMethod === 'oauth') {
+            const refreshToken = state.tokens?.refresh_token ?? this.config.refreshToken;
+            if (!refreshToken) {
+                this.log.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                this.log.error('OAuth is configured but no refresh token was found.');
+                this.log.error('Run the OAuth setup tool to get an initial refresh token');
+                this.log.error('and add it as "refreshToken" in your plugin config.');
+                this.log.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                return false;
+            }
+            try {
+                this.log.info('Authenticating with OAuth refresh token...');
+                const tokens = await this.provider.refreshAccessToken(refreshToken);
+                this.api.setTokens(tokens);
+                this.saveState({ authMethod: 'oauth', tokens });
+                this.log.info('Authentication successful (OAuth)');
+                await this.logSupportedCommands();
+                return true;
+            }
+            catch (err) {
+                this.log.error('OAuth token refresh failed:', err.message);
+                this.log.error('Your refresh token may have expired. Run the setup tool to get a new one.');
+                this.saveState({});
+                return false;
+            }
+        }
+        // ── OTP path (deprecated) ─────────────────────────────────────────────────
+        this.log.warn('OTP authentication will be removed in v2.0.0.');
+        this.log.warn('Migrate: register an app at developer.volvocars.com, then add clientId + clientSecret to your config.');
         // 1. Try stored refresh token first
         if (state.tokens?.refresh_token) {
             try {
                 this.log.info('Authenticating with stored refresh token...');
                 const tokens = await this.provider.refreshAccessToken(state.tokens.refresh_token);
                 this.api.setTokens(tokens);
-                this.saveState({ tokens });
+                this.saveState({ authMethod: 'otp', tokens });
                 this.log.info('Authentication successful (refresh token)');
                 await this.logSupportedCommands();
                 return true;
@@ -215,9 +259,9 @@ class VolvoPlatform {
             if (ageMs < 8 * 60 * 1000) {
                 try {
                     this.log.info('Completing OTP verification...');
-                    const tokens = await this.provider.completeOtpFlow(this.config.otp, state.authFlow);
+                    const tokens = await this.otp.completeOtpFlow(this.config.otp, state.authFlow);
                     this.api.setTokens(tokens);
-                    this.saveState({ tokens });
+                    this.saveState({ authMethod: 'otp', tokens });
                     this.log.info('Authentication successful (OTP)');
                     this.log.info('You can now clear the OTP field in the plugin settings.');
                     await this.logSupportedCommands();
@@ -241,11 +285,10 @@ class VolvoPlatform {
             }
             try {
                 this.log.info('Starting fresh OTP auth flow...');
-                const flowState = await this.provider.initiateOtpFlow(this.config.username, this.config.password);
-                // Submit the OTP immediately in the same flow
-                const tokens = await this.provider.completeOtpFlow(this.config.otp, flowState);
+                const flowState = await this.otp.initiateOtpFlow(this.config.username, this.config.password);
+                const tokens = await this.otp.completeOtpFlow(this.config.otp, flowState);
                 this.api.setTokens(tokens);
-                this.saveState({ tokens });
+                this.saveState({ authMethod: 'otp', tokens });
                 this.log.info('Authentication successful (fresh OTP flow)');
                 this.log.info('You can now clear the OTP field in the plugin settings.');
                 await this.logSupportedCommands();
@@ -267,8 +310,8 @@ class VolvoPlatform {
         }
         try {
             this.log.info('No stored session. Sending OTP to your email...');
-            const flowState = await this.provider.initiateOtpFlow(this.config.username, this.config.password);
-            this.saveState({ authFlow: flowState });
+            const flowState = await this.otp.initiateOtpFlow(this.config.username, this.config.password);
+            this.saveState({ authMethod: 'otp', authFlow: flowState });
             this.log.warn('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
             this.log.warn('OTP sent to your Volvo ID email address.');
             this.log.warn('1. Check your email for a 6-digit code from Volvo');

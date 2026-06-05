@@ -34,6 +34,9 @@ export interface VolvoConfig extends PlatformConfig {
     tankCapacityLiters?: number;
     evLowChargeThreshold?: number;
     forceReauth?: boolean;
+    clientId?: string;
+    clientSecret?: string;
+    refreshToken?: string;
 }
 export declare class VolvoPlatform implements DynamicPlatformPlugin {
     readonly log: Logger;
@@ -46,6 +49,7 @@ export declare class VolvoPlatform implements DynamicPlatformPlugin {
     readonly config: VolvoConfig;
     private readonly storageFile;
     private readonly provider;
+    private readonly otp;
     private readonly cacheStore;
     private readonly cacheInFlight;
     private cacheGeneration;

@@ -81,14 +81,14 @@ type DebugFn = (msg: string) => void;
 // ── AuthProvider interface ────────────────────────────────────────────────────
 
 export interface AuthProvider {
-  initiateOtpFlow(username: string, password: string): Promise<AuthFlowState>;
-  completeOtpFlow(otp: string, flowState: AuthFlowState): Promise<TokenSet>;
+  readonly authMethod: 'otp' | 'oauth';
   refreshAccessToken(refreshToken: string): Promise<TokenSet>;
 }
 
 // ── OtpAuthProvider — the existing PingFederate OTP flow ─────────────────────
 
 export class OtpAuthProvider implements AuthProvider {
+  readonly authMethod = 'otp' as const;
   private authCookies = '';
   private debug: DebugFn;
 
@@ -232,6 +232,42 @@ export class OtpAuthProvider implements AuthProvider {
       expiresAt: Date.now() + (res.data.expires_in ?? 1800) * 1000 - 30_000,
     };
     this.debug(`Token refreshed, expires in ${res.data.expires_in}s`);
+    return tokens;
+  }
+}
+
+// ── OAuthAuthProvider — sanctioned OAuth 2.0 flow with user-owned credentials ─
+
+export class OAuthAuthProvider implements AuthProvider {
+  readonly authMethod = 'oauth' as const;
+  private debug: DebugFn;
+
+  constructor(
+    private readonly clientId: string,
+    private readonly clientSecret: string,
+    debugFn?: DebugFn,
+  ) {
+    this.debug = debugFn ?? (() => undefined);
+  }
+
+  async refreshAccessToken(refreshToken: string): Promise<TokenSet> {
+    this.debug('Refreshing OAuth access token');
+    const basicAuth = 'Basic ' + Buffer.from(`${this.clientId}:${this.clientSecret}`).toString('base64');
+    const res = await axios.post<TokenSet>(TOKEN_URL, qs.stringify({
+      grant_type: 'refresh_token',
+      refresh_token: refreshToken,
+    }), {
+      headers: {
+        Authorization: basicAuth,
+        'content-type': 'application/x-www-form-urlencoded',
+      },
+    });
+    const tokens: TokenSet = {
+      ...res.data,
+      refresh_token: res.data.refresh_token || refreshToken,
+      expiresAt: Date.now() + (res.data.expires_in ?? 1800) * 1000 - 30_000,
+    };
+    this.debug(`OAuth token refreshed, expires in ${res.data.expires_in}s`);
     return tokens;
   }
 }

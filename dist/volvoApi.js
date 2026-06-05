@@ -36,7 +36,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.VolvoApiClient = exports.OtpAuthProvider = void 0;
+exports.VolvoApiClient = exports.OAuthAuthProvider = exports.OtpAuthProvider = void 0;
 const axios_1 = __importDefault(require("axios"));
 const qs = __importStar(require("qs"));
 const BASE_URL = 'https://api.volvocars.com';
@@ -76,6 +76,7 @@ const AUTH_SCOPES = [
 // ── OtpAuthProvider — the existing PingFederate OTP flow ─────────────────────
 class OtpAuthProvider {
     constructor(debugFn) {
+        this.authMethod = 'otp';
         this.authCookies = '';
         this.debug = debugFn ?? (() => undefined);
     }
@@ -206,6 +207,36 @@ class OtpAuthProvider {
     }
 }
 exports.OtpAuthProvider = OtpAuthProvider;
+// ── OAuthAuthProvider — sanctioned OAuth 2.0 flow with user-owned credentials ─
+class OAuthAuthProvider {
+    constructor(clientId, clientSecret, debugFn) {
+        this.clientId = clientId;
+        this.clientSecret = clientSecret;
+        this.authMethod = 'oauth';
+        this.debug = debugFn ?? (() => undefined);
+    }
+    async refreshAccessToken(refreshToken) {
+        this.debug('Refreshing OAuth access token');
+        const basicAuth = 'Basic ' + Buffer.from(`${this.clientId}:${this.clientSecret}`).toString('base64');
+        const res = await axios_1.default.post(TOKEN_URL, qs.stringify({
+            grant_type: 'refresh_token',
+            refresh_token: refreshToken,
+        }), {
+            headers: {
+                Authorization: basicAuth,
+                'content-type': 'application/x-www-form-urlencoded',
+            },
+        });
+        const tokens = {
+            ...res.data,
+            refresh_token: res.data.refresh_token || refreshToken,
+            expiresAt: Date.now() + (res.data.expires_in ?? 1800) * 1000 - 30000,
+        };
+        this.debug(`OAuth token refreshed, expires in ${res.data.expires_in}s`);
+        return tokens;
+    }
+}
+exports.OAuthAuthProvider = OAuthAuthProvider;
 // ── VolvoApiClient ────────────────────────────────────────────────────────────
 class VolvoApiClient {
     constructor(vccApiKey, vin, provider, debugFn) {
