@@ -287,8 +287,24 @@ export class VolvoPlatform implements DynamicPlatformPlugin {
         return true;
       } catch (err) {
         this.log.error('OAuth token refresh failed:', (err as Error).message);
+        // If the state token failed and a different config token is available, try it as fallback.
+        // Never clear state on failure — doing so causes the next restart to retry the already-consumed
+        // config token, creating an infinite failure loop.
+        const configToken = this.config.refreshToken;
+        if (tokenSource === 'state' && configToken && configToken !== refreshToken) {
+          this.log.warn('Stored token failed — retrying with config refreshToken...');
+          try {
+            const tokens = await this.provider.refreshAccessToken(configToken);
+            this.api.setTokens(tokens);
+            this.saveState({ authMethod: 'oauth', tokens });
+            this.log.info('Authentication successful (OAuth via config token)');
+            await this.logSupportedCommands();
+            return true;
+          } catch {
+            // fall through to error
+          }
+        }
         this.log.error('Your refresh token may have expired. Run the setup tool to get a new one.');
-        this.saveState({});
         return false;
       }
     }
