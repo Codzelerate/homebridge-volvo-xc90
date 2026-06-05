@@ -47,12 +47,7 @@
     padding: 16px;
     margin-bottom: 12px;
   }
-  .step-header { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
-  .step-num {
-    display: inline-flex; align-items: center; justify-content: center;
-    background: #e83e8c; color: #fff; border-radius: 50%;
-    width: 22px; height: 22px; font-size: 11px; font-weight: 700; flex-shrink: 0;
-  }
+  .step-header { margin-bottom: 6px; }
   .hint { color: #888; font-size: 12px; margin: 4px 0 0; line-height: 1.5; }
   .hint a { color: #e83e8c; }
   .hint code { color: #aef; }
@@ -87,8 +82,7 @@
 
   <div class="step">
     <div class="step-header">
-      <span class="step-num">1</span>
-      <h2>App credentials</h2>
+      <h2>OAuth Setup</h2>
     </div>
     <p class="hint">
       Register and publish an app at
@@ -102,8 +96,6 @@
     <input type="password" id="clientSecret" placeholder="••••••••••••••••" autocomplete="new-password">
     <label>Redirect URI</label>
     <input type="text" id="redirectUri" placeholder="https://github.com/your-username" autocomplete="off">
-    <label>VCC API Key</label>
-    <input type="text" id="vccApiKey" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" autocomplete="off">
     <br>
     <button class="btn-primary" onclick="generateUrl()">Generate Auth URL</button>
     <div class="error-box" id="step1Error"></div>
@@ -111,7 +103,6 @@
 
   <div class="step hidden" id="step2">
     <div class="step-header">
-      <span class="step-num">2</span>
       <h2>Sign in with your Volvo ID</h2>
     </div>
     <p class="hint">Open the URL below, sign in, then copy the full address bar URL after the redirect. The page may be blank or 404 — that's expected.</p>
@@ -124,7 +115,6 @@
 
   <div class="step hidden" id="step3">
     <div class="step-header">
-      <span class="step-num">3</span>
       <h2>Paste the redirect URL</h2>
     </div>
     <p class="hint">Copy the full URL from the address bar after the redirect and paste it below.</p>
@@ -157,7 +147,6 @@
         const c = configs[0];
         if (c.clientId)     document.getElementById('clientId').value     = c.clientId;
         if (c.clientSecret) document.getElementById('clientSecret').value = c.clientSecret;
-        if (c.vccApiKey)    document.getElementById('vccApiKey').value    = c.vccApiKey;
       }
     } catch (_) {}
 
@@ -171,12 +160,18 @@
     const clientId     = document.getElementById('clientId').value.trim();
     const clientSecret = document.getElementById('clientSecret').value.trim();
     const redirectUri  = document.getElementById('redirectUri').value.trim();
-    const vccApiKey    = document.getElementById('vccApiKey').value.trim();
 
-    if (!clientId || !clientSecret || !redirectUri || !vccApiKey) {
+    if (!clientId || !clientSecret || !redirectUri) {
       showError('step1Error', 'All fields are required.');
       return;
     }
+
+    // Read vccApiKey from existing config — it's already in the standard form below
+    let vccApiKey = '';
+    try {
+      const configs = await homebridge.getPluginConfig();
+      if (configs && configs.length > 0) vccApiKey = configs[0].vccApiKey || '';
+    } catch (_) {}
 
     homebridge.showSpinner();
     try {
