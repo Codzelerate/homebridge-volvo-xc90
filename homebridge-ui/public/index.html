@@ -1,232 +1,1137 @@
 <style>
-  * { box-sizing: border-box; }
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    color: #eee;
-    margin: 0;
-    padding: 0 4px 16px;
-    font-size: 14px;
-  }
-  h2 { font-size: 15px; font-weight: 600; margin: 0 0 4px; }
-  label { display: block; color: #aaa; font-size: 12px; margin: 10px 0 4px; }
-  input[type="text"], input[type="password"], textarea {
-    width: 100%;
-    background: #2a2a2a;
-    border: 1px solid #444;
-    border-radius: 6px;
-    color: #eee;
-    padding: 8px 10px;
-    font-size: 13px;
-    font-family: monospace;
-  }
-  input:focus, textarea:focus { outline: none; border-color: #e83e8c; }
-  textarea { resize: vertical; min-height: 64px; }
-  button {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 8px 14px;
-    border-radius: 6px;
-    border: none;
-    cursor: pointer;
-    font-size: 13px;
-    font-weight: 500;
-    margin-top: 10px;
-    transition: opacity 0.15s;
-  }
-  button:hover { opacity: 0.85; }
-  .btn-primary  { background: #e83e8c; color: #fff; }
-  .btn-secondary { background: #333; color: #eee; border: 1px solid #555; }
-  .btn-success  { background: #28a745; color: #fff; }
-  .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
-  .btn-row button { margin-top: 10px; }
-  .step {
-    background: #1e1e1e;
-    border: 1px solid #333;
-    border-radius: 8px;
-    padding: 16px;
-    margin-bottom: 12px;
-  }
-  .step-header { margin-bottom: 6px; }
-  .hint { color: #888; font-size: 12px; margin: 4px 0 0; line-height: 1.5; }
-  .hint a { color: #e83e8c; }
-  .hint code { color: #aef; }
-  .url-box {
-    background: #2a2a2a; border: 1px solid #444; border-radius: 6px;
-    padding: 8px 10px; font-size: 12px; font-family: monospace;
-    word-break: break-all; color: #88ccff; margin-top: 10px; line-height: 1.5;
-  }
-  .success-box {
-    background: #1a3a1a; border: 1px solid #28a745;
-    border-radius: 8px; padding: 16px; display: none;
-  }
-  .success-box strong { color: #5cb85c; }
-  .success-box p { color: #aaa; font-size: 13px; margin: 6px 0 0; }
-  .error-box {
-    background: #3a1a1a; border: 1px solid #dc3545; border-radius: 6px;
-    padding: 10px 12px; color: #f88; font-size: 12px; margin-top: 10px; display: none;
-  }
-  .hidden { display: none !important; }
-  .divider {
-    border: none; border-top: 1px solid #333; margin: 20px 0;
-  }
-  .config-toggle {
-    color: #aaa; font-size: 12px; cursor: pointer;
-    background: none; border: 1px solid #444; border-radius: 6px;
-    padding: 6px 12px; margin-top: 0; width: 100%; text-align: left;
-  }
-  .config-toggle:hover { background: #1e1e1e; }
+/* ── Design tokens ──────────────────────────────────────────────────────── */
+:root {
+  --bg:           #0d0d0d;
+  --surface:      #161616;
+  --surface-2:    #1e1e1e;
+  --surface-3:    #272727;
+  --border:       #2a2a2a;
+  --border-hi:    #3d3d3d;
+  --text:         #f0f0f0;
+  --text-2:       #aaa;
+  --text-3:       #666;
+  --accent:       #e83e8c;
+  --accent-bg:    rgba(232,62,140,0.12);
+  --accent-border:rgba(232,62,140,0.35);
+  --green:        #22c55e;
+  --green-bg:     rgba(34,197,94,0.1);
+  --green-border: rgba(34,197,94,0.35);
+  --amber:        #f59e0b;
+  --amber-bg:     rgba(245,158,11,0.1);
+  --blue:         #3b82f6;
+  --blue-bg:      rgba(59,130,246,0.1);
+  --red:          #ef4444;
+  --red-bg:       rgba(239,68,68,0.1);
+  --purple:       #a855f7;
+  --purple-bg:    rgba(168,85,247,0.1);
+  --r:            12px;
+  --r-sm:         8px;
+  --r-xs:         6px;
+  --gap:          10px;
+}
+
+/* ── Reset ──────────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  padding: 12px 4px 88px;
+}
+
+/* ── Card ───────────────────────────────────────────────────────────────── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 16px;
+  margin-bottom: var(--gap);
+}
+
+.card-hd {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.card-hd.no-mb { margin-bottom: 0; }
+
+.card-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.icon-chip {
+  width: 26px; height: 26px;
+  border-radius: 7px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+/* ── Badge ──────────────────────────────────────────────────────────────── */
+.badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 3px 9px;
+  border-radius: 20px;
+  font-size: 11px; font-weight: 500;
+  white-space: nowrap;
+}
+.badge-muted   { background: var(--surface-2); color: var(--text-3); border: 1px solid var(--border); }
+.badge-green   { background: var(--green-bg);  color: var(--green);  border: 1px solid var(--green-border); }
+.badge-amber   { background: var(--amber-bg);  color: var(--amber); }
+.badge-red     { background: var(--red-bg);    color: var(--red); }
+.badge-accent  { background: var(--accent-bg); color: var(--accent); border: 1px solid var(--accent-border); }
+.dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+
+/* ── Bento grid ─────────────────────────────────────────────────────────── */
+.bento {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.bento-item {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  padding: 12px 12px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  cursor: pointer;
+  transition: border-color .15s, background .15s;
+  position: relative;
+}
+.bento-item:hover { border-color: var(--border-hi); background: var(--surface-3); }
+.bento-item.on    { border-color: var(--accent-border); background: var(--accent-bg); }
+
+.bento-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.bento-icon {
+  width: 32px; height: 32px;
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 17px;
+}
+
+.bento-label { font-size: 12px; font-weight: 600; margin-bottom: 2px; }
+.bento-desc  { font-size: 11px; color: var(--text-3); line-height: 1.4; }
+
+/* ── Toggle switch ──────────────────────────────────────────────────────── */
+.toggle { cursor: pointer; flex-shrink: 0; }
+.toggle input { display: none; }
+
+.toggle-track {
+  display: block;
+  width: 34px; height: 19px;
+  background: var(--surface-3);
+  border: 1px solid var(--border-hi);
+  border-radius: 10px;
+  position: relative;
+  transition: background .2s, border-color .2s;
+}
+.toggle-track::after {
+  content: '';
+  position: absolute;
+  width: 13px; height: 13px;
+  background: #fff;
+  border-radius: 50%;
+  top: 2px; left: 2px;
+  transition: transform .2s;
+  box-shadow: 0 1px 3px rgba(0,0,0,.5);
+}
+.toggle input:checked + .toggle-track              { background: var(--accent); border-color: var(--accent); }
+.toggle input:checked + .toggle-track::after       { transform: translateX(15px); }
+
+/* ── Field ──────────────────────────────────────────────────────────────── */
+.field { margin-bottom: 12px; }
+.field:last-child { margin-bottom: 0; }
+
+.field-label {
+  font-size: 11px; font-weight: 500;
+  color: var(--text-2);
+  margin-bottom: 5px;
+  display: flex; align-items: center; gap: 4px;
+}
+.req { color: var(--red); }
+
+.field-input {
+  width: 100%;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-xs);
+  color: var(--text);
+  padding: 8px 10px;
+  font-size: 13px;
+  font-family: inherit;
+  transition: border-color .15s;
+  -webkit-appearance: none;
+}
+.field-input:focus { outline: none; border-color: var(--accent); }
+.field-input.mono  { font-family: 'SF Mono', 'Fira Code', ui-monospace, monospace; font-size: 12px; }
+.field-input.err   { border-color: var(--red); }
+
+textarea.field-input { resize: vertical; min-height: 66px; }
+
+.field-hint { font-size: 11px; color: var(--text-3); margin-top: 4px; line-height: 1.4; }
+.field-hint a { color: var(--accent); text-decoration: none; }
+
+/* 2-col field grid */
+.field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+/* ── Row (label + control side-by-side) ─────────────────────────────────── */
+.row {
+  display: flex; align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.row:last-child { margin-bottom: 0; }
+.row-label { flex: 1; font-size: 12px; color: var(--text-2); }
+.row-label small { display: block; font-size: 11px; color: var(--text-3); margin-top: 1px; }
+
+/* ── Stepper ────────────────────────────────────────────────────────────── */
+.stepper {
+  display: flex; align-items: center;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-xs);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.stepper button {
+  width: 30px; height: 32px;
+  background: none; border: none;
+  color: var(--text-2); font-size: 16px;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: background .15s, color .15s;
+}
+.stepper button:hover { background: var(--surface-3); color: var(--text); }
+.stepper input {
+  width: 60px; height: 32px;
+  background: none; border: none;
+  border-left: 1px solid var(--border); border-right: 1px solid var(--border);
+  color: var(--text); font-size: 13px; text-align: center;
+  -moz-appearance: textfield;
+}
+.stepper input::-webkit-outer-spin-button,
+.stepper input::-webkit-inner-spin-button { -webkit-appearance: none; }
+.stepper input:focus { outline: none; }
+
+/* ── Buttons ────────────────────────────────────────────────────────────── */
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 14px;
+  border-radius: var(--r-xs); border: none;
+  font-size: 13px; font-weight: 500;
+  cursor: pointer; white-space: nowrap;
+  transition: opacity .15s, transform .1s;
+}
+.btn:hover   { opacity: .85; }
+.btn:active  { transform: scale(.98); }
+.btn:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+
+.btn-primary  { background: var(--accent);    color: #fff; }
+.btn-green    { background: var(--green);     color: #fff; }
+.btn-ghost    { background: var(--surface-2); color: var(--text-2); border: 1px solid var(--border); }
+.btn-sm       { padding: 5px 10px; font-size: 12px; }
+.btn-full     { width: 100%; justify-content: center; }
+
+/* ── Wizard stepper ─────────────────────────────────────────────────────── */
+.ws-track {
+  display: flex; align-items: center;
+  margin-bottom: 18px;
+}
+.ws-node {
+  display: flex; align-items: center; gap: 6px;
+}
+.ws-node:not(:last-child) { flex: 1; }
+.ws-dot {
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  border: 2px solid var(--border-hi);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px; font-weight: 700;
+  color: var(--text-3);
+  flex-shrink: 0;
+  transition: all .2s;
+}
+.ws-line {
+  flex: 1; height: 1px;
+  background: var(--border);
+  margin: 0 6px;
+  transition: background .2s;
+}
+.ws-node.active .ws-dot  { border-color: var(--accent); color: var(--accent); background: var(--accent-bg); }
+.ws-node.done   .ws-dot  { border-color: var(--green);  color: var(--green);  background: var(--green-bg);  }
+.ws-node.done   ~ .ws-line { background: var(--green); }
+/* line between done-node and next node */
+.ws-line.done            { background: var(--green); }
+
+/* ── Divider ────────────────────────────────────────────────────────────── */
+.hr { border: none; border-top: 1px solid var(--border); margin: 14px 0; }
+
+/* ── Alert boxes ────────────────────────────────────────────────────────── */
+.alert {
+  padding: 10px 12px;
+  border-radius: var(--r-xs);
+  font-size: 12px; line-height: 1.5;
+  margin-top: 10px;
+}
+.alert-info  { background: var(--blue-bg);  border-left: 3px solid var(--blue);  color: #93c5fd; }
+.alert-green { background: var(--green-bg); border-left: 3px solid var(--green); color: #86efac; }
+.alert-red   { background: var(--red-bg);   border-left: 3px solid var(--red);   color: #fca5a5; }
+.alert-amber { background: var(--amber-bg); border-left: 3px solid var(--amber); color: #fcd34d; }
+
+/* ── URL display ────────────────────────────────────────────────────────── */
+.url-box {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-xs);
+  padding: 10px 12px;
+  font-family: 'SF Mono', 'Fira Code', ui-monospace, monospace;
+  font-size: 11px;
+  color: #88ccff;
+  word-break: break-all;
+  line-height: 1.6;
+  margin: 10px 0;
+}
+
+/* ── Auth hero ──────────────────────────────────────────────────────────── */
+.auth-hero {
+  display: flex; align-items: center; gap: 14px;
+}
+.auth-avatar {
+  width: 46px; height: 46px;
+  background: var(--accent-bg);
+  border: 1px solid var(--accent-border);
+  border-radius: var(--r-sm);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px; flex-shrink: 0;
+}
+.auth-info { flex: 1; }
+.auth-name { font-size: 14px; font-weight: 600; }
+.auth-sub  { font-size: 12px; color: var(--text-3); margin-top: 2px; font-family: 'SF Mono', ui-monospace, monospace; }
+
+/* ── Collapsible ────────────────────────────────────────────────────────── */
+.coll-hd {
+  display: flex; align-items: center; justify-content: space-between;
+  cursor: pointer; user-select: none;
+}
+.coll-hd:hover .card-title { color: var(--accent); }
+.chevron { color: var(--text-3); font-size: 11px; transition: transform .2s; }
+
+.collapsed .chevron { transform: rotate(-90deg); }
+.collapsed .coll-body { display: none; }
+
+/* ── Sticky save bar ────────────────────────────────────────────────────── */
+.save-bar {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  background: rgba(13,13,13,.94);
+  border-top: 1px solid var(--border);
+  backdrop-filter: blur(14px);
+  padding: 10px 16px;
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  z-index: 100;
+}
+.save-hint { font-size: 12px; color: var(--text-3); display: flex; align-items: center; gap: 6px; }
+
+/* ── Utility ────────────────────────────────────────────────────────────── */
+.hidden { display: none !important; }
+code { font-family: 'SF Mono', ui-monospace, monospace; font-size: 11px; color: #88ccff; }
 </style>
 
-<div id="oauthSection">
-
-  <div class="step">
-    <div class="step-header">
-      <h2>OAuth Setup</h2>
+<!-- ── AUTH STATUS CARD ─────────────────────────────────────────────────── -->
+<div class="card" id="authCard">
+  <div class="card-hd">
+    <div class="card-title">
+      <div class="icon-chip" style="background:var(--accent-bg)">🔐</div>
+      Authentication
     </div>
-    <p class="hint">
+    <span class="badge badge-muted" id="authBadge">—</span>
+  </div>
+
+  <div id="stateConnected" class="hidden">
+    <div class="auth-hero">
+      <div class="auth-avatar">🔑</div>
+      <div class="auth-info">
+        <div class="auth-name">OAuth Connected</div>
+        <div class="auth-sub" id="authClientSnip">—</div>
+      </div>
+      <span class="badge badge-green"><span class="dot"></span>Active</span>
+    </div>
+    <hr class="hr">
+    <button class="btn btn-ghost btn-sm" onclick="showWizard()">Re-configure OAuth</button>
+  </div>
+
+  <div id="stateEmpty">
+    <p class="field-hint" style="margin-bottom:12px">
+      Connect via OAuth to unlock all features including Remote Start.
+      OTP (legacy) credentials can still be entered in the Advanced section.
+    </p>
+    <button class="btn btn-primary btn-full" onclick="showWizard()">Set up OAuth →</button>
+  </div>
+</div>
+
+<!-- ── OAUTH WIZARD CARD ─────────────────────────────────────────────────── -->
+<div class="card hidden" id="wizardCard">
+  <div class="card-hd">
+    <div class="card-title">
+      <div class="icon-chip" style="background:var(--accent-bg)">🔐</div>
+      OAuth Setup
+    </div>
+    <button class="btn btn-ghost btn-sm" onclick="hideWizard()">✕</button>
+  </div>
+
+  <!-- Stepper track -->
+  <div class="ws-track">
+    <div class="ws-node active" id="ws1"><div class="ws-dot">1</div></div>
+    <div class="ws-line" id="wl1"></div>
+    <div class="ws-node" id="ws2"><div class="ws-dot">2</div></div>
+    <div class="ws-line" id="wl2"></div>
+    <div class="ws-node" id="ws3"><div class="ws-dot">3</div></div>
+  </div>
+
+  <!-- Step 1 -->
+  <div id="step1">
+    <p class="field-hint" style="margin-bottom:12px">
       Register and publish an app at
       <a href="https://developer.volvocars.com/account/" target="_blank">developer.volvocars.com</a>.
       Add a redirect URI (e.g. <code>https://github.com/your-username</code>)
-      and select all scopes including <code>conve:engine_start_stop</code> for Remote Start.
+      and enable all <code>conve:</code> scopes.
     </p>
-    <label>Client ID</label>
-    <input type="text" id="clientId" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" autocomplete="off">
-    <label>Client Secret</label>
-    <input type="password" id="clientSecret" placeholder="••••••••••••••••" autocomplete="new-password">
-    <label>Redirect URI</label>
-    <input type="text" id="redirectUri" placeholder="https://github.com/your-username" autocomplete="off">
-    <br>
-    <button class="btn-primary" onclick="generateUrl()">Generate Auth URL</button>
-    <div class="error-box" id="step1Error"></div>
-  </div>
-
-  <div class="step hidden" id="step2">
-    <div class="step-header">
-      <h2>Sign in with your Volvo ID</h2>
+    <div class="field">
+      <div class="field-label">Client ID</div>
+      <input class="field-input mono" id="wClientId" type="text" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" autocomplete="off">
     </div>
-    <p class="hint">Open the URL below, sign in, then copy the full address bar URL after the redirect. The page may be blank or 404 — that's expected.</p>
-    <div class="url-box" id="authUrlDisplay"></div>
-    <div class="btn-row">
-      <button class="btn-secondary" onclick="copyUrl()">Copy URL</button>
-      <button class="btn-primary" onclick="openUrl()">Open in new tab ↗</button>
+    <div class="field">
+      <div class="field-label">Client Secret</div>
+      <input class="field-input mono" id="wClientSecret" type="password" placeholder="••••••••••••••••" autocomplete="new-password">
     </div>
-  </div>
-
-  <div class="step hidden" id="step3">
-    <div class="step-header">
-      <h2>Paste the redirect URL</h2>
+    <div class="field">
+      <div class="field-label">Redirect URI</div>
+      <input class="field-input mono" id="wRedirectUri" type="text" placeholder="https://github.com/your-username" autocomplete="off">
     </div>
-    <p class="hint">Copy the full URL from the address bar after the redirect and paste it below.</p>
-    <label>Redirect URL (from address bar)</label>
-    <textarea id="redirectResult" placeholder="https://github.com/your-username?code=abc123&state=xyz"></textarea>
-    <br>
-    <button class="btn-success" onclick="completeOAuth()">Complete OAuth</button>
-    <div class="error-box" id="step3Error"></div>
+    <div class="alert alert-red hidden" id="err1"></div>
+    <button class="btn btn-primary btn-full" style="margin-top:12px" onclick="genUrl()">Generate Auth URL →</button>
   </div>
 
-  <div class="success-box" id="successBox">
-    <strong>✓ Authentication successful!</strong>
-    <p>Config saved automatically. Restart the Volvo XC90 plugin to activate OAuth. OTP credentials have been removed.</p>
+  <!-- Step 2 -->
+  <div id="step2" class="hidden">
+    <p class="field-hint" style="margin-bottom:6px">
+      Open the URL below, sign in with your Volvo ID, then copy the full address bar URL after the redirect.
+      The page may be blank or 404 — that's expected.
+    </p>
+    <div class="url-box" id="authUrlBox"></div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-ghost btn-sm" onclick="copyUrl()">Copy URL</button>
+      <button class="btn btn-primary btn-sm" onclick="openUrl()">Open in browser ↗</button>
+    </div>
+    <hr class="hr">
+    <button class="btn btn-ghost btn-sm btn-full" onclick="wsGo(3)">I've signed in — paste the redirect URL →</button>
   </div>
 
+  <!-- Step 3 -->
+  <div id="step3" class="hidden">
+    <div class="field">
+      <div class="field-label">Redirect URL (from address bar)</div>
+      <textarea class="field-input mono" id="wRedirectResult" rows="3"
+        placeholder="https://github.com/your-username?code=abc123&state=xyz"></textarea>
+    </div>
+    <div class="alert alert-red hidden" id="err3"></div>
+    <button class="btn btn-green btn-full" style="margin-top:12px" onclick="finishOAuth()">✓ Complete Setup</button>
+  </div>
+
+  <!-- Success -->
+  <div id="stepDone" class="hidden">
+    <div class="alert alert-green">
+      <strong>Authentication successful!</strong><br>
+      Credentials saved. Click <strong>Save Configuration</strong> below and restart the plugin.
+    </div>
+    <button class="btn btn-ghost btn-sm" style="margin-top:12px" onclick="hideWizard()">← Back to settings</button>
+  </div>
 </div>
 
-<hr class="divider">
+<!-- ── VEHICLE ────────────────────────────────────────────────────────────── -->
+<div class="card">
+  <div class="card-hd">
+    <div class="card-title">
+      <div class="icon-chip" style="background:var(--blue-bg)">🚗</div>
+      Vehicle
+    </div>
+  </div>
+  <div class="field">
+    <div class="field-label">Platform Name</div>
+    <input class="field-input" id="cfgName" type="text" placeholder="Volvo XC90">
+  </div>
+  <div class="field">
+    <div class="field-label">VCC API Key <span class="req">*</span></div>
+    <input class="field-input mono" id="cfgVccApiKey" type="text"
+      placeholder="Primary key from developer.volvocars.com" autocomplete="off">
+    <div class="field-hint">Found in your app on <a href="https://developer.volvocars.com" target="_blank">developer.volvocars.com</a></div>
+  </div>
+  <div class="field">
+    <div class="field-label">VIN <span class="req">*</span></div>
+    <input class="field-input mono" id="cfgVin" type="text" maxlength="17"
+      placeholder="17-character Vehicle Identification Number" autocomplete="off" oninput="vinCheck()">
+    <div class="field-hint" id="vinHint"></div>
+  </div>
+</div>
 
-<div id="schemaFormContainer"></div>
+<!-- ── CONTROLS ───────────────────────────────────────────────────────────── -->
+<div class="card">
+  <div class="card-hd">
+    <div class="card-title">
+      <div class="icon-chip" style="background:var(--amber-bg)">⚙️</div>
+      Controls
+    </div>
+    <span class="badge badge-muted" id="bdgControls">0 / 6</span>
+  </div>
+  <div class="bento" id="bentoControls"></div>
+</div>
+
+<!-- ── SENSORS ────────────────────────────────────────────────────────────── -->
+<div class="card">
+  <div class="card-hd">
+    <div class="card-title">
+      <div class="icon-chip" style="background:var(--blue-bg)">📡</div>
+      Sensors
+    </div>
+    <span class="badge badge-muted" id="bdgSensors">0 / 4</span>
+  </div>
+  <div class="bento" id="bentoSensors"></div>
+</div>
+
+<!-- ── ENERGY ─────────────────────────────────────────────────────────────── -->
+<div class="card">
+  <div class="card-hd">
+    <div class="card-title">
+      <div class="icon-chip" style="background:var(--green-bg)">⚡</div>
+      Energy
+    </div>
+    <span class="badge badge-muted" id="bdgEnergy">0 / 5</span>
+  </div>
+  <div class="bento" id="bentoEnergy"></div>
+</div>
+
+<!-- ── LOCATION ───────────────────────────────────────────────────────────── -->
+<div class="card">
+  <div class="card-hd no-mb">
+    <div class="card-title">
+      <div class="icon-chip" style="background:var(--purple-bg)">📍</div>
+      Location
+    </div>
+    <label class="toggle" onclick="event.stopPropagation()">
+      <input type="checkbox" id="cfgShowLocation" onchange="onLocationToggle()">
+      <span class="toggle-track"></span>
+    </label>
+  </div>
+  <div id="locationBody" class="hidden">
+    <hr class="hr">
+    <p class="field-hint" style="margin-bottom:12px">
+      Shows a <em>Car at Home</em> occupancy sensor — Occupied when the car is within range of your home coordinates.
+    </p>
+    <div class="field-grid" style="margin-bottom:8px">
+      <div class="field">
+        <div class="field-label">Latitude</div>
+        <input class="field-input mono" id="cfgLat" type="number" step="any" placeholder="51.5074">
+      </div>
+      <div class="field">
+        <div class="field-label">Longitude</div>
+        <input class="field-input mono" id="cfgLon" type="number" step="any" placeholder="-0.1278">
+      </div>
+    </div>
+    <div class="row" style="margin-bottom:0">
+      <div class="row-label">
+        Home radius
+        <small>How close the car must be to count as home</small>
+      </div>
+      <div>
+        <div class="stepper">
+          <button onclick="step('cfgRadius', -50, 50, 2000)">−</button>
+          <input type="number" id="cfgRadius" value="200" onchange="dirty()">
+          <button onclick="step('cfgRadius', 50, 50, 2000)">+</button>
+        </div>
+        <div style="text-align:right;font-size:11px;color:var(--text-3);margin-top:3px">metres</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── ALERT THRESHOLDS (collapsible) ────────────────────────────────────── -->
+<div class="card collapsed" id="cardAlerts">
+  <div class="coll-hd" onclick="toggleColl('cardAlerts')">
+    <div class="card-title">
+      <div class="icon-chip" style="background:var(--red-bg)">🔔</div>
+      Alert Thresholds
+    </div>
+    <span class="chevron">▾</span>
+  </div>
+  <div class="coll-body" style="margin-top:14px">
+    <div class="row">
+      <div class="row-label">
+        EV low charge alert
+        <small>HomeKit notifies when charge drops below this</small>
+      </div>
+      <div>
+        <div class="stepper">
+          <button onclick="step('cfgEvLow', -5, 1, 80)">−</button>
+          <input type="number" id="cfgEvLow" value="20" onchange="dirty()">
+          <button onclick="step('cfgEvLow', 5, 1, 80)">+</button>
+        </div>
+        <div style="text-align:right;font-size:11px;color:var(--text-3);margin-top:3px">%</div>
+      </div>
+    </div>
+    <div class="row" style="margin-bottom:0">
+      <div class="row-label">
+        Service alert threshold
+        <small>Service Due sensor triggers below this service life %</small>
+      </div>
+      <div>
+        <div class="stepper">
+          <button onclick="step('cfgSvcAlert', -5, 5, 50)">−</button>
+          <input type="number" id="cfgSvcAlert" value="20" onchange="dirty()">
+          <button onclick="step('cfgSvcAlert', 5, 5, 50)">+</button>
+        </div>
+        <div style="text-align:right;font-size:11px;color:var(--text-3);margin-top:3px">%</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── VEHICLE SPECS (collapsible) ───────────────────────────────────────── -->
+<div class="card collapsed" id="cardSpecs">
+  <div class="coll-hd" onclick="toggleColl('cardSpecs')">
+    <div class="card-title">
+      <div class="icon-chip" style="background:var(--amber-bg)">🔧</div>
+      Vehicle Specs
+    </div>
+    <span class="chevron">▾</span>
+  </div>
+  <div class="coll-body" style="margin-top:14px">
+    <div class="row">
+      <div class="row-label">Fuel tank capacity <small>XC90 T8 PHEV default is 50 L</small></div>
+      <div>
+        <div class="stepper">
+          <button onclick="step('cfgTank', -5, 10, 150)">−</button>
+          <input type="number" id="cfgTank" value="50" onchange="dirty()">
+          <button onclick="step('cfgTank', 5, 10, 150)">+</button>
+        </div>
+        <div style="text-align:right;font-size:11px;color:var(--text-3);margin-top:3px">litres</div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="row-label">Engine start duration <small>Max 15 min (Volvo API limit)</small></div>
+      <div>
+        <div class="stepper">
+          <button onclick="step('cfgEngDur', -1, 1, 15)">−</button>
+          <input type="number" id="cfgEngDur" value="15" onchange="dirty()">
+          <button onclick="step('cfgEngDur', 1, 1, 15)">+</button>
+        </div>
+        <div style="text-align:right;font-size:11px;color:var(--text-3);margin-top:3px">minutes</div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="row-label">Service interval <small>Time between services</small></div>
+      <div>
+        <div class="stepper">
+          <button onclick="step('cfgSvcMo', -1, 1, 36)">−</button>
+          <input type="number" id="cfgSvcMo" value="12" onchange="dirty()">
+          <button onclick="step('cfgSvcMo', 1, 1, 36)">+</button>
+        </div>
+        <div style="text-align:right;font-size:11px;color:var(--text-3);margin-top:3px">months</div>
+      </div>
+    </div>
+    <div class="row" style="margin-bottom:0">
+      <div class="row-label">Service interval <small>Distance between services</small></div>
+      <div>
+        <div class="stepper">
+          <button onclick="step('cfgSvcKm', -5000, 1000, 100000)">−</button>
+          <input type="number" id="cfgSvcKm" value="30000" onchange="dirty()">
+          <button onclick="step('cfgSvcKm', 5000, 1000, 100000)">+</button>
+        </div>
+        <div style="text-align:right;font-size:11px;color:var(--text-3);margin-top:3px">km</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── ADVANCED (collapsible) ────────────────────────────────────────────── -->
+<div class="card collapsed" id="cardAdv">
+  <div class="coll-hd" onclick="toggleColl('cardAdv')">
+    <div class="card-title">
+      <div class="icon-chip" style="background:var(--surface-2)">🛠</div>
+      Advanced
+    </div>
+    <span class="chevron">▾</span>
+  </div>
+  <div class="coll-body" style="margin-top:14px">
+    <div class="row">
+      <div class="row-label">
+        Poll interval
+        <small>How often to fetch vehicle state from Volvo</small>
+      </div>
+      <div>
+        <div class="stepper">
+          <button onclick="step('cfgPoll', -60, 10, 86400)">−</button>
+          <input type="number" id="cfgPoll" value="1800" onchange="dirty();pollLabel()">
+          <button onclick="step('cfgPoll', 60, 10, 86400)">+</button>
+        </div>
+        <div style="text-align:right;font-size:11px;color:var(--text-3);margin-top:3px" id="pollLabel">30 min</div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="row-label">
+        Refresh switch
+        <small>Adds a manual Refresh toggle to the Controls tile</small>
+      </div>
+      <label class="toggle">
+        <input type="checkbox" id="cfgRefresh" onchange="dirty()">
+        <span class="toggle-track"></span>
+      </label>
+    </div>
+    <hr class="hr" style="margin:10px 0">
+    <p class="field-hint" style="margin-bottom:10px">Legacy OTP credentials — only needed if not using OAuth.</p>
+    <div class="field">
+      <div class="field-label">Volvo ID (email)</div>
+      <input class="field-input" id="cfgUsername" type="email" placeholder="you@example.com" autocomplete="off">
+    </div>
+    <div class="field">
+      <div class="field-label">Password</div>
+      <input class="field-input" id="cfgPassword" type="password" placeholder="••••••••" autocomplete="new-password">
+    </div>
+    <div class="field">
+      <div class="field-label">One-Time Password (OTP)</div>
+      <input class="field-input mono" id="cfgOtp" type="text" placeholder="6-digit code from Volvo email" maxlength="6">
+    </div>
+    <div class="row" style="margin-bottom:0">
+      <div class="row-label">
+        Force re-authentication
+        <small>Clears stored session on next restart to trigger fresh OTP</small>
+      </div>
+      <label class="toggle">
+        <input type="checkbox" id="cfgForceReauth" onchange="dirty()">
+        <span class="toggle-track"></span>
+      </label>
+    </div>
+    <hr class="hr" style="margin:10px 0">
+    <div class="row" style="margin-bottom:0">
+      <div class="row-label">
+        Debug logging
+        <small>Log every API request to the Homebridge log</small>
+      </div>
+      <label class="toggle">
+        <input type="checkbox" id="cfgDebug" onchange="dirty()">
+        <span class="toggle-track"></span>
+      </label>
+    </div>
+  </div>
+</div>
+
+<!-- ── SAVE BAR ───────────────────────────────────────────────────────────── -->
+<div class="save-bar">
+  <div class="save-hint" id="saveHint">
+    <span class="dot" style="color:var(--text-3)"></span>
+    No changes
+  </div>
+  <button class="btn btn-primary" id="saveBtn" onclick="saveConfig()">Save Configuration</button>
+</div>
 
 <script>
-  let generatedAuthUrl = '';
+/* ── Feature definitions ─────────────────────────────────────────────────── */
+const FEATURES = {
+  controls: [
+    { id:'showLock',      label:'Lock',        icon:'🔒', bg:'var(--amber-bg)',  desc:'Lock & unlock remotely' },
+    { id:'showClimate',   label:'Climate',     icon:'❄️', bg:'var(--blue-bg)',   desc:'Climate pre-conditioning' },
+    { id:'showEngine',    label:'Remote Start',icon:'🔑', bg:'var(--accent-bg)', desc:'OAuth + engine scope required' },
+    { id:'showHonkFlash', label:'Honk + Flash',icon:'📣', bg:'var(--purple-bg)', desc:'Horn & lights together' },
+    { id:'showHonk',      label:'Honk only',   icon:'🔊', bg:'var(--surface-3)', desc:'Horn only — check log for support' },
+    { id:'showFlash',     label:'Flash only',  icon:'💡', bg:'var(--surface-3)', desc:'Lights only — check log for support' },
+  ],
+  sensors: [
+    { id:'showDoors',       label:'Doors',       icon:'🚪', bg:'var(--blue-bg)',   desc:'6 contact sensors + summary tile' },
+    { id:'showWindows',     label:'Windows',     icon:'🪟', bg:'var(--blue-bg)',   desc:'All windows + sunroof' },
+    { id:'showLeftOpen',    label:'Left Open',   icon:'⚠️', bg:'var(--red-bg)',    desc:'Alert when locked with opening ajar' },
+    { id:'showDiagnostics', label:'Diagnostics', icon:'🔧', bg:'var(--amber-bg)',  desc:'Oil, brakes, tyres, service life' },
+  ],
+  energy: [
+    { id:'showFuel',        label:'Fuel Level',    icon:'⛽', bg:'var(--amber-bg)',  desc:'Tank % and range (km to empty)' },
+    { id:'showCharging',    label:'EV Battery',    icon:'⚡', bg:'var(--green-bg)',  desc:'Charge level + low-charge alerts' },
+    { id:'showChargingEta', label:'Charging ETA',  icon:'⏱', bg:'var(--green-bg)',  desc:'Minutes to full shown in tile name' },
+    { id:'showRange',       label:'Range',         icon:'🗺', bg:'var(--purple-bg)', desc:'EV & fuel range readouts' },
+    { id:'rangeStandalone', label:'Range as Tiles',icon:'📊', bg:'var(--purple-bg)', desc:'Standalone tiles vs sub-sensors' },
+  ],
+};
 
-  async function init() {
-    // Pre-fill credentials from existing config
-    try {
-      const configs = await homebridge.getPluginConfig();
-      if (configs && configs.length > 0) {
-        const c = configs[0];
-        if (c.clientId)     document.getElementById('clientId').value     = c.clientId;
-        if (c.clientSecret) document.getElementById('clientSecret').value = c.clientSecret;
-      }
-    } catch (_) {}
+/* ── Defaults (schema values) ────────────────────────────────────────────── */
+const DEFAULTS = {
+  name: 'Volvo XC90',
+  evLowChargeThreshold: 20,
+  tankCapacityLiters: 70,
+  engineStartDuration: 15,
+  serviceIntervalMonths: 12,
+  serviceIntervalKm: 30000,
+  serviceAlertThreshold: 20,
+  pollInterval: 1800,
+  homeRadiusMeters: 200,
+  showLock: true, showClimate: true, showEngine: false,
+  showHonkFlash: true, showHonk: false, showFlash: false,
+  showDoors: true, showWindows: true, showLeftOpen: false, showDiagnostics: true,
+  showFuel: true, showCharging: true, showChargingEta: false, showRange: true, rangeStandalone: true,
+  showLocation: false,
+  showRefresh: false, debug: false, forceReauth: false,
+};
 
-    // Render the standard config form below the OAuth section
-    try {
-      await homebridge.showSchemaForm();
-    } catch (_) {}
+let cfg = {};
+let authUrl = '';
+let isDirty = false;
+
+/* ── Bootstrap ───────────────────────────────────────────────────────────── */
+async function init() {
+  buildBento('bentoControls', FEATURES.controls);
+  buildBento('bentoSensors',  FEATURES.sensors);
+  buildBento('bentoEnergy',   FEATURES.energy);
+
+  try {
+    const stored = await homebridge.getPluginConfig();
+    cfg = stored && stored.length ? { ...DEFAULTS, ...stored[0] } : { ...DEFAULTS };
+  } catch (_) {
+    cfg = { ...DEFAULTS };
   }
 
-  async function generateUrl() {
-    const clientId     = document.getElementById('clientId').value.trim();
-    const clientSecret = document.getElementById('clientSecret').value.trim();
-    const redirectUri  = document.getElementById('redirectUri').value.trim();
+  populate();
+  cleanState();
+}
 
-    if (!clientId || !clientSecret || !redirectUri) {
-      showError('step1Error', 'All fields are required.');
-      return;
-    }
+/* ── Bento builder ───────────────────────────────────────────────────────── */
+function buildBento(containerId, defs) {
+  document.getElementById(containerId).innerHTML = defs.map(f => `
+    <div class="bento-item ${cfg[f.id] ? 'on' : ''}" id="bi_${f.id}" onclick="flipFeature('${f.id}')">
+      <div class="bento-top">
+        <div class="bento-icon" style="background:${f.bg}">${f.icon}</div>
+        <label class="toggle" onclick="event.stopPropagation()">
+          <input type="checkbox" id="ft_${f.id}" ${cfg[f.id] ? 'checked' : ''}
+            onchange="onFeature('${f.id}', this.checked)">
+          <span class="toggle-track"></span>
+        </label>
+      </div>
+      <div class="bento-label">${f.label}</div>
+      <div class="bento-desc">${f.desc}</div>
+    </div>
+  `).join('');
+}
 
-    // Read vccApiKey from existing config — it's already in the standard form below
-    let vccApiKey = '';
-    try {
-      const configs = await homebridge.getPluginConfig();
-      if (configs && configs.length > 0) vccApiKey = configs[0].vccApiKey || '';
-    } catch (_) {}
+function flipFeature(id) {
+  const cb = document.getElementById('ft_' + id);
+  cb.checked = !cb.checked;
+  onFeature(id, cb.checked);
+}
 
-    homebridge.showSpinner();
-    try {
-      const res = await homebridge.request('/generate-auth-url', { clientId, clientSecret, redirectUri, vccApiKey });
-      generatedAuthUrl = res.authUrl;
-      document.getElementById('authUrlDisplay').textContent = generatedAuthUrl;
-      document.getElementById('step2').classList.remove('hidden');
-      document.getElementById('step3').classList.remove('hidden');
-      hideError('step1Error');
-    } catch (e) {
-      showError('step1Error', e.message || 'Failed to generate URL.');
-    } finally {
-      homebridge.hideSpinner();
-    }
+function onFeature(id, val) {
+  cfg[id] = val;
+  document.getElementById('bi_' + id).classList.toggle('on', val);
+  updateBadges();
+  dirty();
+}
+
+/* ── Populate all fields from cfg ────────────────────────────────────────── */
+function populate() {
+  set('cfgName',      cfg.name            || '');
+  set('cfgVccApiKey', cfg.vccApiKey       || '');
+  set('cfgVin',       cfg.vin             || '');
+  setNum('cfgEvLow',    cfg.evLowChargeThreshold);
+  setNum('cfgTank',     cfg.tankCapacityLiters);
+  setNum('cfgEngDur',   cfg.engineStartDuration);
+  setNum('cfgSvcMo',    cfg.serviceIntervalMonths);
+  setNum('cfgSvcKm',    cfg.serviceIntervalKm);
+  setNum('cfgSvcAlert', cfg.serviceAlertThreshold);
+  setNum('cfgPoll',     cfg.pollInterval);
+  setNum('cfgRadius',   cfg.homeRadiusMeters);
+  setChk('cfgShowLocation', cfg.showLocation);
+  setChk('cfgRefresh',      cfg.showRefresh);
+  setChk('cfgDebug',        cfg.debug);
+  setChk('cfgForceReauth',  cfg.forceReauth);
+  set('cfgUsername', cfg.username || '');
+  set('cfgPassword', cfg.password || '');
+  set('cfgOtp',      cfg.otp      || '');
+  if (cfg.homeLatitude  != null) setNum('cfgLat', cfg.homeLatitude);
+  if (cfg.homeLongitude != null) setNum('cfgLon', cfg.homeLongitude);
+
+  onLocationToggle();
+  pollLabel();
+  vinCheck();
+  updateAuthCard();
+  updateBadges();
+
+  // Sync bento states
+  allFeatures().forEach(f => {
+    const cb = document.getElementById('ft_' + f.id);
+    if (!cb) return;
+    cb.checked = !!cfg[f.id];
+    document.getElementById('bi_' + f.id).classList.toggle('on', !!cfg[f.id]);
+  });
+}
+
+const allFeatures = () => [...FEATURES.controls, ...FEATURES.sensors, ...FEATURES.energy];
+
+/* ── Helpers ─────────────────────────────────────────────────────────────── */
+function set(id, v)    { const e = g(id); if (e) e.value = v; }
+function setNum(id, v) { const e = g(id); if (e && v != null) e.value = v; }
+function setChk(id, v) { const e = g(id); if (e) e.checked = !!v; }
+function getNum(id, fb){ return parseInt(g(id)?.value) || fb; }
+function getChk(id)    { return !!g(id)?.checked; }
+function g(id)         { return document.getElementById(id); }
+
+/* ── Auth card ───────────────────────────────────────────────────────────── */
+function updateAuthCard() {
+  const ok = cfg.clientId && cfg.clientSecret && cfg.refreshToken;
+  g('stateConnected').classList.toggle('hidden', !ok);
+  g('stateEmpty').classList.toggle('hidden',  ok);
+  g('authBadge').className   = ok ? 'badge badge-green' : 'badge badge-muted';
+  g('authBadge').innerHTML   = ok
+    ? '<span class="dot"></span>OAuth'
+    : 'Not configured';
+  if (ok) {
+    g('authClientSnip').textContent = 'Client ID: ' + cfg.clientId.slice(0,8) + '••••';
+  }
+}
+
+/* ── Wizard ──────────────────────────────────────────────────────────────── */
+function showWizard() {
+  g('wizardCard').classList.remove('hidden');
+  g('authCard').classList.add('hidden');
+  wsGo(1);
+  if (cfg.clientId)     set('wClientId',     cfg.clientId);
+  if (cfg.clientSecret) set('wClientSecret', cfg.clientSecret);
+}
+
+function hideWizard() {
+  g('wizardCard').classList.add('hidden');
+  g('authCard').classList.remove('hidden');
+}
+
+function wsGo(n) {
+  ['step1','step2','step3','stepDone'].forEach((id, i) => {
+    g(id).classList.toggle('hidden', i !== n - 1);
+  });
+  for (let i = 1; i <= 3; i++) {
+    const node = g('ws' + i);
+    node.classList.remove('active','done');
+    if (i < n) node.classList.add('done');
+    else if (i === n) node.classList.add('active');
+  }
+  // colour connector lines
+  g('wl1').classList.toggle('done', n > 1);
+  g('wl2').classList.toggle('done', n > 2);
+}
+
+async function genUrl() {
+  const cid = g('wClientId').value.trim();
+  const sec = g('wClientSecret').value.trim();
+  const uri = g('wRedirectUri').value.trim();
+  if (!cid || !sec || !uri) { showErr('err1', 'All three fields are required.'); return; }
+
+  const vccApiKey = g('cfgVccApiKey').value.trim();
+  homebridge.showSpinner();
+  try {
+    const res = await homebridge.request('/generate-auth-url', { clientId:cid, clientSecret:sec, redirectUri:uri, vccApiKey });
+    authUrl = res.authUrl;
+    g('authUrlBox').textContent = authUrl;
+    hideErr('err1');
+    wsGo(2);
+  } catch (e) {
+    showErr('err1', e.message || 'Failed to generate URL.');
+  } finally {
+    homebridge.hideSpinner();
+  }
+}
+
+function copyUrl()  { navigator.clipboard.writeText(authUrl).then(() => homebridge.toast.success('URL copied')); }
+function openUrl()  { window.open(authUrl, '_blank'); setTimeout(() => wsGo(3), 600); }
+
+async function finishOAuth() {
+  const redir = g('wRedirectResult').value.trim();
+  if (!redir) { showErr('err3', 'Paste the redirect URL first.'); return; }
+
+  homebridge.showSpinner();
+  try {
+    await homebridge.request('/exchange-code', { redirectUrl: redir });
+    // server has saved config; re-read it
+    const stored = await homebridge.getPluginConfig();
+    if (stored && stored.length) cfg = { ...cfg, ...stored[0] };
+    updateAuthCard();
+    dirty();
+    wsGo(4); // success panel
+  } catch (e) {
+    showErr('err3', e.message || 'Token exchange failed — check credentials and try from Step 1.');
+  } finally {
+    homebridge.hideSpinner();
+  }
+}
+
+/* ── Location ────────────────────────────────────────────────────────────── */
+function onLocationToggle() {
+  const on = getChk('cfgShowLocation');
+  g('locationBody').classList.toggle('hidden', !on);
+  cfg.showLocation = on;
+  dirty();
+}
+
+/* ── Collapsible ─────────────────────────────────────────────────────────── */
+function toggleColl(id) { g(id).classList.toggle('collapsed'); }
+
+/* ── Stepper ─────────────────────────────────────────────────────────────── */
+function step(id, delta, min, max) {
+  const el = g(id);
+  let v = (parseInt(el.value) || 0) + delta;
+  el.value = Math.max(min, Math.min(max, v));
+  dirty();
+  if (id === 'cfgPoll') pollLabel();
+}
+
+function pollLabel() {
+  const s = parseInt(g('cfgPoll')?.value) || 1800;
+  const el = g('pollLabel');
+  if (!el) return;
+  el.textContent = s < 60 ? s + 's' : s < 3600 ? Math.round(s/60) + ' min' : (s/3600).toFixed(1) + ' hr';
+}
+
+/* ── VIN check ───────────────────────────────────────────────────────────── */
+function vinCheck() {
+  const v = g('cfgVin').value;
+  const el = g('vinHint');
+  if (!v) { el.textContent = ''; return; }
+  el.innerHTML = v.length === 17
+    ? '<span style="color:var(--green)">✓ 17 characters</span>'
+    : `<span style="color:var(--amber)">${v.length} / 17 characters</span>`;
+}
+
+/* ── Badges ──────────────────────────────────────────────────────────────── */
+function updateBadges() {
+  badge('bdgControls', FEATURES.controls);
+  badge('bdgSensors',  FEATURES.sensors);
+  badge('bdgEnergy',   FEATURES.energy);
+}
+
+function badge(id, defs) {
+  const on = defs.filter(f => cfg[f.id]).length;
+  const el = g(id);
+  el.textContent = on + ' / ' + defs.length;
+  el.className = on > 0 ? 'badge badge-green' : 'badge badge-muted';
+}
+
+/* ── Alert helpers ───────────────────────────────────────────────────────── */
+function showErr(id, msg) { const e = g(id); e.textContent = msg; e.classList.remove('hidden'); }
+function hideErr(id)      { g(id).classList.add('hidden'); }
+
+/* ── Dirty state ─────────────────────────────────────────────────────────── */
+function dirty() {
+  if (isDirty) return;
+  isDirty = true;
+  g('saveHint').innerHTML = '<span class="dot" style="color:var(--amber)"></span> Unsaved changes';
+}
+
+function cleanState() {
+  isDirty = false;
+  g('saveHint').innerHTML = '<span class="dot" style="color:var(--text-3)"></span> All saved';
+}
+
+/* ── Save ────────────────────────────────────────────────────────────────── */
+async function saveConfig() {
+  const vccApiKey = g('cfgVccApiKey').value.trim();
+  const vin       = g('cfgVin').value.trim();
+
+  if (!vccApiKey) { homebridge.toast.error('VCC API Key is required.'); return; }
+  if (vin.length !== 17) { homebridge.toast.error('VIN must be exactly 17 characters.'); return; }
+
+  const updated = {
+    ...cfg,
+    platform: 'VolvoXC90',
+    name:     g('cfgName').value.trim() || 'Volvo XC90',
+    vccApiKey, vin,
+    evLowChargeThreshold: getNum('cfgEvLow',    20),
+    tankCapacityLiters:   getNum('cfgTank',     70),
+    engineStartDuration:  getNum('cfgEngDur',   15),
+    serviceIntervalMonths:getNum('cfgSvcMo',    12),
+    serviceIntervalKm:    getNum('cfgSvcKm',    30000),
+    serviceAlertThreshold:getNum('cfgSvcAlert', 20),
+    pollInterval:         getNum('cfgPoll',     1800),
+    homeRadiusMeters:     getNum('cfgRadius',   200),
+    showLocation: getChk('cfgShowLocation'),
+    showRefresh:  getChk('cfgRefresh'),
+    debug:        getChk('cfgDebug'),
+    forceReauth:  getChk('cfgForceReauth'),
+  };
+
+  // Feature toggles
+  allFeatures().forEach(f => {
+    const cb = g('ft_' + f.id);
+    if (cb) updated[f.id] = cb.checked;
+  });
+
+  // Location coordinates
+  if (updated.showLocation) {
+    const lat = parseFloat(g('cfgLat').value);
+    const lon = parseFloat(g('cfgLon').value);
+    if (!isNaN(lat)) updated.homeLatitude  = lat;
+    if (!isNaN(lon)) updated.homeLongitude = lon;
   }
 
-  function copyUrl() {
-    navigator.clipboard.writeText(generatedAuthUrl).then(() => {
-      homebridge.toast.success('URL copied to clipboard');
-    });
+  // OTP fields (only include if non-empty)
+  const uname = g('cfgUsername').value.trim();
+  const pass  = g('cfgPassword').value.trim();
+  const otp   = g('cfgOtp').value.trim();
+  if (uname) updated.username = uname; else delete updated.username;
+  if (pass)  updated.password = pass;  else delete updated.password;
+  if (otp)   updated.otp = otp;        else delete updated.otp;
+
+  // Clean up OTP fields if OAuth is fully configured
+  if (updated.clientId && updated.clientSecret && updated.refreshToken) {
+    delete updated.username;
+    delete updated.password;
+    delete updated.otp;
+    delete updated.forceReauth;
   }
 
-  function openUrl() {
-    window.open(generatedAuthUrl, '_blank');
+  const btn = g('saveBtn');
+  btn.disabled = true;
+  btn.textContent = 'Saving…';
+
+  try {
+    await homebridge.updatePluginConfig([updated]);
+    await homebridge.savePluginConfig();
+    cfg = updated;
+    cleanState();
+    homebridge.toast.success('Saved — restart the plugin to apply changes.');
+  } catch (e) {
+    homebridge.toast.error('Save failed: ' + (e.message || 'unknown error'));
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Save Configuration';
   }
+}
 
-  async function completeOAuth() {
-    const redirectUrl = document.getElementById('redirectResult').value.trim();
-    if (!redirectUrl) {
-      showError('step3Error', 'Paste the redirect URL first.');
-      return;
-    }
+// Watch text/number inputs for dirty state
+document.addEventListener('input', e => {
+  const watched = ['cfgName','cfgVccApiKey','cfgVin','cfgLat','cfgLon',
+                   'cfgUsername','cfgPassword','cfgOtp'];
+  if (watched.includes(e.target.id)) dirty();
+  if (e.target.id === 'cfgVin') vinCheck();
+  if (e.target.id === 'cfgPoll') pollLabel();
+});
 
-    homebridge.showSpinner();
-    try {
-      await homebridge.request('/exchange-code', { redirectUrl });
-      document.getElementById('oauthSection').style.display = 'none';
-      document.getElementById('successBox').style.display = 'block';
-      homebridge.toast.success('OAuth configured — restart the plugin to activate.');
-    } catch (e) {
-      showError('step3Error', e.message || 'Token exchange failed. Check your credentials and try again from Step 1.');
-    } finally {
-      homebridge.hideSpinner();
-    }
-  }
-
-  function showError(id, msg) {
-    const el = document.getElementById(id);
-    el.textContent = msg;
-    el.style.display = 'block';
-  }
-
-  function hideError(id) {
-    document.getElementById(id).style.display = 'none';
-  }
-
-  init();
+init();
 </script>
