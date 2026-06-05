@@ -7,14 +7,13 @@ export declare class EnergyAccessory {
     private fuelService;
     private evService;
     private evChargeService;
-    private chargingEtaService;
     private chargerConnectedService;
     private tankRangeService;
     private evRangeService;
     private fuelLevel;
     private chargeLevel;
-    private chargingEta;
     private chargerPluggedIn;
+    private readonly showChargingEta;
     private tankRange;
     private evRange;
     private readonly tankCapacity;

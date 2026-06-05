@@ -10,20 +10,19 @@ class EnergyAccessory {
         this.fuelService = null;
         this.evService = null;
         this.evChargeService = null;
-        this.chargingEtaService = null;
         this.chargerConnectedService = null;
         // Range sub-services — only used when rangeStandalone === false (combined view)
         this.tankRangeService = null;
         this.evRangeService = null;
         this.fuelLevel = 100;
         this.chargeLevel = 100;
-        this.chargingEta = 0;
         this.chargerPluggedIn = true; // assume plugged in until first poll
         this.tankRange = 1;
         this.evRange = 1;
         const { Service, Characteristic } = platform;
         this.tankCapacity = platform.config.tankCapacityLiters ?? 70;
         this.evLowThreshold = platform.config.evLowChargeThreshold ?? 20;
+        this.showChargingEta = platform.config.showChargingEta === true;
         (0, accessoryInfo_1.setAccessoryInfo)(platform, accessory, 'XC90 — Energy');
         // Remove legacy unsubtyped Battery service left by the old FuelAccessory
         const legacyBattery = accessory.getService(Service.Battery);
@@ -109,20 +108,10 @@ class EnergyAccessory {
             this.evChargeService.setCharacteristic(Characteristic.ConfiguredName, 'EV Charge');
             this.evChargeService.getCharacteristic(Characteristic.CurrentRelativeHumidity)
                 .onGet(() => this.chargeLevel);
-            // Charging ETA — opt-in LightSensor showing minutes to full charge (0 when not charging)
-            if (platform.config.showChargingEta) {
-                this.chargingEtaService = accessory.services.find(s => s.subtype === 'charging-eta' && s.UUID === Service.LightSensor.UUID)
-                    || accessory.addService(Service.LightSensor, 'Charging ETA', 'charging-eta');
-                this.chargingEtaService.addOptionalCharacteristic(Characteristic.ConfiguredName);
-                this.chargingEtaService.setCharacteristic(Characteristic.ConfiguredName, 'Charging ETA');
-                this.chargingEtaService.getCharacteristic(Characteristic.CurrentAmbientLightLevel)
-                    .onGet(() => Math.max(0.0001, this.chargingEta));
-            }
-            else {
-                const existing = accessory.services.find(s => s.subtype === 'charging-eta' && s.UUID === Service.LightSensor.UUID);
-                if (existing)
-                    accessory.removeService(existing);
-            }
+            // Remove legacy charging-eta LightSensor (replaced by dynamic EV Battery name)
+            const legacyEta = accessory.services.find(s => s.subtype === 'charging-eta' && s.UUID === Service.LightSensor.UUID);
+            if (legacyEta)
+                accessory.removeService(legacyEta);
             // Charger Connected — ContactSensor: closed = plugged in, open = unplugged
             this.chargerConnectedService = accessory.services.find(s => s.subtype === 'charger-connected' && s.UUID === Service.ContactSensor.UUID)
                 || accessory.addService(Service.ContactSensor, 'Charger Unplugged', 'charger-connected');
@@ -180,9 +169,10 @@ class EnergyAccessory {
                     chargingState = Characteristic.ChargingState.NOT_CHARGING;
                 }
                 this.evService.updateCharacteristic(Characteristic.ChargingState, chargingState);
-                if (this.chargingEtaService) {
-                    this.chargingEta = sys === 'CHARGING' ? (data.estimatedChargingTime ?? 0) : 0;
-                    this.chargingEtaService.updateCharacteristic(Characteristic.CurrentAmbientLightLevel, Math.max(0.0001, this.chargingEta));
+                if (this.showChargingEta) {
+                    const eta = sys === 'CHARGING' ? (data.estimatedChargingTime ?? 0) : 0;
+                    const name = eta > 0 ? `EV Battery · ${eta} min` : 'EV Battery';
+                    this.evService.updateCharacteristic(Characteristic.ConfiguredName, name);
                 }
                 if (this.chargerConnectedService) {
                     this.chargerPluggedIn = conn !== 'DISCONNECTED' && conn !== 'UNSPECIFIED' && conn !== '';
