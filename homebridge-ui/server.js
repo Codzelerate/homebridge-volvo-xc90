@@ -102,24 +102,9 @@ class OAuthUiServer extends HomebridgePluginUiServer {
 
     const refreshToken = res.data.refresh_token;
 
-    // Save to plugin config — remove OTP fields, add OAuth fields
-    const pluginConfig = await this.getPluginConfig();
-    if (pluginConfig.length > 0) {
-      const config = pluginConfig[0];
-      config.clientId = clientId;
-      config.clientSecret = clientSecret;
-      config.vccApiKey = vccApiKey;
-      config.refreshToken = refreshToken;
-      delete config.username;
-      delete config.password;
-      delete config.otp;
-      delete config.forceReauth;
-      await this.updatePluginConfig(pluginConfig);
-      await this.savePluginConfig();
-    }
-
     this.pending = null;
-    return { success: true };
+    // Return credentials to client — frontend saves them via homebridge.updatePluginConfig()
+    return { success: true, clientId, clientSecret, vccApiKey, refreshToken };
   }
 }
 

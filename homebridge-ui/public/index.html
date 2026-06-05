@@ -255,10 +255,7 @@ textarea.field-input { resize: vertical; min-height: 66px; }
   display: flex; align-items: center;
   margin-bottom: 18px;
 }
-.ws-node {
-  display: flex; align-items: center; gap: 6px;
-}
-.ws-node:not(:last-child) { flex: 1; }
+.ws-node { flex-shrink: 0; }
 .ws-dot {
   width: 22px; height: 22px;
   border-radius: 50%;
@@ -266,13 +263,12 @@ textarea.field-input { resize: vertical; min-height: 66px; }
   display: flex; align-items: center; justify-content: center;
   font-size: 10px; font-weight: 700;
   color: var(--text-3);
-  flex-shrink: 0;
   transition: all .2s;
 }
 .ws-line {
-  flex: 1; height: 1px;
+  flex: 1; height: 2px;
   background: var(--border);
-  margin: 0 6px;
+  margin: 0 8px;
   transition: background .2s;
 }
 .ws-node.active .ws-dot  { border-color: var(--accent); color: var(--accent); background: var(--accent-bg); }
@@ -969,9 +965,14 @@ async function finishOAuth() {
   setBtnLoading(btn, true, 'Exchanging token…');
   hideErr('err3');
   try {
-    await requestWithTimeout('/exchange-code', { redirectUrl: redir }, 15000);
-    const stored = await homebridge.getPluginConfig();
-    if (stored && stored.length) cfg = { ...cfg, ...stored[0] };
+    const result = await requestWithTimeout('/exchange-code', { redirectUrl: redir }, 15000);
+    // Merge OAuth credentials into config, strip legacy OTP fields
+    cfg = { ...cfg,
+      clientId: result.clientId, clientSecret: result.clientSecret,
+      vccApiKey: result.vccApiKey || cfg.vccApiKey, refreshToken: result.refreshToken,
+    };
+    delete cfg.username; delete cfg.password; delete cfg.otp; delete cfg.forceReauth;
+    await homebridge.updatePluginConfig([cfg]);
     updateAuthCard();
     wsGo(4);
   } catch (e) {
