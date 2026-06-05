@@ -2,7 +2,7 @@
   "pluginAlias": "VolvoXC90",
   "pluginType": "platform",
   "singular": true,
-  "headerDisplay": "Control your Volvo XC90 2016 from Apple Home via the Volvo Connected Vehicle API v2. Get your VCC API Key at [developer.volvocars.com](https://developer.volvocars.com).\n\n**First-time setup:** Fill in all fields, save, and restart. Volvo will email you a 6-digit OTP — paste it into the OTP field, save, and restart again. Once authenticated, you can remove your email, password, and OTP from the config. Only the VCC API Key and VIN are needed going forward.",
+  "headerDisplay": "Control your Volvo XC90 2016 from Apple Home via the Volvo Connected Vehicle API v2. Get your VCC API Key at [developer.volvocars.com](https://developer.volvocars.com).\n\n**OAuth setup (recommended):** Register and publish an app at developer.volvocars.com to get your Client ID and Client Secret. Run `npm run oauth` from the plugin directory to get an initial refresh token. Paste the three values below, save, and restart. The plugin rotates the token automatically after that.\n\n**OTP setup (legacy):** Fill in email, password, VCC API Key, and VIN. Save and restart — Volvo will email you a 6-digit OTP. Paste it into the OTP field, save, and restart again. Remove email, password, and OTP once authenticated.",
   "schema": {
     "type": "object",
     "properties": {
@@ -251,7 +251,7 @@
       "title": "Authentication (OAuth — recommended)",
       "description": "Register and publish an app at developer.volvocars.com to get your Client ID and Client Secret. Run the OAuth setup tool (npm run oauth) to obtain an initial refresh token, paste it below, then save and restart. Remove the refresh token field once running — the plugin rotates it automatically.",
       "expandable": true,
-      "expanded": false,
+      "expanded": true,
       "items": ["clientId", "clientSecret", "refreshToken"]
     },
     {
@@ -259,7 +259,7 @@
       "title": "Authentication (OTP — legacy, will be removed in v2.0.0)",
       "description": "For first-time login only. Fill in, save, restart, enter the OTP code Volvo emails you, then save and restart again. Remove email, password, and OTP once authenticated — only VCC API Key and VIN are needed going forward.",
       "expandable": true,
-      "expanded": true,
+      "expanded": false,
       "items": ["username", "password", "otp", "forceReauth"]
     },
     {

@@ -1,8 +1,9 @@
 # OAuth Migration Plan — moving to Volvo's sanctioned authentication
 
-> **Status:** Planned, not yet started. This document is the spec + research for migrating
-> `homebridge-volvo-xc90` from its current unofficial auth to Volvo's compliant OAuth 2.0 flow.
-> It is excluded from the npm package (the `files` whitelist ships only `dist` + `config.schema.json`).
+> **Status:** Phases 0–3 complete as of v1.3.0 (2026-06-05). OAuth authentication is live,
+> `npm run oauth` setup tool ships, Remote Start works under OAuth. Phase 4 (remove OTP/`AUTH_BASIC`
+> entirely) is planned for v2.0.0 as a breaking change.
+> This document is excluded from the npm package (the `files` whitelist ships only `dist` + `config.schema.json`).
 
 ---
 

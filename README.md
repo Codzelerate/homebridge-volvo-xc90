@@ -47,7 +47,7 @@ Control and monitor your car directly from the Apple Home app and Siri — lock/
 | **Volvo Controls** | Switch (up to 5) | Climate, Honk and Flash, Honk only, Flash only, Refresh — all in one tile |
 | **Volvo Doors** | Contact Sensors | Summary tile + individual sensors for all 6 openings |
 | **Volvo Windows** | Contact Sensors | Summary tile + individual sensors for all 4 windows and sunroof |
-| **Volvo Energy** | Battery + Humidity + Contact | EV battery with charging state, EV charge %, fuel level %, and charger plug status |
+| **Volvo Energy** | Battery + Humidity + Contact | EV battery with charging state, EV charge %, fuel level %, and charger unplugged alert |
 | **EV Range km** | Temperature Sensor | Kilometres remaining on EV battery — standalone tile or inside Energy tile |
 | **Tank Range km** | Light Sensor | Kilometres remaining on petrol tank — standalone tile or inside Energy tile |
 | **Volvo Diagnostics** | Contact + Leak Sensors | Summary alert tile (**faults only** — oil, coolant, brake fluid, washer fluid, tyres) + Service Due as a separate independent sensor |
@@ -95,13 +95,38 @@ sudo systemctl restart homebridge
 
 ## Authentication
 
-This plugin uses Volvo's multi-step OTP authentication. On first setup, Volvo emails you a 6-digit code to verify your identity. Once authenticated, a refresh token is stored on disk — you only need to log in again if the token expires (typically after several months).
+v1.3.0 adds **OAuth authentication** using your own Volvo Developer app credentials. OAuth is recommended — it is the only path that supports Remote Start and is fully compliant with Volvo's API terms. The legacy OTP flow continues to work but will be removed in v2.0.0.
 
-### First-time setup
+### OAuth setup (recommended)
+
+**Prerequisites:** a free developer account at [developer.volvocars.com](https://developer.volvocars.com).
+
+1. Sign in to the Volvo Developer Portal and go to **Your API Applications → Create application**
+2. Name it (e.g. `homebridge`), select the APIs you want (Connected Vehicle v2, Energy v2), and **enable `conve:engine_start_stop`** if you want Remote Start
+3. Add a redirect URI — the plugin's GitHub URL works: `https://github.com/Codzelerate/homebridge-volvo-xc90`
+4. **Publish** the app to receive your `client_id` and `client_secret`
+5. On your Homebridge server, run the OAuth setup tool from the plugin directory:
+   ```bash
+   cd /var/lib/homebridge/node_modules/homebridge-volvo-xc90
+   npm run oauth
+   ```
+6. Follow the prompts — the tool opens the Volvo auth URL, you sign in, copy the redirect URL from your browser, and paste it back. It prints a ready-to-paste config block.
+7. In Homebridge plugin settings, enter **Client ID**, **Client Secret**, and the **Refresh Token** from the output. **Remove any OTP credentials** if present.
+8. Save and restart. Check the log for:
+   ```
+   [Volvo XC90] Authentication successful (OAuth)
+   ```
+9. **Remove the Refresh Token field** from plugin settings — the plugin rotates it automatically and stores it on disk. If the token ever expires, re-run `npm run oauth`.
+
+---
+
+### OTP setup (legacy — will be removed in v2.0.0)
+
+The OTP flow uses Volvo's mobile-app credential and does not support Remote Start. It continues to work but migration to OAuth is recommended.
 
 1. Go to **Plugins → homebridge-volvo-xc90 → Settings**
 2. Under **Always Required**, enter your **VCC API Key** and **VIN**
-3. Under **First-time Setup**, enter your **Volvo ID email** and **password**
+3. Under **Authentication (OTP)**, enter your **Volvo ID email** and **password**
 4. Save and restart Homebridge
 5. Check the log — you will see:
    ```
@@ -113,23 +138,20 @@ This plugin uses Volvo's multi-step OTP authentication. On first setup, Volvo em
 9. Check the log for:
    ```
    [Volvo XC90] Authentication successful (OTP)
-   [Volvo XC90] You can now clear the OTP field in the plugin settings.
    ```
 10. Return to plugin settings and **remove your email, password, and OTP** — only VCC API Key and VIN are needed going forward
 
-Your session is now saved. Homebridge will automatically refresh it without any further action.
-
 ---
 
-### Re-authenticating
+### Re-authenticating (OAuth)
 
-You need to re-authenticate when:
-- The refresh token has expired (Volvo invalidated your session)
-- You installed a plugin update that added new API scopes
+If the token chain expires (Volvo invalidates your session), re-run `npm run oauth` from the plugin directory to get a fresh refresh token and paste it back into plugin settings. The fallback is automatic — if the stored token fails, the plugin retries with the token in your config before giving up.
+
+### Re-authenticating (OTP)
 
 **Do not delete any files manually.** Use the built-in **Force re-authentication** toggle instead:
 
-1. Go to **Plugins → homebridge-volvo-xc90 → Settings → First-time Setup**
+1. Go to **Plugins → homebridge-volvo-xc90 → Settings → Authentication (OTP)**
 2. Enter your **Volvo ID email** and **password**
 3. Enable **Force re-authentication**
 4. Save and restart Homebridge
@@ -159,7 +181,15 @@ You need to re-authenticate when:
 | **VCC API Key** | Primary API key from [developer.volvocars.com](https://developer.volvocars.com) |
 | **VIN** | Your 17-character Vehicle Identification Number |
 
-### First-time Setup
+### Authentication — OAuth (recommended)
+
+| Field | Description |
+|---|---|
+| **OAuth Client ID** | Client ID from your published app on developer.volvocars.com. When both Client ID and Client Secret are present the plugin uses OAuth instead of OTP. |
+| **OAuth Client Secret** | Client secret from your published app. |
+| **OAuth Refresh Token** | Initial refresh token from `npm run oauth`. Paste once — the plugin rotates and stores it automatically. Remove this field after the first successful restart. |
+
+### Authentication — OTP (legacy, will be removed in v2.0.0)
 
 | Field | Description |
 |---|---|
@@ -174,7 +204,7 @@ You need to re-authenticate when:
 |---|---|---|
 | **Show Lock** | On | Lock / unlock tile |
 | **Show Climate Pre-condition** | On | Climate switch inside the Controls tile |
-| **Show Remote Start** | Off | **Not supported** — Volvo blocks the required permission for this plugin's login method (returns 403). Hidden by default; see [Troubleshooting](#troubleshooting). |
+| **Show Remote Start** | Off | Requires **OAuth** with the `conve:engine_start_stop` scope enabled on your Volvo Developer app. Has no effect under the OTP flow. |
 | **Show Honk and Flash (combined)** | On | Single momentary switch that honks and flashes simultaneously |
 | **Show Honk only** | Off | Separate momentary switch for horn only — enable if your VIN supports the `HONK` command (check `Supported commands:` in the log on startup) |
 | **Show Flash only** | Off | Separate momentary switch for lights only — enable if your VIN supports the `FLASH` command |
@@ -224,6 +254,8 @@ You need to re-authenticate when:
       "name": "Volvo XC90",
       "vccApiKey": "your-vcc-api-key",
       "vin": "YV1XXXXXXXXX00000",
+      "clientId": "your-client-id",
+      "clientSecret": "your-client-secret",
       "showLock": true,
       "showClimate": true,
       "showEngine": false,
@@ -252,6 +284,8 @@ You need to re-authenticate when:
 }
 ```
 
+> **Note:** `refreshToken` is only needed on first run — the plugin rotates and stores it automatically after that. Remove it from the config once the plugin has restarted successfully.
+
 ---
 
 ## HomeKit accessories
@@ -275,7 +309,7 @@ A single tile containing up to six momentary or toggle switches, all visible in 
 - **Flash** *(off by default)* — Momentary switch for lights only. Enable via `showFlash` after confirming your VIN supports the `FLASH` command.
 - **Refresh** *(off by default)* — Momentary switch that immediately polls all accessories in parallel. Resets to off after 1 second. Enable via `showRefresh` in Advanced settings.
 
-> **Remote Start is not supported** and is hidden by default. Volvo does not permit the engine start/stop permission for this plugin's login method, so the command fails with a 403 error. See [Troubleshooting](#troubleshooting) for the full explanation.
+> **Remote Start requires OAuth.** It is hidden by default and only works when using OAuth credentials (`clientId` + `clientSecret`) with the `conve:engine_start_stop` scope enabled on your Volvo Developer app. Under the legacy OTP flow it returns 403 and cannot be made to work — switch to OAuth to unlock it. Enable the switch via **Controls → Show Remote Start** once OAuth is configured.
 
 > To check which commands your VIN supports, look for the `Supported commands:` line in the Homebridge log on startup.
 
@@ -314,7 +348,7 @@ A single tile covering EV and fuel energy status. Tap the tile to see all sensor
 |---|---|---|
 | **EV Battery** | Battery | Charge % and charging state (Charging / Not Charging / Not Chargeable). Low-battery alert fires below the configured threshold (default 20%). |
 | **EV Charge** | Humidity | Current EV charge % at a glance — same value as EV Battery, humidity-style display for quick reading |
-| **Charger Connected** | Contact Sensor | Closed = charging cable plugged in · Open = no cable |
+| **Charger Unplugged** | Contact Sensor | Open (highlighted) = cable unplugged · Closed = plugged in |
 | **Fuel Level** | Humidity | Petrol tank % (calculated from litres ÷ tank capacity) |
 
 > **EV sensors are T8 PHEV only.** Disable **Show EV Battery** in plugin settings if your variant is petrol-only.
@@ -549,7 +583,7 @@ Open the Homebridge UI → **Child Bridges** tab → find Volvo XC90 → **Reset
 Confirm your Volvo On Call subscription is active. Lock and unlock commands require an active subscription.
 
 **Remote Start fails with "status code 403"**
-Remote engine start is **not currently supported** by this plugin, and the switch is hidden by default. It requires the `conve:engine_start_stop` OAuth scope, which the public app credential used by the plugin's headless login is not permitted to request — Volvo gates remote engine start more tightly than other commands (such as climate, which does work). There is no workaround within the current authentication model, so the switch stays off unless you explicitly enable **Show Remote Start**.
+Remote Start only works under **OAuth authentication** with the `conve:engine_start_stop` scope. If you are using the legacy OTP flow, Volvo refuses the permission at the token level — switch to OAuth (see [Authentication](#authentication)) and ensure your Volvo Developer app has `conve:engine_start_stop` enabled. The switch is hidden by default; enable it under **Controls → Show Remote Start** once OAuth is configured. Note: the command also returns 422 (Precondition Failed) when the car is plugged in and charging — this is expected Volvo API behaviour.
 
 **Fuel level shows wrong percentage**
 The API returns litres only. If your tank capacity differs from the default (70 L), set **Fuel tank capacity** in plugin settings to match your variant.
@@ -577,17 +611,17 @@ Window state is reported by the car's sensors — if the car has been stationary
 
 Every plugin makes trade-offs. These are the ones we made on purpose — what the plugin deliberately *doesn't* do yet, why, and what it would take to change that. If a limitation below matters to you, the fastest way to move it up the list is to 👍 the matching [GitHub issue](https://github.com/Codzelerate/homebridge-volvo-xc90/issues) — these decisions are demand-driven.
 
-### Remote Start — deferred by design
+### Remote Start — available under OAuth
 
-**The short version:** you can't remotely start the engine through this plugin, and that's a conscious choice rather than a missing feature.
+Remote Start works in v1.3.0 via OAuth authentication. It is opt-in and requires a few extra setup steps:
 
-**The problem.** Volvo splits its commands into permission tiers. Lower-risk actions — lock, unlock, climate pre-conditioning, honk, flash — are granted to the login method this plugin uses (a fast, headless email-and-OTP flow that needs nothing more than your Volvo credentials). Starting the engine is treated as higher-risk, and Volvo refuses to grant that one permission to this login method. The result is a flat `403 Forbidden` — not a bug we can patch, but a door Volvo has locked on their side.
+1. Register and publish your own app at developer.volvocars.com with `conve:engine_start_stop` enabled
+2. Run `npm run oauth` to get OAuth credentials and paste them into plugin settings
+3. Enable **Show Remote Start** under Controls
 
-**What it would take.** The only way around it is to stop borrowing the login method and have each user register their *own* developer application with Volvo, then log in through a browser-based redirect flow (a web page opens, you sign in, Volvo bounces you back to a local callback with a code to paste in). It's a well-trodden path — it's how the Home Assistant integration does remote start — but it adds real setup friction: registering an app, configuring a callback URL, and a multi-step browser dance on every re-login.
+Under the legacy OTP flow, Remote Start still returns 403 — Volvo blocks `engine_start_stop` for the mobile-app credential the OTP path borrows. The only path to Remote Start is OAuth.
 
-**Why we're not doing it now.** The single best thing about this plugin is that you go from install to a working car tile in about two minutes. Bolting on a second, heavier login path — purely to unlock one command that *also* only works when the car is already locked and fully closed — would tax every user's setup for a feature few would use. We'd rather keep the on-ramp frictionless and treat Remote Start as opt-in plumbing we add *if* enough people ask.
-
-**The plan.** If demand is there, a future release could support optional user-supplied OAuth credentials *alongside* the current quick login — frictionless by default, with remote start available to those willing to do the extra setup. Best of both, only built once it's wanted.
+**One known edge case:** the command returns 422 (Precondition Failed) when the car is plugged in and charging. This is Volvo enforcing that the car must be in a driveable state before the engine will start — it is not a plugin bug.
 
 ### Data freshness — bounded by the car, not the plugin
 

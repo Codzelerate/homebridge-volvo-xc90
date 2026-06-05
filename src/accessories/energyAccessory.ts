@@ -123,8 +123,8 @@ export class EnergyAccessory {
 
       // Charger Connected — ContactSensor: closed = plugged in, open = unplugged
       this.chargerConnectedService = accessory.services.find(s => s.subtype === 'charger-connected' && s.UUID === Service.ContactSensor.UUID)
-        || accessory.addService(Service.ContactSensor, 'Charger Connected', 'charger-connected');
-      this.chargerConnectedService.setCharacteristic(Characteristic.ConfiguredName, 'Charger Connected');
+        || accessory.addService(Service.ContactSensor, 'Charger Unplugged', 'charger-connected');
+      this.chargerConnectedService.setCharacteristic(Characteristic.ConfiguredName, 'Charger Unplugged');
       this.chargerConnectedService.getCharacteristic(Characteristic.ContactSensorState)
         .onGet(() => this.chargerPluggedIn
           ? Characteristic.ContactSensorState.CONTACT_DETECTED

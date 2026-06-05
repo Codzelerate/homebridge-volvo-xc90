@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2026-06-05
+
+### Added
+- **OAuth authentication** — authenticate with your own Volvo Developer app credentials (`clientId` + `clientSecret`) instead of the legacy OTP flow. Register and publish an app at developer.volvocars.com, run `npm run oauth` to get an initial refresh token, paste it into plugin settings, and restart. The plugin rotates the token automatically — no further action needed until Volvo invalidates the token chain.
+- **`npm run oauth` setup tool** — interactive PKCE authorisation-code flow that walks through the Volvo auth dance and prints a ready-to-paste config block with `clientId`, `clientSecret`, `refreshToken`, and `vccApiKey`.
+- **Remote Start under OAuth** — engine start/stop now works when using OAuth credentials that include the `conve:engine_start_stop` scope. Enable **Show Remote Start** in plugin settings after switching to OAuth. Has no effect under the legacy OTP flow.
+
+### Changed
+- **"Charger Connected" sensor renamed to "Charger Unplugged"** — Open (highlighted in HomeKit) now means the cable is unplugged; Closed means plugged in. Matches HomeKit's contact sensor convention where Open signals something requiring attention. The service subtype is unchanged so no duplicate tile appears.
+
+### Fixed
+- **OAuth token rotation** — Volvo rotates the refresh token on every use. If the stored state token fails (400), the plugin now falls back to the config `refreshToken` as a recovery path rather than clearing state, which previously caused an infinite 400 loop when the rotated state token was ahead of the config token.
+
+---
+
 ## [1.2.14] - 2026-06-04
 
 ### Documentation
