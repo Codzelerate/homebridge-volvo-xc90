@@ -42,8 +42,12 @@ const axios_1 = __importDefault(require("axios"));
 const qs = __importStar(require("qs"));
 const AUTH_URL = 'https://volvoid.eu.volvocars.com/as/authorization.oauth2';
 const TOKEN_URL = 'https://volvoid.eu.volvocars.com/as/token.oauth2';
+// Scope names used by the Volvo Developer Portal OAuth 2.0 authorization endpoint.
+// These differ from the granular scope names the OTP/PingFederate flow accepts:
+// the Energy API grants here are broad (energy:state:read) rather than per-field.
 const OAUTH_SCOPES = [
     'openid',
+    'conve:battery_charge_level',
     'conve:brake_status',
     'conve:climatization_start_stop',
     'conve:command_accessibility',
@@ -65,12 +69,9 @@ const OAUTH_SCOPES = [
     'conve:vehicle_relation',
     'conve:warnings',
     'conve:windows_status',
-    'energy:battery_charge_level',
-    'energy:charging_connection_status',
-    'energy:charging_system_status',
-    'energy:electric_range',
-    'energy:estimated_charging_time',
-    'energy:recharge_status',
+    'energy:capability:read',
+    'energy:state:read',
+    'location:read',
 ].join(' ');
 function ask(rl, question) {
     return new Promise(resolve => rl.question(question, answer => resolve(answer.trim())));
