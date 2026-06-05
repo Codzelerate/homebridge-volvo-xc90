@@ -349,6 +349,20 @@ textarea.field-input { resize: vertical; min-height: 66px; }
 }
 .save-hint { font-size: 12px; color: var(--text-3); display: flex; align-items: center; gap: 6px; }
 
+/* ── Masked input with reveal toggle ────────────────────────────────────── */
+.input-wrap { position: relative; display: flex; align-items: center; }
+.input-wrap .field-input { padding-right: 36px; }
+.reveal-btn {
+  position: absolute; right: 0;
+  width: 34px; height: 100%;
+  background: none; border: none;
+  color: var(--text-3); font-size: 14px;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: color .15s;
+  border-radius: 0 var(--r-xs) var(--r-xs) 0;
+}
+.reveal-btn:hover { color: var(--text-2); }
+
 /* ── Utility ────────────────────────────────────────────────────────────── */
 .hidden { display: none !important; }
 code { font-family: 'SF Mono', ui-monospace, monospace; font-size: 11px; color: #88ccff; }
@@ -479,14 +493,20 @@ code { font-family: 'SF Mono', ui-monospace, monospace; font-size: 11px; color: 
   </div>
   <div class="field">
     <div class="field-label">VCC API Key <span class="req">*</span></div>
-    <input class="field-input mono" id="cfgVccApiKey" type="text"
-      placeholder="Primary key from developer.volvocars.com" autocomplete="off">
+    <div class="input-wrap">
+      <input class="field-input mono" id="cfgVccApiKey" type="password"
+        placeholder="Primary key from developer.volvocars.com" autocomplete="off">
+      <button class="reveal-btn" onclick="toggleReveal('cfgVccApiKey', this)" type="button" title="Show / hide">👁</button>
+    </div>
     <div class="field-hint">Found in your app on <a href="https://developer.volvocars.com" target="_blank">developer.volvocars.com</a></div>
   </div>
   <div class="field">
     <div class="field-label">VIN <span class="req">*</span></div>
-    <input class="field-input mono" id="cfgVin" type="text" maxlength="17"
-      placeholder="17-character Vehicle Identification Number" autocomplete="off" oninput="vinCheck()">
+    <div class="input-wrap">
+      <input class="field-input mono" id="cfgVin" type="password" maxlength="17"
+        placeholder="17-character Vehicle Identification Number" autocomplete="off" oninput="vinCheck()">
+      <button class="reveal-btn" onclick="toggleReveal('cfgVin', this)" type="button" title="Show / hide">👁</button>
+    </div>
     <div class="field-hint" id="vinHint"></div>
   </div>
 </div>
@@ -1122,6 +1142,14 @@ async function saveConfig() {
     btn.disabled = false;
     btn.textContent = 'Save Configuration';
   }
+}
+
+/* ── Reveal toggle ───────────────────────────────────────────────────────── */
+function toggleReveal(id, btn) {
+  const el = g(id);
+  const showing = el.type === 'text';
+  el.type = showing ? 'password' : 'text';
+  btn.textContent = showing ? '👁' : '🙈';
 }
 
 // Watch text/number inputs for dirty state
