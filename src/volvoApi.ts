@@ -272,7 +272,7 @@ export class OAuthAuthProvider implements AuthProvider {
       refresh_token: res.data.refresh_token || refreshToken,
       expiresAt: Date.now() + (res.data.expires_in ?? 1800) * 1000 - 30_000,
     };
-    this.debug(`OAuth token refreshed, expires in ${res.data.expires_in}s`);
+    this.debug(`OAuth token refreshed, expires in ${res.data.expires_in}s, newRefreshToken=${!!res.data.refresh_token}`);
     return tokens;
   }
 }

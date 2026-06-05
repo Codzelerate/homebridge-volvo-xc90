@@ -177,10 +177,14 @@ class VolvoPlatform {
     }
     // ── Persistent storage ────────────────────────────────────────────────────
     loadState() {
+        this.dbg(`State file: ${this.storageFile}`);
         try {
             if (fs.existsSync(this.storageFile)) {
-                return JSON.parse(fs.readFileSync(this.storageFile, 'utf-8'));
+                const state = JSON.parse(fs.readFileSync(this.storageFile, 'utf-8'));
+                this.dbg(`Loaded state: authMethod=${state.authMethod ?? 'none'}, hasTokens=${!!state.tokens}, hasRefreshToken=${!!state.tokens?.refresh_token}`);
+                return state;
             }
+            this.dbg('No state file found — starting fresh');
         }
         catch {
             this.dbg('Could not read persisted state');
@@ -190,6 +194,7 @@ class VolvoPlatform {
     saveState(state) {
         try {
             fs.writeFileSync(this.storageFile, JSON.stringify(state, null, 2));
+            this.dbg(`State saved: authMethod=${state.authMethod ?? 'none'}, hasTokens=${!!state.tokens}, hasRefreshToken=${!!state.tokens?.refresh_token}`);
         }
         catch (err) {
             this.log.warn('Could not save auth state:', err.message);
@@ -210,7 +215,9 @@ class VolvoPlatform {
         }
         // ── OAuth path ────────────────────────────────────────────────────────────
         if (this.provider.authMethod === 'oauth') {
+            const tokenSource = state.tokens?.refresh_token ? 'state' : (this.config.refreshToken ? 'config' : 'none');
             const refreshToken = state.tokens?.refresh_token ?? this.config.refreshToken;
+            this.dbg(`OAuth token source: ${tokenSource}`);
             if (!refreshToken) {
                 this.log.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
                 this.log.error('OAuth is configured but no refresh token was found.');
