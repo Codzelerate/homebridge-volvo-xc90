@@ -78,44 +78,23 @@ export interface AuthFlowState {
 
 type DebugFn = (msg: string) => void;
 
-export class VolvoApiClient {
-  private http: AxiosInstance;
-  private tokens: TokenSet | null = null;
+// ── AuthProvider interface ────────────────────────────────────────────────────
+
+export interface AuthProvider {
+  initiateOtpFlow(username: string, password: string): Promise<AuthFlowState>;
+  completeOtpFlow(otp: string, flowState: AuthFlowState): Promise<TokenSet>;
+  refreshAccessToken(refreshToken: string): Promise<TokenSet>;
+}
+
+// ── OtpAuthProvider — the existing PingFederate OTP flow ─────────────────────
+
+export class OtpAuthProvider implements AuthProvider {
   private authCookies = '';
   private debug: DebugFn;
 
-  constructor(
-    private readonly vccApiKey: string,
-    private readonly vin: string,
-    debugFn?: DebugFn,
-  ) {
+  constructor(debugFn?: DebugFn) {
     this.debug = debugFn ?? (() => undefined);
-    this.http = axios.create({ baseURL: BASE_URL });
-    this.attachInterceptors();
   }
-
-  private attachInterceptors(): void {
-    this.http.interceptors.request.use((req: InternalAxiosRequestConfig) => {
-      this.debug(`→ ${req.method?.toUpperCase()} ${req.baseURL}${req.url}`);
-      if (req.data) this.debug(`  body: ${JSON.stringify(req.data)}`);
-      return req;
-    });
-    this.http.interceptors.response.use(
-      (res: AxiosResponse) => {
-        this.debug(`← ${res.status} ${res.config.url}`);
-        this.debug(`  response: ${JSON.stringify(res.data)}`);
-        return res;
-      },
-      (err) => {
-        const status = err.response?.status ?? 'no-response';
-        const body = JSON.stringify(err.response?.data ?? {});
-        this.debug(`← ERROR ${status} ${err.config?.url}: ${body}`);
-        return Promise.reject(err);
-      },
-    );
-  }
-
-  // ── Cookie management for PingFederate auth flow ──────────────────────────
 
   private mergeCookies(response: AxiosResponse): void {
     const setCookies = response.headers['set-cookie'];
@@ -161,8 +140,6 @@ export class VolvoApiClient {
     return res.data as Record<string, unknown>;
   }
 
-  // ── Step 1: send credentials → triggers OTP email ─────────────────────────
-
   async initiateOtpFlow(username: string, password: string): Promise<AuthFlowState> {
     this.debug('Initiating OTP auth flow');
     this.authCookies = '';
@@ -193,8 +170,6 @@ export class VolvoApiClient {
     return { flowId, cookies: this.authCookies, timestamp: Date.now() };
   }
 
-  // ── Step 2: submit OTP → returns tokens ───────────────────────────────────
-
   async completeOtpFlow(otp: string, flowState: AuthFlowState): Promise<TokenSet> {
     this.debug(`Completing OTP flow (flowId: ${flowState.flowId})`);
     this.authCookies = flowState.cookies;
@@ -219,8 +194,6 @@ export class VolvoApiClient {
     return this.exchangeCode(code);
   }
 
-  // ── Exchange auth code for tokens ─────────────────────────────────────────
-
   private async exchangeCode(code: string): Promise<TokenSet> {
     this.debug('Exchanging auth code for tokens');
     const res = await axios.post<TokenSet>(TOKEN_URL, qs.stringify({
@@ -237,12 +210,9 @@ export class VolvoApiClient {
       ...res.data,
       expiresAt: Date.now() + (res.data.expires_in ?? 1800) * 1000 - 30_000,
     };
-    this.tokens = tokens;
     this.debug(`Tokens obtained, expires in ${res.data.expires_in}s`);
     return tokens;
   }
-
-  // ── Refresh access token ──────────────────────────────────────────────────
 
   async refreshAccessToken(refreshToken: string): Promise<TokenSet> {
     this.debug('Refreshing access token');
@@ -261,9 +231,48 @@ export class VolvoApiClient {
       refresh_token: res.data.refresh_token || refreshToken,
       expiresAt: Date.now() + (res.data.expires_in ?? 1800) * 1000 - 30_000,
     };
-    this.tokens = tokens;
     this.debug(`Token refreshed, expires in ${res.data.expires_in}s`);
     return tokens;
+  }
+}
+
+// ── VolvoApiClient ────────────────────────────────────────────────────────────
+
+export class VolvoApiClient {
+  private http: AxiosInstance;
+  private tokens: TokenSet | null = null;
+  private debug: DebugFn;
+
+  constructor(
+    private readonly vccApiKey: string,
+    private readonly vin: string,
+    private readonly provider: AuthProvider,
+    debugFn?: DebugFn,
+  ) {
+    this.debug = debugFn ?? (() => undefined);
+    this.http = axios.create({ baseURL: BASE_URL });
+    this.attachInterceptors();
+  }
+
+  private attachInterceptors(): void {
+    this.http.interceptors.request.use((req: InternalAxiosRequestConfig) => {
+      this.debug(`→ ${req.method?.toUpperCase()} ${req.baseURL}${req.url}`);
+      if (req.data) this.debug(`  body: ${JSON.stringify(req.data)}`);
+      return req;
+    });
+    this.http.interceptors.response.use(
+      (res: AxiosResponse) => {
+        this.debug(`← ${res.status} ${res.config.url}`);
+        this.debug(`  response: ${JSON.stringify(res.data)}`);
+        return res;
+      },
+      (err) => {
+        const status = err.response?.status ?? 'no-response';
+        const body = JSON.stringify(err.response?.data ?? {});
+        this.debug(`← ERROR ${status} ${err.config?.url}: ${body}`);
+        return Promise.reject(err);
+      },
+    );
   }
 
   setTokens(tokens: TokenSet): void {
@@ -280,7 +289,8 @@ export class VolvoApiClient {
     if (!this.tokens) throw new Error('Not authenticated');
     if (Date.now() >= this.tokens.expiresAt) {
       this.debug('Access token expired — refreshing');
-      await this.refreshAccessToken(this.tokens.refresh_token);
+      const tokens = await this.provider.refreshAccessToken(this.tokens.refresh_token);
+      this.tokens = tokens;
     }
     return this.tokens!.access_token;
   }

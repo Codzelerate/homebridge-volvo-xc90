@@ -10,7 +10,7 @@ import {
 import * as fs from 'fs';
 import * as path from 'path';
 import { PLATFORM_NAME, PLUGIN_NAME } from './settings';
-import { VolvoApiClient, TokenSet, AuthFlowState, VehicleStatus } from './volvoApi';
+import { VolvoApiClient, OtpAuthProvider, AuthProvider, TokenSet, AuthFlowState, VehicleStatus } from './volvoApi';
 import { LockAccessory } from './accessories/lockAccessory';
 import { ControlsAccessory } from './accessories/controlsAccessory';
 import { DoorsAccessory } from './accessories/doorsAccessory';
@@ -74,6 +74,7 @@ export class VolvoPlatform implements DynamicPlatformPlugin {
   public readonly api: VolvoApiClient;
   public readonly config: VolvoConfig;
   private readonly storageFile: string;
+  private readonly provider: AuthProvider;
 
   // Generic in-cycle cache with in-flight deduplication.
   //
@@ -187,7 +188,8 @@ export class VolvoPlatform implements DynamicPlatformPlugin {
       ? (msg: string) => this.log.info(`[DEBUG] ${msg}`)
       : undefined;
 
-    this.api = new VolvoApiClient(this.config.vccApiKey, this.config.vin, debugFn);
+    this.provider = new OtpAuthProvider(debugFn);
+    this.api = new VolvoApiClient(this.config.vccApiKey, this.config.vin, this.provider, debugFn);
     this.dbg(`Plugin v${PLUGIN_VERSION} loaded — VIN: ${this.config.vin}`);
 
     hbApi.on('didFinishLaunching', async () => {
@@ -239,7 +241,7 @@ export class VolvoPlatform implements DynamicPlatformPlugin {
     if (state.tokens?.refresh_token) {
       try {
         this.log.info('Authenticating with stored refresh token...');
-        const tokens = await this.api.refreshAccessToken(state.tokens.refresh_token);
+        const tokens = await this.provider.refreshAccessToken(state.tokens.refresh_token);
         this.api.setTokens(tokens);
         this.saveState({ tokens });
         this.log.info('Authentication successful (refresh token)');
@@ -257,7 +259,7 @@ export class VolvoPlatform implements DynamicPlatformPlugin {
       if (ageMs < 8 * 60 * 1000) {
         try {
           this.log.info('Completing OTP verification...');
-          const tokens = await this.api.completeOtpFlow(this.config.otp, state.authFlow);
+          const tokens = await this.provider.completeOtpFlow(this.config.otp, state.authFlow);
           this.api.setTokens(tokens);
           this.saveState({ tokens });
           this.log.info('Authentication successful (OTP)');
@@ -282,9 +284,9 @@ export class VolvoPlatform implements DynamicPlatformPlugin {
       }
       try {
         this.log.info('Starting fresh OTP auth flow...');
-        const flowState = await this.api.initiateOtpFlow(this.config.username, this.config.password);
+        const flowState = await this.provider.initiateOtpFlow(this.config.username, this.config.password);
         // Submit the OTP immediately in the same flow
-        const tokens = await this.api.completeOtpFlow(this.config.otp, flowState);
+        const tokens = await this.provider.completeOtpFlow(this.config.otp, flowState);
         this.api.setTokens(tokens);
         this.saveState({ tokens });
         this.log.info('Authentication successful (fresh OTP flow)');
@@ -309,7 +311,7 @@ export class VolvoPlatform implements DynamicPlatformPlugin {
 
     try {
       this.log.info('No stored session. Sending OTP to your email...');
-      const flowState = await this.api.initiateOtpFlow(this.config.username, this.config.password);
+      const flowState = await this.provider.initiateOtpFlow(this.config.username, this.config.password);
       this.saveState({ authFlow: flowState });
       this.log.warn('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
       this.log.warn('OTP sent to your Volvo ID email address.');
