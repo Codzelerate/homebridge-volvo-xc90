@@ -52,6 +52,7 @@ export interface VolvoConfig extends PlatformConfig {
   homeRadiusMeters?: number;
   showRefresh?: boolean;
   showLeftOpen?: boolean;
+  showChargingEta?: boolean;
   serviceIntervalMonths?: number;
   serviceIntervalKm?: number;
   serviceAlertThreshold?: number;

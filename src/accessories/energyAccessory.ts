@@ -123,13 +123,18 @@ export class EnergyAccessory {
       this.evChargeService.getCharacteristic(Characteristic.CurrentRelativeHumidity)
         .onGet(() => this.chargeLevel);
 
-      // Charging ETA — LightSensor showing minutes to full charge as lux (0 when not charging)
-      this.chargingEtaService = accessory.services.find(s => s.subtype === 'charging-eta' && s.UUID === Service.LightSensor.UUID)
-        || accessory.addService(Service.LightSensor, 'Charging ETA', 'charging-eta');
-      this.chargingEtaService.addOptionalCharacteristic(Characteristic.ConfiguredName);
-      this.chargingEtaService.setCharacteristic(Characteristic.ConfiguredName, 'Charging ETA');
-      this.chargingEtaService.getCharacteristic(Characteristic.CurrentAmbientLightLevel)
-        .onGet(() => Math.max(0.0001, this.chargingEta));
+      // Charging ETA — opt-in LightSensor showing minutes to full charge (0 when not charging)
+      if (platform.config.showChargingEta) {
+        this.chargingEtaService = accessory.services.find(s => s.subtype === 'charging-eta' && s.UUID === Service.LightSensor.UUID)
+          || accessory.addService(Service.LightSensor, 'Charging ETA', 'charging-eta');
+        this.chargingEtaService.addOptionalCharacteristic(Characteristic.ConfiguredName);
+        this.chargingEtaService.setCharacteristic(Characteristic.ConfiguredName, 'Charging ETA');
+        this.chargingEtaService.getCharacteristic(Characteristic.CurrentAmbientLightLevel)
+          .onGet(() => Math.max(0.0001, this.chargingEta));
+      } else {
+        const existing = accessory.services.find(s => s.subtype === 'charging-eta' && s.UUID === Service.LightSensor.UUID);
+        if (existing) accessory.removeService(existing);
+      }
 
       // Charger Connected — ContactSensor: closed = plugged in, open = unplugged
       this.chargerConnectedService = accessory.services.find(s => s.subtype === 'charger-connected' && s.UUID === Service.ContactSensor.UUID)

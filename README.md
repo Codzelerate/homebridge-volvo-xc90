@@ -211,6 +211,7 @@ If the token chain expires (Volvo invalidates your session), re-run `npm run oau
 | **Show Windows** | On | Contact sensor summary tile + 5 individual window and sunroof sensors |
 | **Show Fuel Level** | On | Petrol tank % inside the Energy tile |
 | **Show EV Battery** | On | EV charge level, charging state, charging ETA, and charger plug status inside the Energy tile (T8 PHEV only) |
+| **Show Charging ETA** | Off | Adds a Charging ETA sensor inside the Energy tile showing minutes to full charge when actively charging. Off by default. |
 | **Show Range** | On | Km-to-empty for EV battery and petrol tank. Display style controlled by the Range view option below |
 | **Range view** | On (standalone) | **On**: EV Range km and Tank Range km appear as their own standalone room tiles. **Off**: range values appear as sub-sensors inside the Energy tile detail view |
 | **Show Left Open sensor** | Off | Alerts when locked with something left open. Enable notifications for this sensor in the Home app. |

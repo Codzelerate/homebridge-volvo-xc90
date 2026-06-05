@@ -159,6 +159,12 @@
         "default": true,
         "description": "Contact sensor tile showing open/closed state for all windows (front left, front right, rear left, rear right) and the sunroof. Summary tile shows Open if any window is ajar."
       },
+      "showChargingEta": {
+        "title": "Show Charging ETA",
+        "type": "boolean",
+        "default": false,
+        "description": "Adds a 'Charging ETA' sensor inside the Energy tile showing minutes to full charge when actively charging. Off by default."
+      },
       "showRange": {
         "title": "Show Range",
         "type": "boolean",
@@ -292,7 +298,7 @@
       "description": "Fuel level, EV battery, and range sensors.",
       "expandable": true,
       "expanded": false,
-      "items": ["showFuel", "showCharging", "showRange", "rangeStandalone"]
+      "items": ["showFuel", "showCharging", "showChargingEta", "showRange", "rangeStandalone"]
     },
     {
       "type": "fieldset",
