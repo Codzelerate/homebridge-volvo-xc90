@@ -21,6 +21,7 @@
   "scripts": {
     "build": "rm -rf dist && tsc",
     "watch": "tsc --watch",
+    "oauth": "node dist/oauthSetup.js",
     "prepublishOnly": "npm run build"
   },
   "keywords": [
