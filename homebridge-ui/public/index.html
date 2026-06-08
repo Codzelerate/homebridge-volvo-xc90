@@ -941,6 +941,7 @@ function showWizard() {
   wsGo(1);
   if (cfg.clientId)     set('wClientId',     cfg.clientId);
   if (cfg.clientSecret) set('wClientSecret', cfg.clientSecret);
+  if (cfg.redirectUri)  set('wRedirectUri',  cfg.redirectUri);
 }
 
 function hideWizard() {
@@ -1042,6 +1043,7 @@ async function finishOAuth() {
     cfg = { ...cfg,
       clientId: result.clientId, clientSecret: result.clientSecret,
       vccApiKey: result.vccApiKey || cfg.vccApiKey, refreshToken: result.refreshToken,
+      redirectUri: uri,
     };
     delete cfg.username; delete cfg.password; delete cfg.otp; delete cfg.forceReauth;
     await homebridge.updatePluginConfig([cfg]);
@@ -1076,7 +1078,8 @@ async function saveManualToken() {
   const btn = g('manualSaveBtn');
   setBtnLoading(btn, true, 'Saving…');
   try {
-    cfg = { ...cfg, clientId: cid, clientSecret: sec, refreshToken: token };
+    const uri = g('wRedirectUri').value.trim();
+    cfg = { ...cfg, clientId: cid, clientSecret: sec, refreshToken: token, ...(uri && { redirectUri: uri }) };
     delete cfg.username; delete cfg.password; delete cfg.otp; delete cfg.forceReauth;
     await homebridge.updatePluginConfig([cfg]);
     updateAuthCard();

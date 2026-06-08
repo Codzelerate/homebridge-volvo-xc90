@@ -62,6 +62,11 @@
         "type": "string",
         "description": "Initial refresh token obtained from the OAuth setup tool. The plugin rotates and stores this automatically after first use — you only need to paste it here once."
       },
+      "redirectUri": {
+        "title": "OAuth Redirect URI",
+        "type": "string",
+        "description": "The redirect URI used during OAuth setup (e.g. https://github.com/your-username). Saved automatically by the wizard — no need to edit manually."
+      },
       "evLowChargeThreshold": {
         "title": "EV low charge alert threshold (%)",
         "type": "integer",
@@ -258,7 +263,7 @@
       "description": "Register and publish an app at developer.volvocars.com to get your Client ID and Client Secret. Run the OAuth setup tool (npm run oauth) to obtain an initial refresh token, paste it below, then save and restart. Remove the refresh token field once running — the plugin rotates it automatically.",
       "expandable": true,
       "expanded": true,
-      "items": ["clientId", "clientSecret", "refreshToken"]
+      "items": ["clientId", "clientSecret", "refreshToken", "redirectUri"]
     },
     {
       "type": "fieldset",
