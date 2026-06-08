@@ -116,7 +116,7 @@ export class VolvoPlatform implements DynamicPlatformPlugin {
   getCached<T>(key: string, fetcher: () => Promise<T>): Promise<T> {
     const cached = this.cacheStore.get(key);
     if (cached && Date.now() - cached.ts < this.cacheTtlMs) {
-      this.dbg(`cache[${key}]: hit`);
+      this.dbg(`cache[${key}]: hit (age ${Math.round((Date.now() - cached.ts) / 1000)}s, ttl ${Math.round(this.cacheTtlMs / 1000)}s)`);
       return Promise.resolve(cached.data as T);
     }
     const inFlight = this.cacheInFlight.get(key);
@@ -124,6 +124,7 @@ export class VolvoPlatform implements DynamicPlatformPlugin {
       this.dbg(`cache[${key}]: joining in-flight request`);
       return inFlight as Promise<T>;
     }
+    this.dbg(`cache[${key}]: miss — fetching (ttl ${Math.round(this.cacheTtlMs / 1000)}s, gen ${this.cacheGeneration})`);
     const generation = this.cacheGeneration;
     const promise = fetcher()
       .then(data => {
@@ -131,6 +132,9 @@ export class VolvoPlatform implements DynamicPlatformPlugin {
         // discards stale data from a request that started before a manual refresh.
         if (generation === this.cacheGeneration) {
           this.cacheStore.set(key, { data, ts: Date.now() });
+          this.dbg(`cache[${key}]: stored result (gen ${generation})`);
+        } else {
+          this.dbg(`cache[${key}]: result discarded — generation changed (was ${generation}, now ${this.cacheGeneration})`);
         }
         // Identity guard: only clear if we are still the owning request for this key.
         if (this.cacheInFlight.get(key) === promise) this.cacheInFlight.delete(key);
@@ -147,6 +151,7 @@ export class VolvoPlatform implements DynamicPlatformPlugin {
   /** Wipe all cached and in-flight data so the next fetch is guaranteed fresh. */
   invalidateCache(): void {
     this.cacheGeneration++;
+    this.dbg(`Cache invalidated — generation bumped to ${this.cacheGeneration}, cleared ${this.cacheStore.size} entries`);
     this.cacheStore.clear();
     this.cacheInFlight.clear();
   }
@@ -231,7 +236,16 @@ export class VolvoPlatform implements DynamicPlatformPlugin {
     try {
       if (fs.existsSync(this.storageFile)) {
         const state = JSON.parse(fs.readFileSync(this.storageFile, 'utf-8')) as PersistedState;
-        this.dbg(`Loaded state: authMethod=${state.authMethod ?? 'none'}, hasTokens=${!!state.tokens}, hasRefreshToken=${!!state.tokens?.refresh_token}`);
+        const expiry = state.tokens?.expiresAt;
+        const expiryInfo = expiry
+          ? (Date.now() >= expiry
+            ? `EXPIRED ${Math.round((Date.now() - expiry) / 1000)}s ago`
+            : `valid for ${Math.round((expiry - Date.now()) / 1000)}s`)
+          : 'n/a';
+        this.dbg(
+          `Loaded state: authMethod=${state.authMethod ?? 'none'}, hasTokens=${!!state.tokens},` +
+          ` hasRefreshToken=${!!state.tokens?.refresh_token}, tokenExpiry=${expiryInfo}`,
+        );
         return state;
       }
       this.dbg('No state file found — starting fresh');
@@ -244,7 +258,14 @@ export class VolvoPlatform implements DynamicPlatformPlugin {
   private saveState(state: PersistedState): void {
     try {
       fs.writeFileSync(this.storageFile, JSON.stringify(state, null, 2));
-      this.dbg(`State saved: authMethod=${state.authMethod ?? 'none'}, hasTokens=${!!state.tokens}, hasRefreshToken=${!!state.tokens?.refresh_token}`);
+      const expiry = state.tokens?.expiresAt;
+      const expiryInfo = expiry
+        ? `valid for ${Math.round((expiry - Date.now()) / 1000)}s`
+        : 'n/a';
+      this.dbg(
+        `State saved: authMethod=${state.authMethod ?? 'none'}, hasTokens=${!!state.tokens},` +
+        ` hasRefreshToken=${!!state.tokens?.refresh_token}, tokenExpiry=${expiryInfo}`,
+      );
     } catch (err) {
       this.log.warn('Could not save auth state:', (err as Error).message);
     }
@@ -272,7 +293,7 @@ export class VolvoPlatform implements DynamicPlatformPlugin {
     if (this.provider.authMethod === 'oauth') {
       const tokenSource = state.tokens?.refresh_token ? 'state' : (this.config.refreshToken ? 'config' : 'none');
       const refreshToken = state.tokens?.refresh_token ?? this.config.refreshToken;
-      this.dbg(`OAuth token source: ${tokenSource}`);
+      this.dbg(`OAuth token source: ${tokenSource}${refreshToken ? ` (rt prefix: ${refreshToken.slice(0, 8)}…)` : ''}`);
       if (!refreshToken) {
         this.log.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
         this.log.error('OAuth is configured but no refresh token was found.');
@@ -291,12 +312,16 @@ export class VolvoPlatform implements DynamicPlatformPlugin {
         return true;
       } catch (err) {
         this.log.error('OAuth token refresh failed:', (err as Error).message);
+        const errStatus = (err as { response?: { status?: number; data?: unknown } }).response?.status;
+        const errBody = JSON.stringify((err as { response?: { data?: unknown } }).response?.data ?? {});
+        this.dbg(`OAuth refresh error detail: HTTP ${errStatus ?? 'no-response'} — ${errBody}`);
         // If the state token failed and a different config token is available, try it as fallback.
         // Never clear state on failure — doing so causes the next restart to retry the already-consumed
         // config token, creating an infinite failure loop.
         const configToken = this.config.refreshToken;
         if (tokenSource === 'state' && configToken && configToken !== refreshToken) {
           this.log.warn('Stored token failed — retrying with config refreshToken...');
+          this.dbg(`Config refreshToken prefix: ${configToken.slice(0, 8)}…`);
           try {
             const tokens = await this.provider.refreshAccessToken(configToken);
             this.api.setTokens(tokens);
@@ -304,8 +329,10 @@ export class VolvoPlatform implements DynamicPlatformPlugin {
             this.log.info('Authentication successful (OAuth via config token)');
             await this.logSupportedCommands();
             return true;
-          } catch {
-            // fall through to error
+          } catch (err2) {
+            const s2 = (err2 as { response?: { status?: number; data?: unknown } }).response?.status;
+            const b2 = JSON.stringify((err2 as { response?: { data?: unknown } }).response?.data ?? {});
+            this.dbg(`Config token fallback also failed: HTTP ${s2 ?? 'no-response'} — ${b2}`);
           }
         }
         this.log.error('Your refresh token may have expired. Run the setup tool to get a new one.');

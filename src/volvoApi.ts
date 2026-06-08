@@ -216,23 +216,31 @@ export class OtpAuthProvider implements AuthProvider {
   }
 
   async refreshAccessToken(refreshToken: string): Promise<TokenSet> {
-    this.debug('Refreshing access token');
-    const res = await axios.post<TokenSet>(TOKEN_URL, qs.stringify({
-      grant_type: 'refresh_token',
-      refresh_token: refreshToken,
-    }), {
-      headers: {
-        Authorization: AUTH_BASIC,
-        'X-XSRF-Header': 'PingFederate',
-        'content-type': 'application/x-www-form-urlencoded',
-      },
-    });
+    this.debug(`Refreshing OTP access token (rt prefix: ${refreshToken.slice(0, 8)}…)`);
+    let res;
+    try {
+      res = await axios.post<TokenSet>(TOKEN_URL, qs.stringify({
+        grant_type: 'refresh_token',
+        refresh_token: refreshToken,
+      }), {
+        headers: {
+          Authorization: AUTH_BASIC,
+          'X-XSRF-Header': 'PingFederate',
+          'content-type': 'application/x-www-form-urlencoded',
+        },
+      });
+    } catch (err) {
+      const status = (err as { response?: { status?: number; data?: unknown } }).response?.status;
+      const body = JSON.stringify((err as { response?: { data?: unknown } }).response?.data ?? {});
+      this.debug(`OTP token refresh HTTP error: status=${status ?? 'no-response'} body=${body}`);
+      throw err;
+    }
     const tokens: TokenSet = {
       ...res.data,
       refresh_token: res.data.refresh_token || refreshToken,
       expiresAt: Date.now() + (res.data.expires_in ?? 1800) * 1000 - 30_000,
     };
-    this.debug(`Token refreshed, expires in ${res.data.expires_in}s`);
+    this.debug(`OTP token refreshed — expires_in=${res.data.expires_in}s, rotated=${!!res.data.refresh_token}`);
     return tokens;
   }
 
@@ -256,23 +264,31 @@ export class OAuthAuthProvider implements AuthProvider {
   supportsEngine(): boolean { return true; }
 
   async refreshAccessToken(refreshToken: string): Promise<TokenSet> {
-    this.debug('Refreshing OAuth access token');
+    this.debug(`Refreshing OAuth access token (rt prefix: ${refreshToken.slice(0, 8)}…)`);
     const basicAuth = 'Basic ' + Buffer.from(`${this.clientId}:${this.clientSecret}`).toString('base64');
-    const res = await axios.post<TokenSet>(TOKEN_URL, qs.stringify({
-      grant_type: 'refresh_token',
-      refresh_token: refreshToken,
-    }), {
-      headers: {
-        Authorization: basicAuth,
-        'content-type': 'application/x-www-form-urlencoded',
-      },
-    });
+    let res;
+    try {
+      res = await axios.post<TokenSet>(TOKEN_URL, qs.stringify({
+        grant_type: 'refresh_token',
+        refresh_token: refreshToken,
+      }), {
+        headers: {
+          Authorization: basicAuth,
+          'content-type': 'application/x-www-form-urlencoded',
+        },
+      });
+    } catch (err) {
+      const status = (err as { response?: { status?: number; data?: unknown } }).response?.status;
+      const body = JSON.stringify((err as { response?: { data?: unknown } }).response?.data ?? {});
+      this.debug(`OAuth token refresh HTTP error: status=${status ?? 'no-response'} body=${body}`);
+      throw err;
+    }
     const tokens: TokenSet = {
       ...res.data,
       refresh_token: res.data.refresh_token || refreshToken,
       expiresAt: Date.now() + (res.data.expires_in ?? 1800) * 1000 - 30_000,
     };
-    this.debug(`OAuth token refreshed, expires in ${res.data.expires_in}s, newRefreshToken=${!!res.data.refresh_token}`);
+    this.debug(`OAuth token refreshed — expires_in=${res.data.expires_in}s, rotated=${!!res.data.refresh_token}`);
     return tokens;
   }
 }
@@ -303,20 +319,23 @@ export class VolvoApiClient {
 
   private attachInterceptors(): void {
     this.http.interceptors.request.use((req: InternalAxiosRequestConfig) => {
+      (req as InternalAxiosRequestConfig & { _startMs?: number })._startMs = Date.now();
       this.debug(`→ ${req.method?.toUpperCase()} ${req.baseURL}${req.url}`);
       if (req.data) this.debug(`  body: ${JSON.stringify(req.data)}`);
       return req;
     });
     this.http.interceptors.response.use(
       (res: AxiosResponse) => {
-        this.debug(`← ${res.status} ${res.config.url}`);
+        const elapsed = Date.now() - ((res.config as InternalAxiosRequestConfig & { _startMs?: number })._startMs ?? Date.now());
+        this.debug(`← ${res.status} ${res.config.url} (${elapsed}ms)`);
         this.debug(`  response: ${JSON.stringify(res.data)}`);
         return res;
       },
       (err) => {
+        const elapsed = Date.now() - ((err.config as (InternalAxiosRequestConfig & { _startMs?: number }) | undefined)?._startMs ?? Date.now());
         const status = err.response?.status ?? 'no-response';
         const body = JSON.stringify(err.response?.data ?? {});
-        this.debug(`← ERROR ${status} ${err.config?.url}: ${body}`);
+        this.debug(`← ERROR ${status} ${err.config?.url} (${elapsed}ms): ${body}`);
         return Promise.reject(err);
       },
     );
@@ -334,21 +353,35 @@ export class VolvoApiClient {
 
   private async ensureValidToken(): Promise<string> {
     if (!this.tokens) throw new Error('Not authenticated');
-    if (Date.now() >= this.tokens.expiresAt) {
+    const now = Date.now();
+    const secsRemaining = Math.round((this.tokens.expiresAt - now) / 1000);
+    if (now >= this.tokens.expiresAt) {
+      this.debug(`Access token expired ${Math.abs(secsRemaining)}s ago — refresh needed`);
       // Deduplicate concurrent refresh calls — Volvo rotates the refresh token on each use,
       // so multiple simultaneous requests with the same token all fail except the first.
       if (!this.refreshInFlight) {
+        this.debug(`Starting new token refresh (rt prefix: ${this.tokens.refresh_token.slice(0, 8)}…)`);
         const current = this.tokens;
         this.refreshInFlight = this.provider
           .refreshAccessToken(current.refresh_token)
           .then(tokens => {
+            const newExpirySecs = Math.round((tokens.expiresAt - Date.now()) / 1000);
+            this.debug(`Token refresh succeeded — new token valid for ${newExpirySecs}s, newRefreshToken=${!!tokens.refresh_token}`);
             this.tokens = tokens;
             this.onTokensRefreshed?.(tokens);
             return tokens;
           })
+          .catch(err => {
+            this.debug(`Token refresh failed: ${(err as Error).message}`);
+            throw err;
+          })
           .finally(() => { this.refreshInFlight = null; });
+      } else {
+        this.debug('Token refresh already in flight — joining existing request');
       }
       await this.refreshInFlight;
+    } else {
+      this.debug(`Access token valid — ${secsRemaining}s remaining`);
     }
     return this.tokens!.access_token;
   }
