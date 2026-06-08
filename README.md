@@ -124,11 +124,13 @@ The entire OAuth flow is handled inside the Homebridge settings UI — no termin
    [Volvo XC90] Authentication successful (OAuth)
    ```
 
-> **Terminal fallback:** If you prefer the command-line, the `npm run oauth` setup tool is still available:
+> **Already have a refresh token?** If you obtained one via the terminal tool (see below), click **"Already have a refresh token? Paste it directly →"** at the bottom of Step 1 instead of going through the browser flow. Fill in Client ID and Client Secret, paste the token, and click **✓ Save Token** — no browser redirect needed.
+
+> **Terminal fallback:** If you prefer the command-line, run the built-in OAuth setup tool:
 > ```bash
 > cd /var/lib/homebridge/node_modules/homebridge-volvo-xc90 && npm run oauth
 > ```
-> Paste the printed `clientId`, `clientSecret`, and `refreshToken` into the plugin settings manually and save.
+> Then paste the printed `refreshToken` directly into the wizard using the **"Paste it directly →"** shortcut above, or enter `clientId`, `clientSecret`, and `refreshToken` manually into the plugin settings and save.
 
 ---
 
@@ -657,6 +659,8 @@ The OTP authentication path will be removed in v2.0.0 once the majority of users
 ### ✅ Shipped
 
 - **OAuth flow in the Homebridge UI** *(v1.3.5)* — The entire OAuth dance now happens inside the Homebridge settings panel. Enter your credentials, click Generate Auth URL, sign in, paste the redirect — done. No terminal, no copy-paste config blocks.
+
+- **OAuth wizard reliability improvements** *(v1.3.8 / v1.3.9)* — PKCE and the auth URL are now generated entirely in the browser, removing a server round-trip that could time out when the Homebridge plugin UI server was slow to start. A **"Paste token directly"** shortcut was added to Step 1 for users who already have a refresh token from the terminal tool — bypasses the full browser flow in one click. The server is now fully stateless (no stored session between wizard steps).
 
 ---
 
