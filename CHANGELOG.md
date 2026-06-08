@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.7] - 2026-06-08
+
+### Changed
+- **Verbose debug logging** — when `debug: true` is set, the plugin now logs: HTTP error bodies on failed token refreshes (previously swallowed), refresh token prefix hints (first 8 chars) to identify which token is in use, access token expiry countdowns, request round-trip timing, and explicit cache miss/hit/invalidation events with TTL and generation info.
+
+---
+
+## [1.3.6] - 2026-06-07
+
+### Changed
+- **Plugin icon** — added icon asset for the Homebridge plugin registry.
+
+---
+
 ## [1.3.5] - 2026-06-05
 
 ### Added
