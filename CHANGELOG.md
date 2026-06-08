@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.8] - 2026-06-08
+
+### Fixed
+- **OAuth wizard timeout** — auth URL and PKCE challenge/verifier are now generated entirely in the browser (Web Crypto API). The wizard no longer calls the Homebridge plugin server for Step 1, eliminating the timeout that occurred when the server.js child process was slow to start.
+- **Manual token entry** — added a "Already have a refresh token? Paste it directly →" path in the OAuth wizard for users who obtained a token via the terminal `node dist/oauthSetup.js` tool. Bypasses the full OAuth flow.
+- **Stateless server** — removed `this.pending` server-side state from `server.js`; credentials and PKCE verifier are now sent by the frontend at exchange time, making the flow resilient to server restarts between wizard steps.
+
+---
+
 ## [1.3.7] - 2026-06-08
 
 ### Changed

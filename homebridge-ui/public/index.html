@@ -426,6 +426,8 @@ code { font-family: 'SF Mono', ui-monospace, monospace; font-size: 11px; color: 
     </div>
     <div class="alert alert-red hidden" id="err1"></div>
     <button class="btn btn-primary btn-full" id="genUrlBtn" style="margin-top:12px" onclick="genUrl()">Generate Auth URL →</button>
+    <hr class="hr" style="margin:12px 0">
+    <button class="btn btn-ghost btn-sm btn-full" onclick="showManualEntry()">Already have a refresh token? Paste it directly →</button>
   </div>
 
   <!-- Step 2 -->
@@ -452,6 +454,22 @@ code { font-family: 'SF Mono', ui-monospace, monospace; font-size: 11px; color: 
     </div>
     <div class="alert alert-red hidden" id="err3"></div>
     <button class="btn btn-green btn-full" id="finishBtn" style="margin-top:12px" onclick="finishOAuth()">✓ Complete Setup</button>
+  </div>
+
+  <!-- Manual token entry (bypass the flow) -->
+  <div id="stepManual" class="hidden">
+    <div class="alert alert-info" style="margin-bottom:12px">
+      Paste the refresh token obtained via the terminal <code>node dist/oauthSetup.js</code> tool.
+      Client ID and Client Secret must be filled in Step 1.
+    </div>
+    <div class="field">
+      <div class="field-label">Refresh Token</div>
+      <textarea class="field-input mono" id="wManualToken" rows="4"
+        placeholder="Paste your refresh token here…"></textarea>
+    </div>
+    <div class="alert alert-red hidden" id="errManual"></div>
+    <button class="btn btn-green btn-full" id="manualSaveBtn" style="margin-top:12px" onclick="saveManualToken()">✓ Save Token</button>
+    <button class="btn btn-ghost btn-sm btn-full" style="margin-top:8px" onclick="wsGo(1)">← Back to Step 1</button>
   </div>
 
   <!-- Success -->
@@ -792,8 +810,20 @@ const DEFAULTS = {
   showRefresh: false, debug: false, forceReauth: false,
 };
 
+const OAUTH_SCOPES = [
+  'openid','conve:battery_charge_level','conve:brake_status','conve:climatization_start_stop',
+  'conve:command_accessibility','conve:commands','conve:diagnostics_engine_status',
+  'conve:diagnostics_workshop','conve:doors_status','conve:engine_start_stop','conve:engine_status',
+  'conve:fuel_status','conve:honk_flash','conve:lock','conve:lock_status','conve:navigation',
+  'conve:odometer_status','conve:trip_statistics','conve:tyre_status','conve:unlock',
+  'conve:vehicle_relation','conve:warnings','conve:windows_status',
+  'energy:capability:read','energy:state:read','location:read',
+].join(' ');
+
 let cfg = {};
 let authUrl = '';
+let oauthVerifier = '';
+let oauthState = '';
 
 /* ── Bootstrap ───────────────────────────────────────────────────────────── */
 async function init() {
@@ -919,7 +949,7 @@ function hideWizard() {
 }
 
 function wsGo(n) {
-  ['step1','step2','step3','stepDone'].forEach((id, i) => {
+  ['step1','step2','step3','stepDone','stepManual'].forEach((id, i) => {
     g(id).classList.toggle('hidden', i !== n - 1);
   });
   for (let i = 1; i <= 3; i++) {
@@ -928,9 +958,29 @@ function wsGo(n) {
     if (i < n) node.classList.add('done');
     else if (i === n) node.classList.add('active');
   }
-  // colour connector lines
   g('wl1').classList.toggle('done', n > 1);
   g('wl2').classList.toggle('done', n > 2);
+}
+
+/* ── PKCE helpers (client-side, no server call) ──────────────────────────── */
+async function generateVerifier() {
+  const array = new Uint8Array(96);
+  crypto.getRandomValues(array);
+  return btoa(String.fromCharCode(...array))
+    .replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '').slice(0, 128);
+}
+
+async function sha256Base64Url(str) {
+  const data = new TextEncoder().encode(str);
+  const hash = await crypto.subtle.digest('SHA-256', data);
+  return btoa(String.fromCharCode(...new Uint8Array(hash)))
+    .replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+}
+
+function generateState() {
+  const array = new Uint8Array(16);
+  crypto.getRandomValues(array);
+  return Array.from(array).map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
 async function genUrl() {
@@ -943,12 +993,25 @@ async function genUrl() {
   setBtnLoading(btn, true, 'Generating…');
   hideErr('err1');
   try {
-    const res = await requestWithTimeout('/generate-auth-url', { clientId:cid, clientSecret:sec, redirectUri:uri, vccApiKey: g('cfgVccApiKey').value.trim() });
-    authUrl = res.authUrl;
+    // PKCE + state generated entirely in the browser — no server round-trip needed
+    oauthVerifier = await generateVerifier();
+    oauthState    = generateState();
+    const challenge = await sha256Base64Url(oauthVerifier);
+
+    const params = new URLSearchParams({
+      response_type: 'code',
+      client_id: cid,
+      redirect_uri: uri,
+      scope: OAUTH_SCOPES,
+      code_challenge: challenge,
+      code_challenge_method: 'S256',
+      state: oauthState,
+    });
+    authUrl = `https://volvoid.eu.volvocars.com/as/authorization.oauth2?${params.toString()}`;
     g('authUrlBox').textContent = authUrl;
     wsGo(2);
   } catch (e) {
-    showErr('err1', e.message || 'Failed to generate URL. Check the Homebridge log for details.');
+    showErr('err1', e.message || 'Failed to generate URL.');
   } finally {
     setBtnLoading(btn, false, 'Generate Auth URL →');
   }
@@ -961,12 +1024,22 @@ async function finishOAuth() {
   const redir = g('wRedirectResult').value.trim();
   if (!redir) { showErr('err3', 'Paste the redirect URL first.'); return; }
 
+  const cid = g('wClientId').value.trim();
+  const sec = g('wClientSecret').value.trim();
+  const uri = g('wRedirectUri').value.trim();
+
   const btn = g('finishBtn');
   setBtnLoading(btn, true, 'Exchanging token…');
   hideErr('err3');
   try {
-    const result = await requestWithTimeout('/exchange-code', { redirectUrl: redir }, 15000);
-    // Merge OAuth credentials into config, strip legacy OTP fields
+    const result = await requestWithTimeout('/exchange-code', {
+      redirectUrl: redir,
+      verifier: oauthVerifier,
+      expectedState: oauthState,
+      clientId: cid,
+      clientSecret: sec,
+      redirectUri: uri,
+    }, 20000);
     cfg = { ...cfg,
       clientId: result.clientId, clientSecret: result.clientSecret,
       vccApiKey: result.vccApiKey || cfg.vccApiKey, refreshToken: result.refreshToken,
@@ -979,6 +1052,40 @@ async function finishOAuth() {
     showErr('err3', e.message || 'Token exchange failed — check credentials and try from Step 1.');
   } finally {
     setBtnLoading(btn, false, '✓ Complete Setup');
+  }
+}
+
+/* ── Manual token entry (bypass the OAuth flow entirely) ─────────────────── */
+function showManualEntry() {
+  ['step1','step2','step3','stepDone'].forEach(id => g(id).classList.add('hidden'));
+  g('stepManual').classList.remove('hidden');
+  for (let i = 1; i <= 3; i++) g('ws' + i).classList.remove('active','done');
+  g('ws1').classList.add('active');
+  g('wl1').classList.remove('done');
+  g('wl2').classList.remove('done');
+}
+
+async function saveManualToken() {
+  const cid   = g('wClientId').value.trim();
+  const sec   = g('wClientSecret').value.trim();
+  const token = g('wManualToken').value.trim();
+
+  hideErr('errManual');
+  if (!cid || !sec) { showErr('errManual', 'Fill in Client ID and Client Secret in Step 1 first.'); return; }
+  if (!token)       { showErr('errManual', 'Paste your refresh token.'); return; }
+
+  const btn = g('manualSaveBtn');
+  setBtnLoading(btn, true, 'Saving…');
+  try {
+    cfg = { ...cfg, clientId: cid, clientSecret: sec, refreshToken: token };
+    delete cfg.username; delete cfg.password; delete cfg.otp; delete cfg.forceReauth;
+    await homebridge.updatePluginConfig([cfg]);
+    updateAuthCard();
+    wsGo(4);
+  } catch (e) {
+    showErr('errManual', e.message || 'Failed to save config.');
+  } finally {
+    setBtnLoading(btn, false, '✓ Save Token');
   }
 }
 

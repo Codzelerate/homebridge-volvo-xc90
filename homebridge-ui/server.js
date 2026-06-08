@@ -38,42 +38,19 @@ const OAUTH_SCOPES = [
 class OAuthUiServer extends HomebridgePluginUiServer {
   constructor() {
     super();
-    this.pending = null;
-    this.onRequest('/generate-auth-url', this.generateAuthUrl.bind(this));
     this.onRequest('/exchange-code', this.exchangeCode.bind(this));
     this.ready();
   }
 
-  async generateAuthUrl(body) {
-    const { clientId, clientSecret, redirectUri, vccApiKey } = body;
-
-    const verifier = crypto.randomBytes(96).toString('base64url').slice(0, 128);
-    const challenge = crypto.createHash('sha256').update(verifier).digest('base64url');
-    const state = crypto.randomBytes(16).toString('hex');
-
-    this.pending = { verifier, state, clientId, clientSecret, redirectUri, vccApiKey };
-
-    const params = new URLSearchParams({
-      response_type: 'code',
-      client_id: clientId,
-      redirect_uri: redirectUri,
-      scope: OAUTH_SCOPES,
-      code_challenge: challenge,
-      code_challenge_method: 'S256',
-      state,
-    });
-
-    return { authUrl: `${AUTH_URL}?${params.toString()}` };
-  }
+  // Auth URL generation and PKCE are handled client-side — no server call needed for Step 1.
 
   async exchangeCode(body) {
-    const { redirectUrl } = body;
+    // verifier, expectedState, clientId, clientSecret, redirectUri are all sent by the frontend
+    const { redirectUrl, verifier, expectedState, clientId, clientSecret, redirectUri } = body;
 
-    if (!this.pending) {
-      throw new Error('No pending OAuth flow — go back to Step 1.');
+    if (!verifier || !clientId || !clientSecret) {
+      throw new Error('Missing credentials — please start again from Step 1.');
     }
-
-    const { verifier, state, clientId, clientSecret, redirectUri, vccApiKey } = this.pending;
 
     let code, returnedState;
     try {
@@ -85,7 +62,7 @@ class OAuthUiServer extends HomebridgePluginUiServer {
     }
 
     if (!code) throw new Error('No "code" parameter found in the URL.');
-    if (returnedState !== state) throw new Error('State mismatch — please start again from Step 1.');
+    if (returnedState !== expectedState) throw new Error('State mismatch — please start again from Step 1.');
 
     const basicAuth = 'Basic ' + Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
 
@@ -101,10 +78,7 @@ class OAuthUiServer extends HomebridgePluginUiServer {
     );
 
     const refreshToken = res.data.refresh_token;
-
-    this.pending = null;
-    // Return credentials to client — frontend saves them via homebridge.updatePluginConfig()
-    return { success: true, clientId, clientSecret, vccApiKey, refreshToken };
+    return { success: true, clientId, clientSecret, refreshToken };
   }
 }
 
