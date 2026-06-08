@@ -38,11 +38,17 @@ const OAUTH_SCOPES = [
 class OAuthUiServer extends HomebridgePluginUiServer {
   constructor() {
     super();
+    this.onRequest('/pkce-challenge', this.pkceChallenge.bind(this));
     this.onRequest('/exchange-code', this.exchangeCode.bind(this));
     this.ready();
   }
 
-  // Auth URL generation and PKCE are handled client-side — no server call needed for Step 1.
+  // Pure-function endpoint — takes a verifier, returns its SHA-256 base64url challenge.
+  // Stateless: no side-effects, called once per wizard flow.
+  async pkceChallenge({ verifier }) {
+    const challenge = crypto.createHash('sha256').update(verifier).digest('base64url');
+    return { challenge };
+  }
 
   async exchangeCode(body) {
     // verifier, expectedState, clientId, clientSecret, redirectUri are all sent by the frontend

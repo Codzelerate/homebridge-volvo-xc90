@@ -971,10 +971,9 @@ async function generateVerifier() {
 }
 
 async function sha256Base64Url(str) {
-  const data = new TextEncoder().encode(str);
-  const hash = await crypto.subtle.digest('SHA-256', data);
-  return btoa(String.fromCharCode(...new Uint8Array(hash)))
-    .replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+  // crypto.subtle is unavailable in the Homebridge UI webview — delegate to Node via server
+  const res = await homebridge.request('/pkce-challenge', { verifier: str });
+  return res.challenge;
 }
 
 function generateState() {

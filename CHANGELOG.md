@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.9] - 2026-06-08
+
+### Fixed
+- **OAuth wizard crash** — `crypto.subtle` is unavailable in the Homebridge UI webview; PKCE SHA-256 challenge is now computed via a stateless `/pkce-challenge` server endpoint (pure function, no stored state) instead of `crypto.subtle.digest`.
+
+---
+
 ## [1.3.8] - 2026-06-08
 
 ### Fixed
