@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.10] - 2026-06-08
+
+### Added
+- **Grant expiry tracking** — `grantedAt` is now stamped on first successful OAuth authentication and preserved through every token rotation. On each Homebridge restart the plugin checks the grant age against Volvo's documented limits:
+  - **2-week warning** — logs a prominent warning with re-auth instructions when fewer than 14 days remain before the 6-month hard expiry.
+  - **Post-expiry warning** — logs immediately if the grant is already past 6 months.
+- **`invalid_grant` detection** — when a token refresh is rejected by Volvo, the error message now distinguishes between the 7-day stale token limit (Homebridge offline for a week) and the 6-month hard expiry, and links directly to the re-auth flow in the Homebridge UI.
+
+### Changed
+- All "run the setup tool" error messages updated to point users to **Homebridge UI → Plugins → Volvo XC90 → Settings → Re-configure OAuth** instead of the terminal.
+
+---
+
 ## [1.3.9] - 2026-06-08
 
 ### Fixed

@@ -297,23 +297,29 @@ export class VolvoPlatform implements DynamicPlatformPlugin {
       if (!refreshToken) {
         this.log.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
         this.log.error('OAuth is configured but no refresh token was found.');
-        this.log.error('Run the OAuth setup tool to get an initial refresh token');
-        this.log.error('and add it as "refreshToken" in your plugin config.');
+        this.log.error('Re-authenticate: Homebridge UI → Plugins → Volvo XC90 → Settings → Re-configure OAuth');
         this.log.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
         return false;
       }
       try {
         this.log.info('Authenticating with OAuth refresh token...');
         const tokens = await this.provider.refreshAccessToken(refreshToken);
-        this.api.setTokens(tokens);
-        this.saveState({ authMethod: 'oauth', tokens });
+        // Preserve the grant start time from state. For a brand-new grant (config token, no
+        // prior grantedAt in state) stamp now — this is when we first confirmed the grant works.
+        // Volvo's 6-month hard expiry is measured from when the grant was issued, not last rotated.
+        const grantedAt = state.tokens?.grantedAt ?? Date.now();
+        const tokensWithGrant = { ...tokens, grantedAt };
+        this.api.setTokens(tokensWithGrant);
+        this.saveState({ authMethod: 'oauth', tokens: tokensWithGrant });
         this.log.info('Authentication successful (OAuth)');
+        this.checkGrantExpiry(grantedAt);
         await this.logSupportedCommands();
         return true;
       } catch (err) {
         this.log.error('OAuth token refresh failed:', (err as Error).message);
         const errStatus = (err as { response?: { status?: number; data?: unknown } }).response?.status;
-        const errBody = JSON.stringify((err as { response?: { data?: unknown } }).response?.data ?? {});
+        const errData   = (err as { response?: { data?: unknown } }).response?.data as Record<string, unknown> | undefined;
+        const errBody   = JSON.stringify(errData ?? {});
         this.dbg(`OAuth refresh error detail: HTTP ${errStatus ?? 'no-response'} — ${errBody}`);
         // If the state token failed and a different config token is available, try it as fallback.
         // Never clear state on failure — doing so causes the next restart to retry the already-consumed
@@ -324,9 +330,12 @@ export class VolvoPlatform implements DynamicPlatformPlugin {
           this.dbg(`Config refreshToken prefix: ${configToken.slice(0, 8)}…`);
           try {
             const tokens = await this.provider.refreshAccessToken(configToken);
-            this.api.setTokens(tokens);
-            this.saveState({ authMethod: 'oauth', tokens });
+            const grantedAt = Date.now(); // fresh grant from wizard
+            const tokensWithGrant = { ...tokens, grantedAt };
+            this.api.setTokens(tokensWithGrant);
+            this.saveState({ authMethod: 'oauth', tokens: tokensWithGrant });
             this.log.info('Authentication successful (OAuth via config token)');
+            this.checkGrantExpiry(grantedAt);
             await this.logSupportedCommands();
             return true;
           } catch (err2) {
@@ -335,7 +344,7 @@ export class VolvoPlatform implements DynamicPlatformPlugin {
             this.dbg(`Config token fallback also failed: HTTP ${s2 ?? 'no-response'} — ${b2}`);
           }
         }
-        this.log.error('Your refresh token may have expired. Run the setup tool to get a new one.');
+        this.logOAuthExpiredError(errData);
         return false;
       }
     }
@@ -433,6 +442,59 @@ export class VolvoPlatform implements DynamicPlatformPlugin {
     }
 
     return false;
+  }
+
+  /**
+   * Warn when the OAuth grant is approaching Volvo's 6-month hard expiry.
+   * Volvo docs: "The maximum lifetime of the grant is 6 months, if refreshed continuously.
+   * After that, the user has to re-authenticate."
+   *
+   * We warn from 2 weeks out so the user has time to act before the plugin stops working.
+   */
+  private checkGrantExpiry(grantedAt: number): void {
+    const GRANT_LIFETIME_MS  = 6 * 30 * 24 * 60 * 60 * 1000; // ~6 months
+    const WARN_THRESHOLD_MS  = 14 * 24 * 60 * 60 * 1000;      // 2 weeks before expiry
+    const ageMs   = Date.now() - grantedAt;
+    const leftMs  = GRANT_LIFETIME_MS - ageMs;
+    const leftDays = Math.round(leftMs / (24 * 60 * 60 * 1000));
+    if (leftMs <= 0) {
+      // Grant has already passed 6 months — likely why auth is about to fail
+      this.log.warn('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      this.log.warn('Your OAuth grant is over 6 months old and may be hard-expired by Volvo.');
+      this.log.warn('Re-authenticate: Homebridge UI → Plugins → Volvo XC90 → Settings → Re-configure OAuth');
+      this.log.warn('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    } else if (leftMs <= WARN_THRESHOLD_MS) {
+      this.log.warn('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      this.log.warn(`OAuth grant expires in ~${leftDays} day(s) (Volvo enforces a 6-month hard limit).`);
+      this.log.warn('Re-authenticate before it expires to avoid interruption:');
+      this.log.warn('Homebridge UI → Plugins → Volvo XC90 → Settings → Re-configure OAuth');
+      this.log.warn('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    } else {
+      this.dbg(`OAuth grant age: ${Math.round(ageMs / (24 * 60 * 60 * 1000))} day(s), expires in ~${leftDays} day(s)`);
+    }
+  }
+
+  /**
+   * Emit a clear, actionable error when an OAuth refresh fails — distinguishing between
+   * a stale token (7-day inactivity) and the 6-month hard expiry.
+   *
+   * Volvo docs:
+   *   "The refresh_token must be used within 7 days or else it will be invalidated."
+   *   "The maximum lifetime of the grant is 6 months, if refreshed continuously."
+   */
+  private logOAuthExpiredError(errData?: Record<string, unknown>): void {
+    const isInvalidGrant = errData?.['error'] === 'invalid_grant';
+    this.log.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    if (isInvalidGrant) {
+      this.log.error('OAuth grant rejected by Volvo (invalid_grant).');
+      this.log.error('This happens when:');
+      this.log.error('  • The refresh token was not used for 7+ days (e.g. Homebridge was offline), OR');
+      this.log.error('  • The 6-month maximum grant lifetime has been reached.');
+    } else {
+      this.log.error('OAuth token refresh failed — your session may have expired.');
+    }
+    this.log.error('Re-authenticate: Homebridge UI → Plugins → Volvo XC90 → Settings → Re-configure OAuth');
+    this.log.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
   }
 
   private async logSupportedCommands(): Promise<void> {

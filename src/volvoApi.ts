@@ -68,6 +68,9 @@ export interface TokenSet {
   refresh_token: string;
   expires_in: number;
   expiresAt: number;
+  /** Unix ms when the OAuth grant was first established. Preserved through every token rotation.
+   *  Stamped on first successful auth; used to warn before the 6-month hard expiry. */
+  grantedAt?: number;
 }
 
 export interface AuthFlowState {
@@ -367,9 +370,12 @@ export class VolvoApiClient {
           .then(tokens => {
             const newExpirySecs = Math.round((tokens.expiresAt - Date.now()) / 1000);
             this.debug(`Token refresh succeeded — new token valid for ${newExpirySecs}s, newRefreshToken=${!!tokens.refresh_token}`);
-            this.tokens = tokens;
-            this.onTokensRefreshed?.(tokens);
-            return tokens;
+            // Preserve grant start time through every rotation — Volvo's 6-month hard expiry
+            // is measured from when the grant was first issued, not from the last rotation.
+            const tokensWithGrant = { ...tokens, grantedAt: current.grantedAt ?? tokens.grantedAt };
+            this.tokens = tokensWithGrant;
+            this.onTokensRefreshed?.(tokensWithGrant);
+            return tokensWithGrant;
           })
           .catch(err => {
             this.debug(`Token refresh failed: ${(err as Error).message}`);
