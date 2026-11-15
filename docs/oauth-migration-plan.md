@@ -120,8 +120,8 @@ Existing installs must keep working. Each phase ships and is revertible on its o
 - `config.schema.json` — add the new OAuth fields (likely a new "Authentication (OAuth)" section);
   keep the existing sections intact.
 - Conventions: bump `version`, update `CHANGELOG.md`, `npm run build` (cleans `dist` first), commit,
-  tag `vX.Y.Z`, push (GitHub Actions publishes to npm). **Push requires `gh auth switch --user
-  sunil-zacharia`.**
+  tag `vX.Y.Z`, push (GitHub Actions publishes to npm). **Push requires the GitHub account
+  that has write access to the repo.**
 - Preserve the README structure and the Disclaimer / Privacy & security / Known limitations sections;
   update them as the migration lands.
 

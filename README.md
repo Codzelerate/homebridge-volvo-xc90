@@ -23,8 +23,10 @@ Control and monitor your car directly from the Apple Home app and Siri — lock/
 - [Requirements](#requirements)
 - [Installation](#installation)
 - [Authentication](#authentication)
-  - [First-time setup](#first-time-setup)
-  - [Re-authenticating](#re-authenticating)
+  - [OAuth setup](#oauth-setup-recommended)
+  - [Migrating to Volvo's new login system (before 31 January 2027)](#migrating-to-volvos-new-login-system-before-31-january-2027)
+  - [Required scopes](#required-scopes)
+  - [Re-authenticating](#re-authenticating-oauth)
 - [Configuration reference](#configuration-reference)
 - [HomeKit accessories](#homekit-accessories)
 - [Finding your home coordinates](#car-at-home)
@@ -97,6 +99,9 @@ sudo systemctl restart homebridge
 
 ## Authentication
 
+> [!IMPORTANT]
+> **Volvo is changing its login system. OAuth credentials whose Client ID starts with `dc-` stop working on 31 January 2027.** Plugin v1.4.0+ already uses the new system — you only need to create a new app and re-run the wizard. See [Migrating to Volvo's new login system](#migrating-to-volvos-new-login-system-before-31-january-2027).
+
 OAuth authentication is the recommended and fully supported path. It is the only method that supports Remote Start and is fully compliant with Volvo's API terms. The legacy OTP flow continues to work but will be removed in v2.0.0.
 
 ### OAuth setup (recommended)
@@ -106,8 +111,8 @@ The entire OAuth flow is handled inside the Homebridge settings UI — no termin
 **Prerequisites:** a free developer account at [developer.volvocars.com](https://developer.volvocars.com).
 
 1. Sign in to the Volvo Developer Portal and go to **Your API Applications → Create application**
-2. Name it (e.g. `homebridge`), select all the `conve:` scopes (include `conve:engine_start_stop` for Remote Start), and add a redirect URI — your GitHub profile URL works fine: `https://github.com/<your-username>`
-3. **Publish** the app to receive your `client_id` and `client_secret`
+2. Name it (e.g. `homebridge`), select **all** the scopes listed in [Required scopes](#required-scopes) (include `conve:engine_start_stop` for Remote Start), and add a redirect URI — your GitHub profile URL works fine: `https://github.com/<your-username>`
+3. **Publish** the app to receive your `client_id` (starts with `vid-dc-`) and `client_secret`. See [Publishing your Volvo app](#publishing-your-volvo-app) for what to enter in the publish form
 4. Open **Homebridge UI → Plugins → Volvo XC90 → Settings**
 5. Click **Set up OAuth →** in the Authentication card
 
@@ -131,6 +136,87 @@ The entire OAuth flow is handled inside the Homebridge settings UI — no termin
 > cd /var/lib/homebridge/node_modules/homebridge-volvo-xc90 && npm run oauth
 > ```
 > Then paste the printed `refreshToken` directly into the wizard using the **"Paste it directly →"** shortcut above, or enter `clientId`, `clientSecret`, and `refreshToken` manually into the plugin settings and save.
+
+---
+
+### Migrating to Volvo's new login system (before 31 January 2027)
+
+Volvo is moving its developer login (Volvo ID) from its old system to a new one. Apps created before the change have a Client ID starting with **`dc-`**; these **stop working on 31 January 2027**. New apps get a Client ID starting with **`vid-dc-`**.
+
+Every user of this plugin creates their own Volvo developer app, so **every user needs to do this once**. It takes about 10 minutes.
+
+**Do I need to migrate?** Open **Homebridge UI → Plugins → Volvo XC90 → Settings**. The Authentication card shows `Client ID: xxxxxxxx••••`:
+- starts with `vid-dc-` → you're done, nothing to do
+- starts with `dc-` → follow the steps below
+- you use the legacy OTP method (email + one-time code) → follow the steps below to move to OAuth now; OTP will be removed in v2.0.0
+
+> [!TIP]
+> Create the new app **before** updating the plugin. Once v1.4.0+ is installed, old `dc-` credentials are rejected, so the plugin stays offline until you finish step 3.
+
+#### Step 1 — Create a new app on the Volvo Developer Portal
+
+1. Sign in at [developer.volvocars.com](https://developer.volvocars.com) with your Volvo ID
+2. Go to **Your API Applications → Create new application**
+3. Give it a name (e.g. `homebridge`)
+4. Tick **every** scope in [Required scopes](#required-scopes). A missing scope makes the Volvo login page fail with an "invalid scope" error
+5. Add a **Redirect URI** — a real web address you own or control, not `localhost`. Your GitHub profile works: `https://github.com/<your-username>`. If you are migrating, reuse the same redirect URI as your old app
+6. **Publish** the app (see [Publishing your Volvo app](#publishing-your-volvo-app)). Credentials are only issued after publishing
+7. Copy the new **Client ID** (starts with `vid-dc-`), **Client Secret** and **VCC API Key**. Keep the secret private — never post it in issues, forums or screenshots
+
+#### Step 2 — Update the plugin
+
+1. **Homebridge UI → Plugins → Volvo XC90 → Update** to the latest version (v1.4.0 or newer)
+2. You'll see an authentication error in the log until step 3 is finished — that's expected
+
+#### Step 3 — Re-run the OAuth wizard
+
+1. **Plugins → Volvo XC90 → Settings → Re-configure OAuth** (or **Set up OAuth →** if you used OTP)
+2. Replace the Client ID and Client Secret with the new `vid-dc-` values. Check the **Redirect URI** matches the one on your new app exactly (including `https://` and any trailing `/`)
+3. Click **Generate Auth URL →**, open the link and sign in with your Volvo ID, then approve access
+4. You'll land on your redirect page (it may look blank or show 404 — that's fine). Copy the **entire URL from the address bar** — it contains `?code=…&state=…`
+5. Paste it into the wizard and click **✓ Complete Setup**. You should see **Authentication successful!**
+6. If your new app shows a different **VCC API Key**, paste it into the **Vehicle** section
+7. Click **Save** at the bottom of the settings dialog. **Don't skip this** — closing the dialog without saving discards the new credentials
+8. Restart the plugin's child bridge (or Homebridge)
+
+#### Step 4 — Check it works
+
+1. In the Homebridge log you should see:
+   ```
+   [Volvo XC90] Authenticating with OAuth refresh token...
+   [Volvo XC90] Authentication successful (OAuth via config token)
+   ```
+   On the first restart you may also see `Stored token failed — retrying with config refreshToken...` just before it. That's the old token being replaced and is expected.
+2. Open the Home app and confirm the lock state and sensors update. Optionally try a harmless command such as **Flash**
+
+#### Step 5 — Clean up
+
+Once everything works, delete the old `dc-` application from the Volvo Developer Portal.
+
+If something goes wrong, see [Troubleshooting → OAuth errors](#oauth-errors).
+
+### Required scopes
+
+Tick all of these when creating your Volvo app. The plugin requests all of them during login, and Volvo rejects the whole login if any is missing.
+
+| API | Scopes |
+|---|---|
+| OpenID | `openid` |
+| Connected Vehicle | `conve:battery_charge_level`, `conve:brake_status`, `conve:climatization_start_stop`, `conve:command_accessibility`, `conve:commands`, `conve:diagnostics_engine_status`, `conve:diagnostics_workshop`, `conve:doors_status`, `conve:engine_start_stop`, `conve:engine_status`, `conve:fuel_status`, `conve:honk_flash`, `conve:lock`, `conve:lock_status`, `conve:navigation`, `conve:odometer_status`, `conve:trip_statistics`, `conve:tyre_status`, `conve:unlock`, `conve:vehicle_relation`, `conve:warnings`, `conve:windows_status` |
+| Energy | `energy:capability:read`, `energy:state:read` |
+| Location | `location:read` |
+
+### Publishing your Volvo app
+
+Volvo asks for some details before issuing credentials. For a personal Homebridge setup:
+
+| Field | What to enter |
+|---|---|
+| Contact name / email / phone | Your own details (only shared with Volvo) |
+| Legal responsibility | Your own name |
+| Business purpose | e.g. *Personal Homebridge plugin to control my own Volvo via Apple HomeKit. Vehicle data is used only locally on my home network and is never shared or stored externally.* |
+| Terms and conditions URL (if asked) | `https://github.com/Codzelerate/homebridge-volvo-xc90` |
+| Comments (optional) | If migrating: *Replacement for my existing `dc-` application as part of the Volvo ID migration.* |
 
 ---
 
@@ -523,20 +609,20 @@ Enable **Debug logging** in the plugin settings (Advanced section) to log every 
 
 Example output:
 ```
-[DEBUG] → GET https://api.volvocars.com/connected-vehicle/v2/vehicles/YV1XX.../doors
-[DEBUG] ← 200 /connected-vehicle/v2/vehicles/YV1XX.../doors
+[DEBUG] → GET https://api.volvocars.com/connected-vehicle/v2/vehicles/YV1**********0000/doors
+[DEBUG] ← 200 /connected-vehicle/v2/vehicles/YV1**********0000/doors
 [DEBUG] Doors: locked=true, doors={"frontLeft":false,...}
-[DEBUG] → GET https://api.volvocars.com/energy/v2/vehicles/YV1XX.../state
-[DEBUG] ← 200 /energy/v2/vehicles/YV1XX.../state
+[DEBUG] → GET https://api.volvocars.com/energy/v2/vehicles/YV1**********0000/state
+[DEBUG] ← 200 /energy/v2/vehicles/YV1**********0000/state
 [DEBUG] EV poll: 100% | CONNECTED | DONE | AC | power: PROVIDING_POWER | ~0min to full | 28km range
 [DEBUG] Charger: plugged in (CONNECTED)
 [DEBUG] EV range: 28 km
 [DEBUG] Tank range: 550 km
 [DEBUG] Diagnostics: All OK | Service in 1 month(s) / 21151 km
-[DEBUG] Location: 52.XXXXXX, 4.XXXXXX | heading 0° | 12m from home | AT HOME (radius 200m)
+[DEBUG] Location: [redacted] | heading 0° | 12m from home | AT HOME (radius 200m)
 ```
 
-Disable debug once everything is working to keep your logs clean.
+Since v1.4.1 the VIN is masked and GPS coordinates are redacted in debug output. Debug logs can still contain other details about your car, so review them before sharing. Disable debug once everything is working to keep your logs clean.
 
 ---
 
@@ -591,8 +677,21 @@ Open the Homebridge UI → **Child Bridges** tab → find Volvo XC90 → **Reset
 - Confirm the email and password entered match your Volvo Cars app credentials
 - Enable debug and check the log for any error during OTP initiation
 
+### OAuth errors
+
+| Where | Message | Cause and fix |
+|---|---|---|
+| Homebridge log | `invalid_client` / *Volvo rejected the Client ID / Client Secret* | The plugin is using credentials Volvo doesn't accept. Most often: old `dc-` credentials after the migration, or the wizard finished but **Save** wasn't clicked before restarting. Re-run the wizard with your `vid-dc-` credentials and click **Save** |
+| Homebridge log | `invalid_grant` | The login session expired — the refresh token wasn't used for 7+ days (e.g. Homebridge was offline) or the 6-month maximum was reached. Re-run the wizard |
+| Volvo login page | `invalid_scope` | The app is missing a scope. Add every scope in [Required scopes](#required-scopes), then start the wizard again |
+| Volvo login page | Redirect URI mismatch | The Redirect URI in the wizard doesn't exactly match the one on your app |
+| Wizard | *State mismatch* | The pasted URL is from an older attempt. Start again from Step 1 of the wizard without reloading the page |
+| Homebridge log | HTTP 401/403 on vehicle data (login succeeded) | The VCC API Key belongs to a different app. Copy the key from your new app into the **Vehicle** section |
+
+When asking for help, turn on [Debug mode](#debug-mode) and share the log lines **without** your Client Secret, refresh token or API key.
+
 **"Not authenticated" or accessories show "No Response"**
-- Your refresh token has likely expired — follow the [Re-authenticating](#re-authenticating) steps above
+- Your refresh token has likely expired — follow the [Re-authenticating](#re-authenticating-oauth) steps above
 - Confirm the Volvo Cars app can control your car — if the app is broken, the plugin cannot work either
 
 **EV sensors show "No Response" or always 0%**
