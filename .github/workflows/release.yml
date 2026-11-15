@@ -11,6 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write   # needed to create GitHub releases
+      id-token: write   # needed for npm trusted publishing (OIDC)
 
     steps:
       - name: Checkout
@@ -55,7 +56,7 @@ jobs:
           if npm view "homebridge-volvo-xc90@${VERSION}" version 2>/dev/null; then
             echo "Version ${VERSION} already on npm — skipping publish"
           else
-            npm publish
+            npm publish --provenance --access public
           fi
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
