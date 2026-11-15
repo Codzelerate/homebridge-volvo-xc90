@@ -1007,7 +1007,7 @@ async function genUrl() {
       code_challenge_method: 'S256',
       state: oauthState,
     });
-    authUrl = `https://volvoid.eu.volvocars.com/as/authorization.oauth2?${params.toString()}`;
+    authUrl = `https://auth.volvocars.com/realms/volvocars/protocol/openid-connect/auth?${params.toString()}`;
     g('authUrlBox').textContent = authUrl;
     wsGo(2);
   } catch (e) {

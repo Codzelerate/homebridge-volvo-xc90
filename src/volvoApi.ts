@@ -2,8 +2,8 @@ import axios, { AxiosInstance, AxiosResponse, InternalAxiosRequestConfig } from 
 import * as qs from 'qs';
 
 const BASE_URL = 'https://api.volvocars.com';
-const AUTH_URL = 'https://volvoid.eu.volvocars.com/as/authorization.oauth2';
-const TOKEN_URL = 'https://volvoid.eu.volvocars.com/as/token.oauth2';
+const AUTH_URL = 'https://auth.volvocars.com/realms/volvocars/protocol/openid-connect/auth';
+const TOKEN_URL = 'https://auth.volvocars.com/realms/volvocars/protocol/openid-connect/token';
 
 // Volvo mobile app OAuth client credentials — public, extracted from the official app, not user-owned
 const AUTH_BASIC = 'Basic aDRZZjBiOlU4WWtTYlZsNnh3c2c1WVFxWmZyZ1ZtSWFEcGhPc3kxUENhVXNpY1F0bzNUUjVrd2FKc2U0QVpkZ2ZJZmNMeXc='; // pragma: allowlist secret
@@ -120,7 +120,7 @@ export class OtpAuthProvider implements AuthProvider {
 
   private async authRequest(method: string, url: string, data?: object, isJson = false): Promise<Record<string, unknown>> {
     if (url.startsWith('http://')) url = 'https://' + url.slice(7);
-    const headers: Record<string, string> = { 'X-XSRF-Header': 'PingFederate' };
+    const headers: Record<string, string> = {};
     if (this.authCookies) headers['Cookie'] = this.authCookies;
     if (isJson) {
       headers['content-type'] = 'application/json';
@@ -206,7 +206,6 @@ export class OtpAuthProvider implements AuthProvider {
     }), {
       headers: {
         Authorization: AUTH_BASIC,
-        'X-XSRF-Header': 'PingFederate',
         'content-type': 'application/x-www-form-urlencoded',
       },
     });
@@ -228,7 +227,6 @@ export class OtpAuthProvider implements AuthProvider {
       }), {
         headers: {
           Authorization: AUTH_BASIC,
-          'X-XSRF-Header': 'PingFederate',
           'content-type': 'application/x-www-form-urlencoded',
         },
       });

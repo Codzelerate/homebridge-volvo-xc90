@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] - 2026-11-15
+
+### Breaking change — Volvo ID IAM migration
+
+Volvo is migrating from PingFederate to Keycloak. **Existing `dc-` OAuth credentials stop working on 31 January 2027.** This release updates the plugin to use the new Keycloak endpoints — but users must also create a new OAuth application on the Volvo Developer Portal to get new `vid-dc-` credentials and re-run the OAuth wizard.
+
+**What you need to do before 31 January 2027:**
+1. Go to [developer.volvocars.com](https://developer.volvocars.com) → Your API Applications → **Create new application**
+2. Configure scopes and redirect URI as before
+3. Open **Homebridge UI → Plugins → Volvo XC90 → Settings → Re-configure OAuth** and enter the new credentials
+4. Delete the old `dc-` application from the portal
+
+### Changed
+- **Auth URL** updated from `volvoid.eu.volvocars.com` (PingFederate) to `auth.volvocars.com/realms/volvocars` (Keycloak) across `server.js`, `volvoApi.ts`, and the OAuth wizard
+- **Token URL** updated to Keycloak endpoint in all token exchange and refresh calls
+- **Removed `X-XSRF-Header: PingFederate`** from all OTP auth requests — PingFederate-specific header, not used by Keycloak
+
+---
+
 ## [1.3.11] - 2026-06-08
 
 ### Fixed

@@ -3,8 +3,8 @@ const crypto = require('crypto');
 const axios = require('axios');
 const qs = require('qs');
 
-const AUTH_URL = 'https://volvoid.eu.volvocars.com/as/authorization.oauth2';
-const TOKEN_URL = 'https://volvoid.eu.volvocars.com/as/token.oauth2';
+const AUTH_URL = 'https://auth.volvocars.com/realms/volvocars/protocol/openid-connect/auth';
+const TOKEN_URL = 'https://auth.volvocars.com/realms/volvocars/protocol/openid-connect/token';
 
 const OAUTH_SCOPES = [
   'openid',
