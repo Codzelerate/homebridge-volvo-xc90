@@ -26,6 +26,9 @@ export interface TokenSet {
     refresh_token: string;
     expires_in: number;
     expiresAt: number;
+    /** Unix ms when the OAuth grant was first established. Preserved through every token rotation.
+     *  Stamped on first successful auth; used to warn before the 6-month hard expiry. */
+    grantedAt?: number;
 }
 export interface AuthFlowState {
     flowId: string;
@@ -60,6 +63,8 @@ export declare class OAuthAuthProvider implements AuthProvider {
     supportsEngine(): boolean;
     refreshAccessToken(refreshToken: string): Promise<TokenSet>;
 }
+export declare function maskVin(vin: string): string;
+export declare function redactVin(text: string, vin: string): string;
 export declare class VolvoApiClient {
     private readonly vccApiKey;
     private readonly vin;
@@ -71,6 +76,7 @@ export declare class VolvoApiClient {
     private refreshInFlight;
     constructor(vccApiKey: string, vin: string, provider: AuthProvider, debugFn?: DebugFn);
     setOnTokensRefreshed(cb: (tokens: TokenSet) => void): void;
+    private redact;
     private attachInterceptors;
     setTokens(tokens: TokenSet): void;
     getTokens(): TokenSet | null;

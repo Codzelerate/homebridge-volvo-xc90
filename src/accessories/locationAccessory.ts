@@ -65,7 +65,7 @@ export class LocationAccessory {
       const atHome = distanceM <= this.radiusMetres;
 
       this.platform.dbg(
-        `Location: ${loc.latitude.toFixed(6)}, ${loc.longitude.toFixed(6)}` +
+        'Location: [redacted]' +
         ` | heading ${loc.heading}° | ${Math.round(distanceM)}m from home` +
         ` | ${atHome ? 'AT HOME' : 'AWAY'} (radius ${this.radiusMetres}m)` +
         ` | last updated ${loc.timestamp}`,

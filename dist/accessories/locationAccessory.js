@@ -48,7 +48,7 @@ class LocationAccessory {
             }
             const distanceM = haversineMetres(this.homeLat, this.homeLon, loc.latitude, loc.longitude);
             const atHome = distanceM <= this.radiusMetres;
-            this.platform.dbg(`Location: ${loc.latitude.toFixed(6)}, ${loc.longitude.toFixed(6)}` +
+            this.platform.dbg('Location: [redacted]' +
                 ` | heading ${loc.heading}° | ${Math.round(distanceM)}m from home` +
                 ` | ${atHome ? 'AT HOME' : 'AWAY'} (radius ${this.radiusMetres}m)` +
                 ` | last updated ${loc.timestamp}`);

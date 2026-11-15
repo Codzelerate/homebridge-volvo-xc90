@@ -10,7 +10,7 @@ import {
 import * as fs from 'fs';
 import * as path from 'path';
 import { PLATFORM_NAME, PLUGIN_NAME } from './settings';
-import { VolvoApiClient, OtpAuthProvider, OAuthAuthProvider, AuthProvider, TokenSet, AuthFlowState, VehicleStatus } from './volvoApi';
+import { VolvoApiClient, OtpAuthProvider, OAuthAuthProvider, AuthProvider, TokenSet, AuthFlowState, VehicleStatus, maskVin } from './volvoApi';
 import { LockAccessory } from './accessories/lockAccessory';
 import { ControlsAccessory } from './accessories/controlsAccessory';
 import { DoorsAccessory } from './accessories/doorsAccessory';
@@ -211,7 +211,7 @@ export class VolvoPlatform implements DynamicPlatformPlugin {
     this.api.setOnTokensRefreshed(tokens => {
       this.saveState({ authMethod: this.provider.authMethod, tokens });
     });
-    this.dbg(`Plugin v${PLUGIN_VERSION} loaded — VIN: ${this.config.vin}`);
+    this.dbg(`Plugin v${PLUGIN_VERSION} loaded — VIN: ${maskVin(this.config.vin)}`);
 
     hbApi.on('didFinishLaunching', async () => {
       const authenticated = await this.authenticate();
@@ -483,9 +483,13 @@ export class VolvoPlatform implements DynamicPlatformPlugin {
    *   "The maximum lifetime of the grant is 6 months, if refreshed continuously."
    */
   private logOAuthExpiredError(errData?: Record<string, unknown>): void {
-    const isInvalidGrant = errData?.['error'] === 'invalid_grant';
+    const errorCode = errData?.['error'];
     this.log.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    if (isInvalidGrant) {
+    if (errorCode === 'invalid_client') {
+      this.log.error('Volvo rejected the Client ID / Client Secret (invalid_client).');
+      this.log.error('  • Old "dc-" credentials no longer work — create a new app on developer.volvocars.com (client ID starts with "vid-dc-").');
+      this.log.error('  • After the OAuth wizard completes, click Save in the plugin settings before restarting.');
+    } else if (errorCode === 'invalid_grant') {
       this.log.error('OAuth grant rejected by Volvo (invalid_grant).');
       this.log.error('This happens when:');
       this.log.error('  • The refresh token was not used for 7+ days (e.g. Homebridge was offline), OR');

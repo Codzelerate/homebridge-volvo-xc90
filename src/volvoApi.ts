@@ -294,6 +294,14 @@ export class OAuthAuthProvider implements AuthProvider {
   }
 }
 
+export function maskVin(vin: string): string {
+  return vin.length > 7 ? `${vin.slice(0, 3)}${'*'.repeat(vin.length - 7)}${vin.slice(-4)}` : '***';
+}
+
+export function redactVin(text: string, vin: string): string {
+  return vin ? text.split(vin).join(maskVin(vin)) : text;
+}
+
 // ── VolvoApiClient ────────────────────────────────────────────────────────────
 
 export class VolvoApiClient {
@@ -318,25 +326,30 @@ export class VolvoApiClient {
     this.onTokensRefreshed = cb;
   }
 
+  private redact(text: string): string {
+    return redactVin(text, this.vin)
+      .replace(/"coordinates":\[[^\]]*\]/g, '"coordinates":"[redacted]"');
+  }
+
   private attachInterceptors(): void {
     this.http.interceptors.request.use((req: InternalAxiosRequestConfig) => {
       (req as InternalAxiosRequestConfig & { _startMs?: number })._startMs = Date.now();
-      this.debug(`→ ${req.method?.toUpperCase()} ${req.baseURL}${req.url}`);
-      if (req.data) this.debug(`  body: ${JSON.stringify(req.data)}`);
+      this.debug(this.redact(`→ ${req.method?.toUpperCase()} ${req.baseURL}${req.url}`));
+      if (req.data) this.debug(this.redact(`  body: ${JSON.stringify(req.data)}`));
       return req;
     });
     this.http.interceptors.response.use(
       (res: AxiosResponse) => {
         const elapsed = Date.now() - ((res.config as InternalAxiosRequestConfig & { _startMs?: number })._startMs ?? Date.now());
-        this.debug(`← ${res.status} ${res.config.url} (${elapsed}ms)`);
-        this.debug(`  response: ${JSON.stringify(res.data)}`);
+        this.debug(this.redact(`← ${res.status} ${res.config.url} (${elapsed}ms)`));
+        this.debug(this.redact(`  response: ${JSON.stringify(res.data)}`));
         return res;
       },
       (err) => {
         const elapsed = Date.now() - ((err.config as (InternalAxiosRequestConfig & { _startMs?: number }) | undefined)?._startMs ?? Date.now());
         const status = err.response?.status ?? 'no-response';
         const body = JSON.stringify(err.response?.data ?? {});
-        this.debug(`← ERROR ${status} ${err.config?.url} (${elapsed}ms): ${body}`);
+        this.debug(this.redact(`← ERROR ${status} ${err.config?.url} (${elapsed}ms): ${body}`));
         return Promise.reject(err);
       },
     );

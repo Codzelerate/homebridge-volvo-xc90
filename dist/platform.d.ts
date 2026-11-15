@@ -73,6 +73,23 @@ export declare class VolvoPlatform implements DynamicPlatformPlugin {
     private loadState;
     private saveState;
     private authenticate;
+    /**
+     * Warn when the OAuth grant is approaching Volvo's 6-month hard expiry.
+     * Volvo docs: "The maximum lifetime of the grant is 6 months, if refreshed continuously.
+     * After that, the user has to re-authenticate."
+     *
+     * We warn from 2 weeks out so the user has time to act before the plugin stops working.
+     */
+    private checkGrantExpiry;
+    /**
+     * Emit a clear, actionable error when an OAuth refresh fails — distinguishing between
+     * a stale token (7-day inactivity) and the 6-month hard expiry.
+     *
+     * Volvo docs:
+     *   "The refresh_token must be used within 7 days or else it will be invalidated."
+     *   "The maximum lifetime of the grant is 6 months, if refreshed continuously."
+     */
+    private logOAuthExpiredError;
     private logSupportedCommands;
     configureAccessory(accessory: PlatformAccessory): void;
     private discoverDevices;

@@ -4,3 +4,6 @@ node_modules/
 scripts/
 
 .DS_Store
+.claude/
+docs/screenshots/
+homebridge-volvo-xc90.png

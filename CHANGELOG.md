@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.1] - 2026-11-15
+
+### Security
+- **Updated `axios` to `^1.21.1`** — resolves high-severity advisories in `axios`, `follow-redirects` and `form-data` (prototype pollution, header injection, credential leakage on redirect)
+- **Debug logs no longer expose personal data** — the VIN is masked (e.g. `YV1**********3456`) and GPS coordinates are redacted in request/response and location debug output
+
+### Improved
+- **Clear message for `invalid_client`** — if Volvo rejects the Client ID/Secret (e.g. old `dc-` credentials after the Keycloak migration, or wizard changes not saved), the log now says so directly instead of the generic "session may have expired"
+
 ## [1.4.0] - 2026-11-15
 
 ### Breaking change — Volvo ID IAM migration

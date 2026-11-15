@@ -37,11 +37,13 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.VolvoApiClient = exports.OAuthAuthProvider = exports.OtpAuthProvider = void 0;
+exports.maskVin = maskVin;
+exports.redactVin = redactVin;
 const axios_1 = __importDefault(require("axios"));
 const qs = __importStar(require("qs"));
 const BASE_URL = 'https://api.volvocars.com';
-const AUTH_URL = 'https://volvoid.eu.volvocars.com/as/authorization.oauth2';
-const TOKEN_URL = 'https://volvoid.eu.volvocars.com/as/token.oauth2';
+const AUTH_URL = 'https://auth.volvocars.com/realms/volvocars/protocol/openid-connect/auth';
+const TOKEN_URL = 'https://auth.volvocars.com/realms/volvocars/protocol/openid-connect/token';
 // Volvo mobile app OAuth client credentials — public, extracted from the official app, not user-owned
 const AUTH_BASIC = 'Basic aDRZZjBiOlU4WWtTYlZsNnh3c2c1WVFxWmZyZ1ZtSWFEcGhPc3kxUENhVXNpY1F0bzNUUjVrd2FKc2U0QVpkZ2ZJZmNMeXc='; // pragma: allowlist secret
 const AUTH_SCOPES = [
@@ -103,7 +105,7 @@ class OtpAuthProvider {
     async authRequest(method, url, data, isJson = false) {
         if (url.startsWith('http://'))
             url = 'https://' + url.slice(7);
-        const headers = { 'X-XSRF-Header': 'PingFederate' };
+        const headers = {};
         if (this.authCookies)
             headers['Cookie'] = this.authCookies;
         if (isJson) {
@@ -174,7 +176,6 @@ class OtpAuthProvider {
         }), {
             headers: {
                 Authorization: AUTH_BASIC,
-                'X-XSRF-Header': 'PingFederate',
                 'content-type': 'application/x-www-form-urlencoded',
             },
         });
@@ -195,7 +196,6 @@ class OtpAuthProvider {
             }), {
                 headers: {
                     Authorization: AUTH_BASIC,
-                    'X-XSRF-Header': 'PingFederate',
                     'content-type': 'application/x-www-form-urlencoded',
                 },
             });
@@ -257,6 +257,12 @@ class OAuthAuthProvider {
     }
 }
 exports.OAuthAuthProvider = OAuthAuthProvider;
+function maskVin(vin) {
+    return vin.length > 7 ? `${vin.slice(0, 3)}${'*'.repeat(vin.length - 7)}${vin.slice(-4)}` : '***';
+}
+function redactVin(text, vin) {
+    return vin ? text.split(vin).join(maskVin(vin)) : text;
+}
 // ── VolvoApiClient ────────────────────────────────────────────────────────────
 class VolvoApiClient {
     constructor(vccApiKey, vin, provider, debugFn) {
@@ -273,24 +279,28 @@ class VolvoApiClient {
     setOnTokensRefreshed(cb) {
         this.onTokensRefreshed = cb;
     }
+    redact(text) {
+        return redactVin(text, this.vin)
+            .replace(/"coordinates":\[[^\]]*\]/g, '"coordinates":"[redacted]"');
+    }
     attachInterceptors() {
         this.http.interceptors.request.use((req) => {
             req._startMs = Date.now();
-            this.debug(`→ ${req.method?.toUpperCase()} ${req.baseURL}${req.url}`);
+            this.debug(this.redact(`→ ${req.method?.toUpperCase()} ${req.baseURL}${req.url}`));
             if (req.data)
-                this.debug(`  body: ${JSON.stringify(req.data)}`);
+                this.debug(this.redact(`  body: ${JSON.stringify(req.data)}`));
             return req;
         });
         this.http.interceptors.response.use((res) => {
             const elapsed = Date.now() - (res.config._startMs ?? Date.now());
-            this.debug(`← ${res.status} ${res.config.url} (${elapsed}ms)`);
-            this.debug(`  response: ${JSON.stringify(res.data)}`);
+            this.debug(this.redact(`← ${res.status} ${res.config.url} (${elapsed}ms)`));
+            this.debug(this.redact(`  response: ${JSON.stringify(res.data)}`));
             return res;
         }, (err) => {
             const elapsed = Date.now() - (err.config?._startMs ?? Date.now());
             const status = err.response?.status ?? 'no-response';
             const body = JSON.stringify(err.response?.data ?? {});
-            this.debug(`← ERROR ${status} ${err.config?.url} (${elapsed}ms): ${body}`);
+            this.debug(this.redact(`← ERROR ${status} ${err.config?.url} (${elapsed}ms): ${body}`));
             return Promise.reject(err);
         });
     }
@@ -318,9 +328,12 @@ class VolvoApiClient {
                     .then(tokens => {
                     const newExpirySecs = Math.round((tokens.expiresAt - Date.now()) / 1000);
                     this.debug(`Token refresh succeeded — new token valid for ${newExpirySecs}s, newRefreshToken=${!!tokens.refresh_token}`);
-                    this.tokens = tokens;
-                    this.onTokensRefreshed?.(tokens);
-                    return tokens;
+                    // Preserve grant start time through every rotation — Volvo's 6-month hard expiry
+                    // is measured from when the grant was first issued, not from the last rotation.
+                    const tokensWithGrant = { ...tokens, grantedAt: current.grantedAt ?? tokens.grantedAt };
+                    this.tokens = tokensWithGrant;
+                    this.onTokensRefreshed?.(tokensWithGrant);
+                    return tokensWithGrant;
                 })
                     .catch(err => {
                     this.debug(`Token refresh failed: ${err.message}`);
