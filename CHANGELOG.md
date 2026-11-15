@@ -11,9 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Volvo is migrating from PingFederate to Keycloak. **Existing `dc-` OAuth credentials stop working on 31 January 2027.** This release updates the plugin to use the new Keycloak endpoints — but users must also create a new OAuth application on the Volvo Developer Portal to get new `vid-dc-` credentials and re-run the OAuth wizard.
 
-**What you need to do before 31 January 2027:**
+**What users need to do before 31 January 2027:**
 1. Go to [developer.volvocars.com](https://developer.volvocars.com) → Your API Applications → **Create new application**
-2. Configure scopes and redirect URI as before
+2. Configure scopes and redirect URI as before — the new client ID will start with `vid-dc-`
 3. Open **Homebridge UI → Plugins → Volvo XC90 → Settings → Re-configure OAuth** and enter the new credentials
 4. Delete the old `dc-` application from the portal
 
