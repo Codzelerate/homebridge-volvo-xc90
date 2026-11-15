@@ -5,7 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.4.1] - 2026-11-15
+## [1.4.2] - 2026-11-15
+
+> 1.4.1 was never released; its changes are included here.
+
+### Documentation
+- **Step-by-step migration guide** in the README for moving to Volvo's new login system before 31 January 2027 — creating and publishing the new `vid-dc-` app, re-running the OAuth wizard, verifying, and cleaning up
+- **Required scopes** table listing every scope the plugin requests
+- **OAuth errors** troubleshooting table (`invalid_client`, `invalid_grant`, `invalid_scope`, redirect URI mismatch, state mismatch, wrong VCC API key)
 
 ### Security
 - **Updated `axios` to `^1.21.1`** — resolves high-severity advisories in `axios`, `follow-redirects` and `form-data` (prototype pollution, header injection, credential leakage on redirect)
