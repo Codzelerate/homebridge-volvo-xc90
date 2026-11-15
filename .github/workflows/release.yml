@@ -51,6 +51,8 @@ jobs:
           prerelease: false
 
       - name: Publish to npm
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
           VERSION=${{ steps.version.outputs.VERSION }}
           if npm view "homebridge-volvo-xc90@${VERSION}" version 2>/dev/null; then
